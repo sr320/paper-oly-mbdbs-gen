@@ -40,7 +40,7 @@ ${reads_dir}/{}_s456_trimmed.fq.gz
  
  
  
- 
+# -s for SE -p for PE 
 ${bismark_dir}/deduplicate_bismark \
 --bam -s \
 *.bam
