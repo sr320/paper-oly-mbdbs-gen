@@ -42,7 +42,7 @@ ${reads_dir}/{}_s456_trimmed.fq.gz
  
  
 ${bismark_dir}/deduplicate_bismark \
---bam -p \
+--bam -s \
 *.bam
  
  
