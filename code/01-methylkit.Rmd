@@ -1,0 +1,166 @@
+---
+title: "01-methylkit"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Obtain session information
+
+```{r}
+sessionInfo()
+```
+
+# Download files from `gannet`
+
+```{bash}
+#wget -r -l1 --no-parent -A_dedup.sorted.bam http://gannet.fish.washington.edu/spartina/2018-10-10-project-virginica-oa-Large-Files/2018-11-07-Bismark-Mox/ #Download files from gannet. They will be stored in the same directory structure as they are online.
+```
+
+
+```{bash}
+pwd
+```
+
+
+
+```{r}
+file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_2_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_3_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                            		   						 	'../data/zr1394_4_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_5_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                              '../data/zr1394_6_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_7_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_8_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                            		   						 	'../data/zr1394_9_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_10_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                              '../data/zr1394_11_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_12_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_13_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                            		   						 	'../data/zr1394_14_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_15_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                              '../data/zr1394_16_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
+'../data/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam'
+)
+```
+
+
+
+
+
+```{r}
+library(methylKit)
+```
+
+
+
+```{r, eval = FALSE}
+myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18"), assembly = "v071", read.context="CpG", mincov=2, treatment = c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1))
+```
+
+```{r, eval = FALSE}
+save(myobj_18, file = "../analyses/myobj_18")
+```
+
+
+available at http://gannet.fish.washington.edu/333333
+
+```{bash}
+#zip ../analyses/myobj_18.zip ../analyses/myobj_18
+```
+
+
+
+```{r}
+#load("analyses/myobj_52")
+```
+
+
+
+
+
+```{r}
+getMethylationStats(myobj_18[[2]],plot=FALSE,both.strands=FALSE)
+```
+
+```{r}
+getMethylationStats(myobj_18
+                    [[8]],plot=TRUE,both.strands=FALSE)
+```
+
+```{r}
+getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=FALSE)
+```
+
+
+```{r}
+filtered.myobj=filterByCoverage(myobj_18,lo.count=5,lo.perc=NULL,
+                                      hi.count=NULL,hi.perc=99.9)
+meth_filter=unite(filtered.myobj, destrand=TRUE)
+clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
+PCASamples(meth_filter)
+```
+
+
+
+
+```{r}
+myDiff=calculateDiffMeth(meth_filter,mc.cores=4)
+```
+
+
+
+
+```{r}
+# get hyper methylated bases
+myDiff50p.hyper=getMethylDiff(myDiff,difference=50,qvalue=0.01,type="hyper")
+#
+# get hypo methylated bases
+myDiff50p.hypo=getMethylDiff(myDiff,difference=50,qvalue=0.01,type="hypo")
+#
+#
+# get all differentially methylated bases
+myDiff50p=getMethylDiff(myDiff,difference=50,qvalue=0.01)
+```
+
+
+
+
+```{r}
+write.table(myDiff50p, file = "analyses/myDiff50p.tab", sep = "\t")
+```
+
+
+
+---
+# Taking the DMLs to a bed
+
+```{r}
+library(readr)
+#myDiff25p <- read_csv("../analyses/myDiff50p.csv")
+
+```
+
+
+```{r}
+head(myDiff50p)
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+dml52 <-  mutate(myDiff50p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
+  mutate_if(is.numeric, as.integer)
+write_delim(dml52, "analyses/dml52.bed",  delim = '\t', col_names = FALSE)
+```
+
+
+```{r}
+head(dml52)
+```
+
+
+http://gannet.fish.washington.edu/seashell/snaps/dml52.bed
