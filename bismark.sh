@@ -39,41 +39,45 @@ find ${reads_dir}*_s456_trimmed.fq.gz \
 ${reads_dir}/{}_s456_trimmed.fq.gz 
  
  
- 
-# -s for SE -p for PE 
-${bismark_dir}/deduplicate_bismark \
---bam -s \
-*.bam
- 
- 
+
+find *.bam | \
+xargs basename -s .bam | \
+xargs -I{} ${bismark_dir}/deduplicate_bismark \
+--bam \
+--single \
+{}.bam
+
+
+
 ${bismark_dir}/bismark_methylation_extractor \
 --bedGraph --counts --scaffolds \
 --multicore 14 \
+--buffer_size 75% \
 *deduplicated.bam
- 
- 
- 
+
+
+
 # Bismark processing report
- 
+
 ${bismark_dir}/bismark2report
- 
+
 #Bismark summary report
- 
+
 ${bismark_dir}/bismark2summary
- 
- 
- 
+
+
+
 # Sort files for methylkit and IGV
- 
+
 find *deduplicated.bam | \
 xargs basename -s .bam | \
 xargs -I{} ${samtools} \
 sort --threads 28 {}.bam \
 -o {}.sorted.bam
- 
+
 # Index sorted files for IGV
 # The "-@ 16" below specifies number of CPU threads to use.
- 
+
 find *.sorted.bam | \
 xargs basename -s .sorted.bam | \
 xargs -I{} ${samtools} \
