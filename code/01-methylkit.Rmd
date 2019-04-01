@@ -16,7 +16,7 @@ sessionInfo()
 # Download files from `gannet`
 
 ```{bash}
-#wget -r -l1 --no-parent -A_dedup.sorted.bam http://gannet.fish.washington.edu/spartina/2018-10-10-project-virginica-oa-Large-Files/2018-11-07-Bismark-Mox/ #Download files from gannet. They will be stored in the same directory structure as they are online.
+#rsync -avz --progress sr320@mox.hyak.uw.edu:/gscratch/srlab/sr320/analyses/2019/0327/*bismark_bt2.deduplicated.sorted.bam ../analyses/
 ```
 
 
@@ -38,7 +38,7 @@ file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted
 '../data/zr1394_13_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                            		   						 	'../data/zr1394_14_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
 '../data/zr1394_15_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',                              '../data/zr1394_16_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
 '../data/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
-'../data/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam'
+'../data/zr1394_18_s456_trimmed_bismark_bt2.deduplicated.sorted.bam'
 )
 ```
 
@@ -61,7 +61,8 @@ save(myobj_18, file = "../analyses/myobj_18")
 ```
 
 
-available at http://gannet.fish.washington.edu/333333
+Also available at https://d.pr/f/vRtrqZ
+
 
 ```{bash}
 #zip ../analyses/myobj_18.zip ../analyses/myobj_18
