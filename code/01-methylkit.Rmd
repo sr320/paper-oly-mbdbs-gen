@@ -91,10 +91,13 @@ getMethylationStats(myobj_18
 getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=FALSE)
 ```
 
+```{r}
+getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
+```
 
 ```{r}
-filtered.myobj=filterByCoverage(myobj_18,lo.count=5,lo.perc=NULL,
-                                      hi.count=NULL,hi.perc=99.9)
+filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
+                                      hi.count=100,hi.perc=NULL)
 meth_filter=unite(filtered.myobj, destrand=TRUE)
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 PCASamples(meth_filter)
@@ -112,21 +115,26 @@ myDiff=calculateDiffMeth(meth_filter,mc.cores=4)
 
 ```{r}
 # get hyper methylated bases
-myDiff50p.hyper=getMethylDiff(myDiff,difference=50,qvalue=0.01,type="hyper")
+myDiff25p.hyper=getMethylDiff(myDiff,difference=25,qvalue=0.01,type="hyper")
 #
 # get hypo methylated bases
-myDiff50p.hypo=getMethylDiff(myDiff,difference=50,qvalue=0.01,type="hypo")
+myDiff25p.hypo=getMethylDiff(myDiff,difference=25,qvalue=0.01,type="hypo")
 #
 #
 # get all differentially methylated bases
-myDiff50p=getMethylDiff(myDiff,difference=50,qvalue=0.01)
+myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
 ```
 
 
 
+```{r}
+write.table(myDiff25p, file = "../analyses/myDiff25p.tab", sep = "\t")
+```
+
+
 
 ```{r}
-write.table(myDiff50p, file = "analyses/myDiff50p.tab", sep = "\t")
+write.table(myDiff50p, file = "../analyses/myDiff50p.tab", sep = "\t")
 ```
 
 
@@ -136,13 +144,13 @@ write.table(myDiff50p, file = "analyses/myDiff50p.tab", sep = "\t")
 
 ```{r}
 library(readr)
-#myDiff25p <- read_csv("../analyses/myDiff50p.csv")
+#myDiff25p <- read_csv("../analyses/myDiff25p.csv")
 
 ```
 
 
 ```{r}
-head(myDiff50p)
+head(myDiff25p)
 ```
 
 
@@ -153,15 +161,15 @@ library(tidyverse)
 
 
 ```{r}
-dml52 <-  mutate(myDiff50p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
+dml25 <-  mutate(myDiff25p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
   mutate_if(is.numeric, as.integer)
-write_delim(dml52, "analyses/dml52.bed",  delim = '\t', col_names = FALSE)
+write_delim(dml25, "../analyses/dml25.bed",  delim = '\t', col_names = FALSE)
 ```
 
 
 ```{r}
-head(dml52)
+head(dml25)
 ```
 
 
-http://gannet.fish.washington.edu/seashell/snaps/dml52.bed
+Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
