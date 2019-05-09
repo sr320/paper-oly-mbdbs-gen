@@ -14,7 +14,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("methylKit")
 
 # require needed packages 
-require(methylKit,reshape2)
+lapply(c("methylKit","reshape2"), require, character.only = TRUE)
 sessionInfo()
 ```
 
@@ -120,9 +120,28 @@ FYI I checked that the correlation matrix in `getCorrelation` is derived from th
 ```{r}
 cor.pears.10 <- cor(perc.meth10, method="pearson") # create pearson correlation matrix. 
 dist.manhat.10 <- dist(t(perc.meth10), method = "manhattan", diag = T, upper = F)
-write.csv(melt(as.matrix(dist.manhat.10), varnames = c("row", "col")), file="analyses/dist.manhat.10.csv", row.names=FALSE) 
+dist.manhat.10.df <- melt(as.matrix(dist.manhat.10), varnames = c("row", "col"))
 
 cor.pears.5 <- cor(perc.meth5, method="pearson") # create pearson correlation matrix. 
 dist.manhat.5 <- dist(t(perc.meth5), method = "manhattan", diag = T, upper = F) #must transform % matrix (samples are rows) for the dist() function
-write.csv(melt(as.matrix(dist.manhat.5), varnames = c("row", "col")), file="analyses/dist.manhat.5.csv", row.names=FALSE)
+dist.manhat.5.df <- melt(as.matrix(dist.manhat.5), varnames = c("row", "col"))
 ```
+
+### Read in sample number key, merge with distance matrix dataframes
+
+```{r}
+key <- read.csv("data/sample-key.csv")
+dist.manhat.10.df <- merge(x=merge(x=dist.manhat.10.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.10.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.10.df, file="analyses/dist.manhat.10.csv", row.names=FALSE) 
+
+dist.manhat.5.df <- merge(x=merge(x=dist.manhat.5.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.5.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.5.df, file="analyses/dist.manhat.5.csv", row.names=FALSE)
+```
+
+
+```{r}
+
+```
+
