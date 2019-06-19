@@ -71,7 +71,7 @@ Also available at https://d.pr/f/vRtrqZ
 
 
 ```{r}
-#load("analyses/myobj_52")
+load("../analyses/myobj_18")
 ```
 
 
