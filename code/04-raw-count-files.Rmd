@@ -1,0 +1,125 @@
+---
+title: "04-raw-count-files"
+author: "Laura H Spencer"
+date: "8/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Generate count files for analysis in MACAU 
+
+MACAU is a software program that assess the influence of a variable (or covariates) on differential methylation while controlling for relatedness. In our case, we will look at the influence of oyster length & wet weight on DML, while considering relatedness in the  Hood Canal and South Sound Olympia oyster populations. Inputs required for MACAU include: 
+
+  1) Total read counts
+  2) Methylated read counts 
+  3) Relatedness file 
+  4) Variable of interest 
+  
+In  this notebook I will generate #1 and  #2 - the count files - from a methylKit object. 
+
+First, load object that Steven created in 01-methylkit.Rmd 
+
+```{r}
+load("analyses/myobj_18")
+```
+
+"The following function will merge all samples to one object for base-pair locations that are covered in all samples. Setting destrand=TRUE (the default is FALSE) will merge reads on both strands of a CpG dinucleotide. This provides better coverage, but only advised when looking at CpG methylation (for CpH methylation this will cause wrong results in subsequent analyses). In addition, setting destrand=TRUE will only work when operating on base-pair resolution, otherwise setting this option TRUE will have no effect. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples."
+
+```{r}
+meth.stranded <- unite(myobj_18, destrand=FALSE)
+meth.destrand <- unite(myobj_18, destrand=TRUE)
+```
+
+Let's take a peek at the object where I retain strandedness 
+
+```{r}
+head(meth.stranded)
+tail(meth.stranded)
+```
+
+Now the object where reads on both strands are merged - should increase coverage 
+
+```{r}
+head(meth.destrand)
+tail(meth.destrand)
+```
+
+When I look at the last 6  base pairs using tail() I see that, indeed, coverage increases when I remove strandedness. I'll create 2 sets of read files - stranded, and destranded. 
+
+From one of the objects, e.g. `head(meth.stranded)`, we can orient ourselves to this type of object's format. We have base-pair resolution of coverage, number of C's (aka methylated C's), and number of T's (aka unmethylated C's, which were coverted upon bisulfite treatment), for each sample from 1 through 18. The "coverage" value is the same as the sum of C's and T's, so this is our "total read counts" value. 
+
+methylBase object with 6 rows
+--------------
+      chr start   end strand coverage1 numCs1 numTs1 coverage2 numCs2 numTs2 coverage3 numCs3 numTs3 coverage4 numCs4 numTs4 coverage5
+1 Contig0 38974 38974      -        15     13      2        16     15      1        16     13      3        13     10      3        15
+2 Contig0 39226 39226      +        21     11     10        22     17      5        22     10     12        23     14      9        23
+3 Contig0 39234 39234      +        24     10     14        27      7     20        27     10     17        26      5     21        28
+4 Contig0 39252 39252      +        13      9      4        11      8      3        11      6      5        12      9      3        12
+5 Contig0 41235 41235      -         4      3      1         4      3      1         4      2      2         7      7      0         6
+6 Contig0 64124 64124      +         5      2      3         8      2      6         7      4      3        10      9      1         4
+
+
+#### Generate raw count data  files 
+
+Let's start with the stranded data. 
+
+Create subset-able dataframe from methylkit object. 
+
+```{r}
+meth.stranded.df <- getData(meth.stranded)
+```
+
+Create a new, single column with a base site ID by merging contig, start, and strand info. 
+
+```{r}
+meth.stranded.df$siteID <- with(meth.stranded.df, paste0(chr, start, strand))  #merge id columns into 1
+ncol(meth.stranded.df) #count total #  columns 
+meth.stranded.df <- subset(meth.stranded.df, select=c(59,1:58)) #move siteID to first  column
+head(meth.stranded.df) #check resulting dataframe 
+```
+
+Create dataframe with total counts (aka coverage), and location info (chromosome, start, strand). End was not pulled, since count are of single base pairs (start and end are the same)
+
+```{r}
+counts.tot.stranded <- meth.stranded.df[, grep(c("siteID|coverage"), colnames(meth.stranded.df))]
+```
+
+Create dataframe with methylated counts  
+
+```{r}
+counts.meth.stranded <- meth.stranded.df[, grep(c("siteID|numCs"), colnames(meth.stranded.df))]
+```
+
+#### Repeat thea bove with destranded data 
+
+```{r}
+meth.destranded.df <- getData(meth.destrand)
+meth.destranded.df$siteID <- with(meth.destranded.df, paste0(chr, start, strand))  #merge id columns into 1
+ncol(meth.destranded.df) #count total #  columns 
+meth.destranded.df <- subset(meth.destranded.df, select=c(59,1:58)) #move siteID to first  column
+head(meth.destranded.df) #check resulting dataframe 
+counts.tot.destrand <- meth.destranded.df[, grep(c("siteID|coverage"), colnames(meth.destranded.df))]
+counts.meth.destrand <- meth.destranded.df[, grep(c("siteID|numCs"), colnames(meth.destranded.df))]
+```
+
+Inspect count dataframes  
+
+```{r}
+head(counts.tot.stranded)
+head(counts.meth.stranded)
+head(counts.tot.destrand)
+head(counts.meth.destrand)
+```
+
+Write dataframes to .csv files 
+
+```{r}
+write.csv(counts.tot.stranded, file = "analyses/counts-total-stranded.csv", row.names = FALSE)
+write.csv(counts.meth.stranded, file = "analyses/counts-meth-stranded.csv", row.names = FALSE)
+write.csv(counts.tot.destrand, file = "analyses/counts-total-destrand.csv", row.names = FALSE)
+write.csv(counts.meth.destrand, file = "analyses/counts-meth-destrand.csv", row.names = FALSE)
+```
+
