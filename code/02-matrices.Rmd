@@ -20,10 +20,6 @@ lapply(c("methylKit","reshape2"), require, character.only = TRUE)
 sessionInfo()
 ```
 
-```{r}
-library(methylKit)
-```
-
 Laura Spencer created this notebook to become familiar with the basic methylKit commands, starting from a methylRawList object, which was created in a separate notebook ("01-methylkit.Rmd"). This step takes a long time, so I bypass it here. 
 
 Note: most of the text in this notebook is copied directly from the [methylKit: User Guide v1.10.0
@@ -36,7 +32,7 @@ Methylation percentage calls can be calculated from sorted SAM or BAM file(s) fr
 File download from here: https://d.pr/f/vRtrqZ
 
 ```{r}
-load("../analyses/myobj_18")
+load("analyses/myobj_18")
 ```
 
 Since we read the methylation data now, we can check the basic stats about the methylation data such as coverage and percent methylation. We now have a methylRawList object which contains methylation information per sample. 

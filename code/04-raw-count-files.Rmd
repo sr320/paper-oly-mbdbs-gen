@@ -97,7 +97,7 @@ counts.meth.stranded <- meth.stranded.df[, grep(c("siteID|numCs"), colnames(meth
 
 ```{r}
 meth.destranded.df <- getData(meth.destrand)
-meth.destranded.df$siteID <- with(meth.destranded.df, paste0(chr, start, strand))  #merge id columns into 1
+meth.destranded.df$siteID <- with(meth.destranded.df, paste0(chr, start))  #merge id columns into 1
 ncol(meth.destranded.df) #count total #  columns 
 meth.destranded.df <- subset(meth.destranded.df, select=c(59,1:58)) #move siteID to first  column
 head(meth.destranded.df) #check resulting dataframe 
@@ -114,12 +114,11 @@ head(counts.tot.destrand)
 head(counts.meth.destrand)
 ```
 
-Write dataframes to .csv files 
+Write dataframes to tab delimited .txt files for MACAU. 
 
 ```{r}
-write.csv(counts.tot.stranded, file = "analyses/counts-total-stranded.csv", row.names = FALSE)
-write.csv(counts.meth.stranded, file = "analyses/counts-meth-stranded.csv", row.names = FALSE)
-write.csv(counts.tot.destrand, file = "analyses/counts-total-destrand.csv", row.names = FALSE)
-write.csv(counts.meth.destrand, file = "analyses/counts-meth-destrand.csv", row.names = FALSE)
+write.table(counts.tot.stranded, file = "analyses/counts-total-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.stranded, file = "analyses/counts-meth-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.tot.destrand, file = "analyses/counts-total-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.destrand, file = "analyses/counts-meth-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
-
