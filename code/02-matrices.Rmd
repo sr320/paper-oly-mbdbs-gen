@@ -141,9 +141,3 @@ dist.manhat.5.df <- merge(x=merge(x=dist.manhat.5.df, y=key, by.x="row", by.y="M
 colnames(dist.manhat.5.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
 write.csv(dist.manhat.5.df, file="analyses/dist.manhat.5.csv", row.names=FALSE)
 ```
-
-
-```{r}
-
-```
-

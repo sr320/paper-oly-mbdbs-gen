@@ -122,3 +122,24 @@ write.table(counts.meth.stranded, file = "analyses/counts-meth-stranded.txt", se
 write.table(counts.tot.destrand, file = "analyses/counts-total-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 write.table(counts.meth.destrand, file = "analyses/counts-meth-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
+
+### Prepare other files for MACAU
+
+I need the predictor variable and  relatedness matrix to be in the same order as the count files.  
+Read in size data (predictor variable), and sample ID key. 
+```{r}
+print(size <- read.csv(file = "data/mbd_size.csv", header=T, sep = "\t"))
+print(key <- read.csv("data/sample-key.csv"))
+```
+
+Merge size and sample key, making sure that the size data is ordered from sample #1 to #18. Include a  column of 1's - these are needed for the MACAU covariate file as it's used as the intercept. 
+```{r}
+print(size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")))
+```
+
+Save only the 3 columns I need for MACAU. Don't include rownames or column names. 
+
+```{r}
+write.table(size.macau[c(1,4:5)],  file="data/size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+```
+
