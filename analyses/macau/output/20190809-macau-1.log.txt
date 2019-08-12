@@ -1,0 +1,24 @@
+##
+## MACAU Version = 1.00alpha
+##
+## Command Line Input = /home/shared/macau/macau -g ../counts-meth-destrand.txt -t ../counts-total-destrand.txt -p ../../data/size.macau.txt -n 2 -k ../2bRAD/HSmbdsamples_rab.txt -bmm -o 20190809-macau-1 
+##
+## Date = Sat Aug 10 01:45:58 2019
+##
+## Summary Statistics:
+## number of total individuals = 18
+## number of analyzed individuals = 18
+## number of total genes/sites = 256043
+## number of analyzed genes/sites = 512086
+## number of covariates = 1
+##
+## Computation time:
+## total computation time = 426.902 min 
+## computation time break down: 
+##      time on eigen-decomposition = 10.4832 min 
+##      time on calculating matrix-vector multiplication = 54.1661 min 
+##      time on sampling Z = 29.0359 min 
+##      time on sampling MW = 51.4912 min 
+##      time on sampling Hyperparameters = 268.783 min 
+##      time on sampling BAU = 39.1173 min 
+##
