@@ -137,9 +137,27 @@ Merge size and sample key, making sure that the size data is ordered from sample
 print(size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")))
 ```
 
-Save only the 3 columns I need for MACAU. Don't include rownames or column names. 
+Save 3 text files for MACAU. Don't include rownames or column names.  
+- predictors.size.macau.txt: contains both weight and length measurements so I can use either in MACAU as predictor. 
+- cov.weight.macau.txt: contains column of 1's (intercept) and weights to use as covariate (when length is predictor).  
+- cov.length.macau.txt: contains column of 1's (intercept) and lengths to use as covariate (when weight is predictor).  
 
 ```{r}
-write.table(size.macau[c(1,4:5)],  file="data/size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(4:5)],  file="data/predictors.size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,4)],  file="data/cov.weight.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,5)],  file="data/cov.length.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
 ```
 
+
+Ran MACAU in a Jupyter Notebook. 
+
+Read in dataframe with MACAU assocation results 
+
+```{r}
+macau.length <- read.table(file="analyses/macau/output/20190809-macau-1.assoc.txt", sep = "\t", stringsAsFactors = F)
+head(macau.length)
+colnames(macau.length) <- macau.length[1,]
+macau.length <- macau.length[-1, ] 
+```
+
+Heat map 
