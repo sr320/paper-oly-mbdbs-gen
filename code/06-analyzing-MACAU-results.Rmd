@@ -4,15 +4,20 @@ author: "Laura H Spencer"
 date: "9/6/2019"
 output: html_document
 ---
+## Visualize MACAU results 
+
+Ran MACAU in a Jupyter Notebook. See [05-MACAU.ipynb](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/05-MACAU.ipynb)
+
+In this notebook I assess patterns in methylated loci that MACAU identified as influence by oyster phenotype, aka oyster shell length. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Libraries 
+#### Load libraries 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("vegan", "dplyr", "factoextra", "FactoMineR", "tidyverse", "tibble", "reshape2") #add new libraries here 
+list.of.packages <- c("vegan", "dplyr", "factoextra", "FactoMineR", "tidyverse", "tibble", "reshape2", "gplots") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -23,12 +28,7 @@ lapply(list.of.packages, FUN = function(X) {
 source("../resources/biostats.R")
 ```
 
-
-Ran MACAU in a Jupyter Notebook. See [05-MACAU.ipynb](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/05-MACAU.ipynb)
-
-## Visualize MACAU results 
-
-Read in dataframe with MACAU assocation results 
+#### Read in dataframe with MACAU assocation results 
 
 ```{r}
 macau.20190812 <- read.table(file="../analyses/macau/output/20190812-macau.assoc.txt", sep = "\t", stringsAsFactors = F)
@@ -40,20 +40,20 @@ hist(macau.20190812$pvalue)
 tail(macau.20190812)
 ```
 
-Extract IDs for loci where MACAU indicates DML, where p<0.05 
+#### Extract IDs for loci where MACAU indicates DML, where p<0.05 
 
 ```{r}
 head(macau.20190812.05 <- subset(macau.20190812, pvalue<0.05))
 ```
 
-Read in count data 
+#### Read in count data 
 
 ```{r}
 counts.tot.destrand <- read.table(file = "../analyses/counts-total-destrand.txt", header = T)
 counts.meth.destrand <- read.table(file = "../analyses/counts-meth-destrand.txt", header = T)
 ```
 
-Extract raw count data for loci where p<0.05 in MACAU 
+#### Extract raw count data for loci where p<0.05 in MACAU 
 
 ```{r}
 # merge macau results with total counts 
@@ -63,8 +63,11 @@ head(macau.20190812.tot.counts <- merge(x=macau.20190812.05, y=subset(counts.tot
 head(macau.20190812.met.counts <- merge(x=macau.20190812.05, y=subset(counts.meth.destrand, siteID %in% macau.20190812.05$id), by.x="id", by.y="siteID"))
 
 nrow(macau.20190812.05) - nrow(macau.20190812.met.counts) #3 row diff (due to duplicate contig ID's, weird)
+```
 
-# Filter out only loci with 10x or greater coverage for all samples 
+#### Filter only loci with 10x or greater coverage for all samples 
+
+```{r}
 macau.20190812.tot.counts.10x <- macau.20190812.tot.counts %>% 
   filter_at(vars(starts_with("coverage")), all_vars(. > 9))
 
@@ -82,7 +85,11 @@ macau.20190812.tot.counts.10x <- macau.20190812.tot.counts.10x[!(macau.20190812.
 
 # Confirm meth.10x and tot.10x df are same 
 identical(macau.20190812.tot.counts.10x$id, macau.20190812.met.counts.10x$id) #yes 
+```
 
+#### Create % methylated dataframe from loci 10x coverage and MACAU p-value <0.05
+
+```{r}
 # duplicate macau methylated count dataframe to make % methylated df 
 macau.20190812.perc.meth.10x <- macau.20190812.met.counts.10x
 
@@ -91,7 +98,9 @@ macau.20190812.perc.meth.10x[,15:32] <- macau.20190812.met.counts.10x[,15:32]/ma
 head(macau.20190812.perc.meth.10x[15:32])
 ```
 
-#### Heatmaps using counts 
+### Visualize 
+
+#### Heatmaps using raw counts  
 
 ---> mbd samples #1-9 = Hood Canal population  
 ---> mbd samples #10-18 = South Sound population  
@@ -105,6 +114,29 @@ heatmap(as.matrix(subset(macau.20190812.met.counts.10x, pvalue<0.001)[15:32]), m
 heatmap(as.matrix(subset(macau.20190812.met.counts.10x, pvalue<0.0001)[15:32]), main = "MACAU id'd counts, pvalue <0.0001", xlab = "mbd sample", ylab = "loci")
 ```
 
+#### PCA using raw counts 
+
+```{r}
+# Transpose methylated count df 
+macau.20190812.met.counts.10x.t <- macau.20190812.met.counts.10x[c(1,15:32)] %>% remove_rownames %>% gather(column, value, -id) %>% spread(id, value) %>% column_to_rownames(var="column")
+
+# Conduct PCA with variance-covariance matrix 
+met.count.pca <- prcomp(macau.20190812.met.counts.10x.t, scale=F) #scale=F for variance-covariance matrix
+
+# Assess PCA results 
+summary(met.count.pca)
+pca.eigenval(met.count.pca) #The Proporation of Variance = %variance 
+fviz_screeplot(met.count.pca, addlabels = TRUE) #PC1 is sign., none other are  
+fviz_contrib(met.count.pca, choice = "var", axes = 1, top=50) #check out loci that are high contributors
+```
+
+#### PC plot using PC1 and PC2   
+
+```{r}
+pops <- c("HC", rep("SS", times=9), rep("HC", times=8)) #create pop vector for color-coding 
+fviz_pca_ind(met.count.pca, label="ind", col.ind=pops)+ ggtitle(label="PCA methylated counts, loci id'd by MACAU, PC 1x2")  #(could also use fviz_pca_biplot) 
+```
+
 #### Heatmaps using % methylated 
 
 ```{r}
@@ -116,32 +148,21 @@ heatmap(as.matrix(subset(macau.20190812.perc.meth.10x, pvalue<0.001)[15:32]), ma
 heatmap(as.matrix(subset(macau.20190812.perc.meth.10x, pvalue<0.0001)[15:32]), main = "MACAU id'd % methylated, pvalue <0.0001", xlab = "mbd sample", ylab = "loci")
 ```
 
-#### PCA 
+#### PCA with % methylated df 
 
 ```{r}
 # Transpose methylated count df 
-macau.20190812.met.counts.10x.t <- macau.20190812.met.counts.10x[c(1,15:32)] %>% remove_rownames %>% gather(column, value, -id) %>% spread(id, value) %>% column_to_rownames(var="column")
+macau.20190812.perc.meth.10x.t <- macau.20190812.perc.meth.10x[c(1,15:32)] %>% remove_rownames %>% gather(column, value, -id) %>% spread(id, value) %>% column_to_rownames(var="column")
+
+met.perc.pca <- prcomp(macau.20190812.perc.meth.10x.t, scale=F) #scale=F for variance-covariance matrix
+summary(met.perc.pca)
+pca.eigenval(met.perc.pca) #The Proporation of Variance = %variance 
+fviz_screeplot(met.perc.pca, addlabels = TRUE) #PC 1, 2 & 3 look sign.
+fviz_contrib(met.perc.pca, choice = "var", axes = 1, top=50)
+
+fviz_pca_biplot(met.perc.pca, label="ind", invisible = "var", col.ind=pops, axes = c(1,2), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 1x2")
+
+fviz_pca_biplot(met.perc.pca, label="ind",  invisible = "var",col.ind=pops, axes = c(1,3), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 1x3")
+
+fviz_pca_biplot(met.perc.pca, label="ind", invisible = "var", col.ind=pops, axes = c(2,3), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 2x3")  #dimension 2 = pop separation 
 ```
-
-Conduct PCA 
-
-```{r}
-met.count.pca <- prcomp(macau.20190812.met.counts.10x.t, scale=F) #scale=F for variance-covariance matrix
-summary(met.count.pca)
-pca.eigenval(met.count.pca) #The Proporation of Variance = %variance 
-```
-
-Assess PC axes and contigs 
-
-```{r}
-fviz_screeplot(met.count.pca, addlabels = TRUE) #PC1 
-fviz_contrib(met.count.pca, choice = "var", axes = 1, top=50)
-```
-
-#### PC Plot  
-
-```{r}
-pops <- c("HC", rep("SS", times=9), rep("HC", times=8))
-fviz_pca_ind(met.count.pca, label="ind", col.ind=pops)
-```
-
