@@ -9,6 +9,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+#### Load libraries 
+
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("methylKit") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
 ## Generate count files for analysis in MACAU 
 
 MACAU is a software program that assess the influence of a variable (or covariates) on differential methylation while controlling for relatedness. In our case, we will look at the influence of oyster length & wet weight on DML, while considering relatedness in the  Hood Canal and South Sound Olympia oyster populations. Inputs required for MACAU include: 
@@ -23,7 +37,7 @@ In  this notebook I will generate #1 and  #2 - the count files - from a methylKi
 First, load object that Steven created in 01-methylkit.Rmd 
 
 ```{r}
-load("analyses/myobj_18")
+load("../analyses/myobj_18")
 ```
 
 "The following function will merge all samples to one object for base-pair locations that are covered in all samples. Setting destrand=TRUE (the default is FALSE) will merge reads on both strands of a CpG dinucleotide. This provides better coverage, but only advised when looking at CpG methylation (for CpH methylation this will cause wrong results in subsequent analyses). In addition, setting destrand=TRUE will only work when operating on base-pair resolution, otherwise setting this option TRUE will have no effect. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples."
@@ -117,19 +131,27 @@ head(counts.meth.destrand)
 Write dataframes to tab delimited .txt files for MACAU. 
 
 ```{r}
-write.table(counts.tot.stranded, file = "analyses/counts-total-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
-write.table(counts.meth.stranded, file = "analyses/counts-meth-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
-write.table(counts.tot.destrand, file = "analyses/counts-total-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
-write.table(counts.meth.destrand, file = "analyses/counts-meth-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.tot.stranded, file = "../analyses/counts-total-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.stranded, file = "../analyses/counts-meth-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.tot.destrand, file = "../analyses/counts-total-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.destrand, file = "../analyses/counts-meth-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
+
+Write out dataframe with merged  ID, contig #, start #, and strand info for later use 
+
+```{r}
+write.table(meth.destranded.df, file = "../analyses/meth.destranded.df.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(meth.stranded.df, file = "../analyses/meth.stranded.df.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+```
+
 
 ### Prepare other files for MACAU
 
 I need the predictor variable and  relatedness matrix to be in the same order as the count files.  
 Read in size data (predictor variable), and sample ID key. 
 ```{r}
-print(size <- read.csv(file = "data/mbd_size.csv", header=T, sep = "\t"))
-print(key <- read.csv("data/sample-key.csv"))
+print(size <- read.csv(file = "../data/mbd_size.csv", header=T, sep = "\t"))
+print(key <- read.csv("../data/sample-key.csv"))
 ```
 
 Merge size and sample key, making sure that the size data is ordered from sample #1 to #18. Include a  column of 1's - these are needed for the MACAU covariate file as it's used as the intercept. 
@@ -143,9 +165,9 @@ Save 3 text files for MACAU. Don't include rownames or column names.
 - cov.length.macau.txt: contains column of 1's (intercept) and lengths to use as covariate (when weight is predictor).  
 
 ```{r}
-write.table(size.macau[c(4:5)],  file="data/predictors.size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
-write.table(size.macau[c(1,4)],  file="data/cov.weight.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
-write.table(size.macau[c(1,5)],  file="data/cov.length.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(4:5)],  file="../data/predictors.size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,4)],  file="../data/cov.weight.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,5)],  file="../data/cov.length.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
 ```
 
 
