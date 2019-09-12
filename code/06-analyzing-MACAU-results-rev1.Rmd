@@ -131,11 +131,27 @@ par(cex.main=.8)
 heatmap.2(as.matrix(macau.sign.perc.meth.5x[22:39]), main = "MACAU id'd % methylated\ngray=<5x cov", xlab = "mbd sample", ylab = "loci", na.color = "gray70", hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="gowers"), trace="none", dendrogram = "column" )
 ```
 
+#### Prepare size data to plot in same order as this heat map 
+This is laborious code with some room for error - needs fixing  
+
+```{r}
+size <- read.csv(file = "../data/mbd_size.csv", header=T, sep = "\t")
+key <- read.csv("../data/sample-key.csv")
+size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE"))
+size.macau$pop <- as.factor(c(rep("HC", times=9), rep("SS",  times=9)))
+size.macau$heat.order <- c(2,7,9,6,8,3,1,11,4,15,13,12,17,10,16,5,18,14)
+mycols <- c("indianred", "darkcyan")
+size.macau <- size.macau[order(size.macau$heat.order),]
+```
+
 #### Heatmaps of % methylation showing only loci with coverage <5x 
  
 ```{r}
 par(cex.main=.8)
+
 heatmap.2(as.matrix(macau.sign.perc.meth.5x[complete.cases(macau.sign.perc.meth.5x[22:39]), 22:39]), main = "MACAU id'd % methylation\nFDR=10%, loci cov=5x", xlab = "mbd sample", ylab = "loci", hclustfun = function(x) hclust(x, method="ward.D"), trace="none")
+
+barplot(height = size.macau$y.Length,  names.arg = size.macau$y.MBD.FILENAME, col = mycols[size.macau$pop], cex.names =  0.8)
 ```
 
 #### PCA with % methylated df, only with loci w/ 5x coverage across all samples 
