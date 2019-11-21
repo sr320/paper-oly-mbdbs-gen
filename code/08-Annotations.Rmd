@@ -1,0 +1,91 @@
+---
+title: "Locations of DMLs and MACAU loci"
+author: "Laura H Spencer"
+date: "11/20/2019"
+output: html_document
+---
+
+### Load libraries 
+
+```{r setup, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("tidyverse") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+sessionInfo()
+```
+
+### Where are differentially methylated loci located? 
+
+```{r}
+DML <- read_delim(here::here("analyses","20191120-DML-annotated.txt"), delim = '\t', 
+                        col_names = c("contig.dml", "start.dml", "end.dml", "score.dml", "unknown", "contig.feat", "source", "feature", "start.feat", "end.feat", "score.feat", "strand", "frame", "attribute")) %>% as_tibble() %>% 
+  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
+         Parent=str_extract(attribute, "Parent=(.*?);"),
+         Name=str_extract(attribute, "Name=(.*?);"),
+         Alias=str_extract(attribute, "Alias=(.*?);"),
+         AED=str_extract(attribute, "AED=(.*?);"),
+         eAED=str_extract(attribute, "eAED=(.*?);"),
+         Note=str_extract(attribute, "Note=(.*?);"),
+         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+         Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
+         ) %>%
+  mutate_at("feature", as.factor)
+
+par(mar=c(2,4,4,2))
+barplot(table(DML$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
+        main="Locations of DMLs between Hood Canal and South Sound Olys\n(10x cov. in any smpl)", 
+        ylab="No. of loci", cex.main=1, cex.axis = .8)
+```
+
+### Where are loci located where methylation is associated with oyster shell length? 
+
+#### Loci with 10x coverage across all samples 
+
+```{r}
+macau.all <- read_delim(here::here("analyses","macau","20191120-MACAU-10xall-features.txt"), delim = '\t', 
+                        col_names = c("contig.locus", "start.locus", "end.locus", "unknown.column", "contig.feat", "source", "feature", "start.feat", "end.feat", "score", "strand", "frame", "attribute")) %>% as_tibble() %>%
+  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
+         Parent=str_extract(attribute, "Parent=(.*?);"),
+         Name=str_extract(attribute, "Name=(.*?);"),
+         Alias=str_extract(attribute, "Alias=(.*?);"),
+         AED=str_extract(attribute, "AED=(.*?);"),
+         eAED=str_extract(attribute, "eAED=(.*?);"),
+         Note=str_extract(attribute, "Note=(.*?);"),
+         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+         Dbxref=str_extract(attribute, "Dbxref=(.*?);")) %>%
+  mutate_at("feature", as.factor)
+par(mar=c(2,2,4,2))
+barplot(table(macau.all$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
+        main="Locations of MACAU-identified loci (10x cov. in all smpl)", 
+        ylab="No. of loci", cex.main=1, cex.axis = 1)
+```
+
+### Where are loci located where methylation is associated with oyster shell length? 
+
+#### Loci with 10x coverage across any sample 
+
+```{r}
+macau.any <- read_delim(here::here("analyses","macau","20191120-MACAU-10xany-features.txt"), delim = '\t', 
+                        col_names = c("contig.locus", "start.locus", "end.locus", "unknown.column", "contig.feat", "source", "feature", "start.feat", "end.feat", "score", "strand", "frame", "attribute")) %>% as_tibble() %>%
+  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
+         Parent=str_extract(attribute, "Parent=(.*?);"),
+         Name=str_extract(attribute, "Name=(.*?);"),
+         Alias=str_extract(attribute, "Alias=(.*?);"),
+         AED=str_extract(attribute, "AED=(.*?);"),
+         eAED=str_extract(attribute, "eAED=(.*?);"),
+         Note=str_extract(attribute, "Note=(.*?);"),
+         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+         Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
+         ) %>%
+  mutate_at("feature", as.factor)
+par(mar=c(2,2,4,2))
+barplot(table(macau.any$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
+        main="Locations of MACAU-identified loci (10x cov. in any smpl)", 
+        ylab="No. of loci", cex.main=1, cex.axis = 1)
+```
+

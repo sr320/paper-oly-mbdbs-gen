@@ -181,13 +181,15 @@ size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", 
   arrange(y.Length)
 mycols <- c("indianred", "darkcyan")
 
-#pdf(file = here::here("..", "analyses","test-heatmap.pdf"))
+#pdf(file = here::here("..", "analyses","macau-heatmap.pdf"))
 par(cex.main=.8)
 heatmap.2(as.matrix(macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[size.macau$sample]), size.macau$sample]), 
           main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by Length", xlab = "mbd sample", ylab = "loci", 
           trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
           col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
-barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8)
+par(oma=c(0,8,0,0))
+barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
+        main = "Shell Length (mm)", las=2)
 #dev.off()
 ```
 
@@ -196,12 +198,12 @@ barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = myco
 
 ```{r}
 macau.sign.perc.meth.10x %>%
-  dplyr::select(c("id", "start", "end", "strand")) %>%
-write_delim(here::here("analyses","macau-any10x.bed"),  delim = '\t', col_names = FALSE)
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau","macau-any10x.bed"),  delim = '\t', col_names = FALSE)
 
 macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[22:39]), ] %>%
-  dplyr::select(c("id", "start", "end", "strand")) %>%
-write_delim(here::here("analyses","macau-all10x.bed"),  delim = '\t', col_names = FALSE)
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all10x.bed"),  delim = '\t', col_names = FALSE)
 ```
 
 

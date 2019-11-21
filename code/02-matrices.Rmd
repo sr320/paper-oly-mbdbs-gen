@@ -1,7 +1,6 @@
 ---
 title: "02-matrices"
 output:
-  pdf_document: default
   html_document: default
 ---
 
@@ -16,7 +15,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("methylKit")
 
 # require needed packages 
-lapply(c("methylKit","reshape2"), require, character.only = TRUE)
+lapply(c("methylKit","reshape2, here"), require, character.only = TRUE)
 sessionInfo()
 ```
 
@@ -32,7 +31,7 @@ Methylation percentage calls can be calculated from sorted SAM or BAM file(s) fr
 File download from here: https://d.pr/f/vRtrqZ
 
 ```{r}
-load("analyses/myobj_18")
+load(here::here("analyses","myobj_18"))
 ```
 
 Since we read the methylation data now, we can check the basic stats about the methylation data such as coverage and percent methylation. We now have a methylRawList object which contains methylation information per sample. 
@@ -122,22 +121,22 @@ FYI I checked that the correlation matrix in `getCorrelation` is derived from th
 ```{r}
 cor.pears.10 <- cor(perc.meth10, method="pearson") # create pearson correlation matrix. 
 dist.manhat.10 <- dist(t(perc.meth10), method = "manhattan", diag = T, upper = F)
-dist.manhat.10.df <- melt(as.matrix(dist.manhat.10), varnames = c("row", "col"))
+dist.manhat.10.df <- reshape2::melt(as.matrix(dist.manhat.10), varnames = c("row", "col"))
 
 cor.pears.5 <- cor(perc.meth5, method="pearson") # create pearson correlation matrix. 
 dist.manhat.5 <- dist(t(perc.meth5), method = "manhattan", diag = T, upper = F) #must transform % matrix (samples are rows) for the dist() function
-dist.manhat.5.df <- melt(as.matrix(dist.manhat.5), varnames = c("row", "col"))
+dist.manhat.5.df <- reshape2::melt(as.matrix(dist.manhat.5), varnames = c("row", "col"))
 ```
 
 ### Read in sample number key, merge with distance matrix dataframes
 
 ```{r}
-key <- read.csv("data/sample-key.csv")
+key <- read.csv(here::here("data", "sample-key.csv"))
 dist.manhat.10.df <- merge(x=merge(x=dist.manhat.10.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.10.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.10.df, file="analyses/dist.manhat.10.csv", row.names=FALSE) 
+write.csv(dist.manhat.10.df, file=here::here("analyses", "dist.manhat.10.csv"), row.names=FALSE) 
 
 dist.manhat.5.df <- merge(x=merge(x=dist.manhat.5.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.5.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.5.df, file="analyses/dist.manhat.5.csv", row.names=FALSE)
+write.csv(dist.manhat.5.df, file=here::here("analyses","dist.manhat.5.csv"), row.names=FALSE)
 ```
