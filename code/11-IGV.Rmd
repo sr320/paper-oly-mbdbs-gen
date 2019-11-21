@@ -11,9 +11,9 @@ output: html_document
 ```
 
 URL for Genome:
-http://gannet.fish.washington.edu/seashell/snaps/Olurida_v081.fa
+`http://gannet.fish.washington.edu/seashell/snaps/Olurida_v081.fa`
 
-https://files.osf.io/v1/resources/4mpd6/providers/osfstorage/5dd6fec51d56d2000ee2e9a9?action=download&version=1&direct
+`https://files.osf.io/v1/resources/4mpd6/providers/osfstorage/5dd6fec51d56d2000ee2e9a9?action=download&version=1&direct`
 
 ```{r}
 genome <- read_file("http://gannet.fish.washington.edu/seashell/snaps/Olurida_v081.fa")
@@ -42,6 +42,11 @@ gene <- read_delim("../genome-features/Olurida_v081.gene.gff")
 
 
 https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081.gene.gff
+
+
+```{bash}
+head ../genome-features/Olurida_v081.gene.gff
+```
 
 
 
