@@ -1,0 +1,1 @@
+Contig44051	605	605	Contig44051	RepeatMasker	similarity	219	643	30.5	+	.	Target "Motif:Gypsy-75_CGi-I" 5167 5594

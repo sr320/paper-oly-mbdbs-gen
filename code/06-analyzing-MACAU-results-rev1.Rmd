@@ -37,6 +37,14 @@ macau.20190812 <- macau.20190812[-1, ]
 macau.20190812$pvalue <- as.numeric(macau.20190812$pvalue)
 hist(macau.20190812$pvalue)
 tail(macau.20190812)
+
+# Read dataframes in if needed (object created in noteboook 04)
+# meth.destranded.df <- read_delim(here::here("analyses", "meth.destranded.df.txt"), delim = "\t")
+summary(macau.20190812$id == meth.destranded.df$siteID) #confirm that macau results and original destranded dataframe are in same order 
+
+# bind macau results with df that has contig id and loci information 
+macau.20190812.c <- cbind(meth.destranded.df[,1:4],macau.20190812) 
+write.table(macau.20190812.c, file = here::here("analyses", "macau", "macau.20190812.c.tab"), sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
 
 ### Correct for multiple comparisons 
@@ -166,6 +174,18 @@ heatmap.2(as.matrix(macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth
           col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
 ```
 
+### Heatmap of % methylated, tree order, only loci with 10x coverage across 75% of samples 
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+```{r}
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,tree.order]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by MethylKit tree", 
+          xlab = "mbd sample", ylab = "loci", trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+
+```
+
 ### Heatmap of % methylated, size order, only loci with 10x coverage across all samples 
 No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
 
@@ -183,8 +203,8 @@ mycols <- c("indianred", "darkcyan")
 
 #pdf(file = here::here("..", "analyses","macau-heatmap.pdf"))
 par(cex.main=.8)
-heatmap.2(as.matrix(macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[size.macau$sample]), size.macau$sample]), 
-          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by Length", xlab = "mbd sample", ylab = "loci", 
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,size.macau$sample]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x (75% of samples)\nOrdered by Length", xlab = "mbd sample", ylab = "loci", 
           trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
           col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
 par(oma=c(0,8,0,0))
@@ -204,11 +224,20 @@ write_delim(here::here("analyses","macau","macau-any10x.bed"),  delim = '\t', co
 macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[22:39]), ] %>%
   dplyr::select(c("chr", "start", "end")) %>%
 write_delim(here::here("analyses","macau", "macau-all10x.bed"),  delim = '\t', col_names = FALSE)
+
+macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,] %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-10x75perc.bed"),  delim = '\t', col_names = FALSE)
+
+# All loci fed into/from macau 
+macau.20190812.c %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all-loci.bed"),  delim = '\t', col_names = FALSE)
 ```
 
 
 
-### BONEYARD 
+# BONEYARD 
 
 #### PCA with % methylated df, only with loci w/ 10x coverage across all samples 
 

@@ -1,0 +1,1 @@
+Contig35176	27110	27112	39	Contig35176	maker	three_prime_UTR	26409	27844	.	+	.	ID=Olurida_00002180-RA:three_prime_utr;Parent=Olurida_00002180-RA;

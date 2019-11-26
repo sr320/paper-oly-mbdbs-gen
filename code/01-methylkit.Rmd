@@ -25,7 +25,6 @@ pwd
 ```
 
 
-
 ```{r}
 file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
 '../data/zr1394_2_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
@@ -43,13 +42,9 @@ file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted
 ```
 
 
-
-
-
 ```{r}
 library(methylKit)
 ```
-
 
 
 ```{r, eval = FALSE}
@@ -73,10 +68,6 @@ Also available at https://d.pr/f/vRtrqZ
 ```{r}
 #load("analyses/myobj_52")
 ```
-
-
-
-
 
 ```{r}
 getMethylationStats(myobj_18[[2]],plot=FALSE,both.strands=FALSE)

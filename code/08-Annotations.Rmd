@@ -8,7 +8,7 @@ output: html_document
 ### Load libraries 
 
 ```{r setup, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -19,73 +19,184 @@ lapply(list.of.packages, FUN = function(X) {
 sessionInfo()
 ```
 
+## 1. DMLs 
+
 ### Where are differentially methylated loci located? 
 
-```{r}
-DML <- read_delim(here::here("analyses","20191120-DML-annotated.txt"), delim = '\t', 
-                        col_names = c("contig.dml", "start.dml", "end.dml", "score.dml", "unknown", "contig.feat", "source", "feature", "start.feat", "end.feat", "score.feat", "strand", "frame", "attribute")) %>% as_tibble() %>% 
-  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
-         Parent=str_extract(attribute, "Parent=(.*?);"),
-         Name=str_extract(attribute, "Name=(.*?);"),
-         Alias=str_extract(attribute, "Alias=(.*?);"),
-         AED=str_extract(attribute, "AED=(.*?);"),
-         eAED=str_extract(attribute, "eAED=(.*?);"),
-         Note=str_extract(attribute, "Note=(.*?);"),
-         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
-         Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
-         ) %>%
-  mutate_at("feature", as.factor)
+```{r, message=FALSE, warning=FALSE}
+DMLfiles <- c("DML-CDS.txt", "DML-exon.txt", "DML-intron.txt", "DML-gene.txt", "DML-UTR3.txt", "DML-mRNA.txt", "DML-TE.txt", "DML-intragenic.txt")
+DML.features <- list()
+for (i in c(1:8)) {
+  DML.features[[i]] <- read_delim(here::here("analyses", "BEDtools", DMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+DML.features[[3]] <- merge(x=DML.features[[3]][1:4], by="X1" , y=DML.features[[6]][c(1,5:13)])
+for (i in 1:7) {
+  DML.features[[i]] <- DML.features[[i]] %>%
+    setNames(c("contig.dml","start.dml","end.dml","score.dml","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);")
+       ) %>%
+mutate_at("feature", as.factor)
+}
+names(DML.features) <- c("DML.CDS", "DML.exon", "DML.intron", "DML.gene", "DML.UTR3", "DML.mRNA", "DML.TE", "DML.intragenic")
+DML.features[["DML.intragenic"]] <- 
+  DML.features[["DML.intragenic"]] %>% 
+  setNames(c("contig.DML", "start.dml", "end.dml", "score.dml"))
 
-par(mar=c(2,4,4,2))
-barplot(table(DML$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
-        main="Locations of DMLs between Hood Canal and South Sound Olys\n(10x cov. in any smpl)", 
-        ylab="No. of loci", cex.main=1, cex.axis = .8)
+DML.features[[1]] <- DML.features[[1]] %>% mutate_at("unknown2", as.character)
+DML.features[[7]] <- DML.features[[7]] %>% mutate_at("unknown1", as.character)
+DML.features.df <- bind_rows(DML.features[-8])
+print(DML.summary <- table(DML.features.df[c("feature")]))
 ```
 
-### Where are loci located where methylation is associated with oyster shell length? 
+## 2. MACAU loci
 
-#### Loci with 10x coverage across all samples 
+### Where are differentially methylated loci located? 
 
-```{r}
-macau.all <- read_delim(here::here("analyses","macau","20191120-MACAU-10xall-features.txt"), delim = '\t', 
-                        col_names = c("contig.locus", "start.locus", "end.locus", "unknown.column", "contig.feat", "source", "feature", "start.feat", "end.feat", "score", "strand", "frame", "attribute")) %>% as_tibble() %>%
-  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
-         Parent=str_extract(attribute, "Parent=(.*?);"),
-         Name=str_extract(attribute, "Name=(.*?);"),
-         Alias=str_extract(attribute, "Alias=(.*?);"),
-         AED=str_extract(attribute, "AED=(.*?);"),
-         eAED=str_extract(attribute, "eAED=(.*?);"),
-         Note=str_extract(attribute, "Note=(.*?);"),
-         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
-         Dbxref=str_extract(attribute, "Dbxref=(.*?);")) %>%
-  mutate_at("feature", as.factor)
-par(mar=c(2,2,4,2))
-barplot(table(macau.all$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
-        main="Locations of MACAU-identified loci (10x cov. in all smpl)", 
-        ylab="No. of loci", cex.main=1, cex.axis = 1)
+```{r, message=FALSE, warning=FALSE}
+macau75files <- c("macau75-CDS.txt", "macau75-exon.txt", "macau75-intron.txt", "macau75-gene.txt", "macau75-UTR3.txt", "macau75-mRNA.txt", "macau75-TE.txt", "macau75-intragenic.txt")
+macau75.features <- list()
+for (i in c(1:8)) {
+  macau75.features[[i]] <- read_delim(here::here("analyses", "BEDtools", macau75files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+macau75.features[[3]] <- merge(x=macau75.features[[3]][1:4], by="X1" , y=macau75.features[[6]][c(1,5:12)])
+for (i in 1:7) {
+  macau75.features[[i]] <- macau75.features[[i]] %>%
+    setNames(c("contig.macau75","start.macau75","end.macau75","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);")
+       ) %>%
+mutate_at("feature", as.factor)
+}
+names(macau75.features) <- c("macau75.CDS", "macau75.exon", "macau75.intron", "macau75.gene", "macau75.UTR3", "macau75.mRNA", "macau75.TE", "macau75.intragenic")
+macau75.features[["macau75.intragenic"]] <- 
+  macau75.features[["macau75.intragenic"]] %>% 
+  setNames(c("contig.macau75", "start.macau75", "end.macau75"))
+
+macau75.features[[1]] <- macau75.features[[1]] %>% mutate_at("unknown2", as.character)
+macau75.features[[7]] <- macau75.features[[7]] %>% mutate_at("unknown1", as.character)
+macau75.features.df <- bind_rows(macau75.features[-8])
+print(macau75.summary <- table(macau75.features.df[c("feature")]))
 ```
 
-### Where are loci located where methylation is associated with oyster shell length? 
+## 3. All loci 
 
-#### Loci with 10x coverage across any sample 
+### Where are all methylated loci located? 
+
+```{r, message=FALSE, warning=FALSE}
+allLocifiles <- c("AllLoci-CDS.txt", "AllLoci-exon.txt", "AllLoci-intron.txt", "AllLoci-gene.txt", "AllLoci-UTR3.txt", "AllLoci-UTR5.txt", "AllLoci-mRNA.txt", "AllLoci-TE.txt", "AllLoci-intragenic.txt")
+allLoci.features <- list()
+for (i in c(1:9)) {
+  allLoci.features[[i]] <- read_delim(here::here("analyses","BEDtools", allLocifiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+allLoci.features[[3]] <- full_join(allLoci.features[[3]][1:4], allLoci.features[[7]][c(1,2,5:12)], by = c("X1", "X2"))
+for (i in 1:8) {
+  allLoci.features[[i]] <- allLoci.features[[i]] %>%
+    setNames(c("contig.allLoci","start.allLoci","end.allLoci", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);")
+       ) %>%
+mutate_at("feature", as.factor)
+}
+names(allLoci.features) <- c("allLoci.CDS","allLoci.exon","allLoci.intron","allLoci.gene","allLoci.UTR3","allLoci.UTR5","allLoci.mRNA","allLoci.TE","allLoci.intragenic")
+allLoci.features[["allLoci.intragenic"]] <- 
+  allLoci.features[["allLoci.intragenic"]] %>% 
+  setNames(c("contig.allLoci", "start.allLoci", "end.allLoci"))
+allLoci.features[[1]] <- allLoci.features[[1]] %>% mutate_at("unknown2", as.character)
+allLoci.features.df <- bind_rows(allLoci.features[-9])
+print(allLoci.summary <- table(allLoci.features.df[c("feature")]))
+```
+
+
+## Summary 
+
+```{r, message=FALSE, warning=FALSE}
+summary <- merge(x=merge(x=melt(DML.summary, varnames = "feature", value.name = "DML"), 
+      y=melt(macau75.summary, varnames = "feature", value.name = "macau75"),
+      by="feature", all=TRUE), 
+      y=melt(allLoci.summary, varnames = "feature", value.name = "allLoci"),
+      by="feature", all=TRUE)
+summaryL <- melt(summary, variable.name = "analysis", value.name = "count")
+summaryL$feature <- as.factor(str_replace(summaryL$feature, "similarity", "TE"))
+summaryL <- summaryL %>% 
+  na.omit() %>%
+  group_by(analysis) %>%
+  mutate(percent=100*(count/sum(count)))
+
+ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=log(count), fill=analysis)) +
+  geom_bar(stat="identity") + 
+  scale_fill_brewer(palette="Paired") + ggtitle("Macau loci and all methylated loci, Log-counts") +
+  theme_minimal()
+
+ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=log(count), fill=analysis)) +
+  geom_bar(stat="identity") +
+  scale_fill_brewer(palette="Paired") + ggtitle("DMLs and all methylated loci, Log-counts") +
+  theme_minimal()
+
+ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=percent, fill=analysis)) +
+  geom_bar(stat="identity", position=position_dodge()) + 
+  scale_fill_brewer(palette="Paired") + ggtitle("% of MACAU loci, and all loci, in each feature") +
+  geom_text(aes(label=paste(round(percent), "%", sep="")), vjust=-0.5, color="gray30",
+            position = position_dodge(0.9), size=3)+
+  theme_minimal()
+
+ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=percent, fill=analysis)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_fill_brewer(palette="Paired") + ggtitle("% of DML loci, and all loci, in each feature") +
+  geom_text(aes(label=paste(round(percent), "%", sep="")), vjust=-0.5, color="gray30",
+            position = position_dodge(0.9), size=3) +
+  theme_minimal()
+```
+
+## Extract GO terms 
 
 ```{r}
-macau.any <- read_delim(here::here("analyses","macau","20191120-MACAU-10xany-features.txt"), delim = '\t', 
-                        col_names = c("contig.locus", "start.locus", "end.locus", "unknown.column", "contig.feat", "source", "feature", "start.feat", "end.feat", "score", "strand", "frame", "attribute")) %>% as_tibble() %>%
-  mutate(ID=str_extract(attribute, "ID=(.*?);"), 
-         Parent=str_extract(attribute, "Parent=(.*?);"),
-         Name=str_extract(attribute, "Name=(.*?);"),
-         Alias=str_extract(attribute, "Alias=(.*?);"),
-         AED=str_extract(attribute, "AED=(.*?);"),
-         eAED=str_extract(attribute, "eAED=(.*?);"),
-         Note=str_extract(attribute, "Note=(.*?);"),
-         Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
-         Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
-         ) %>%
-  mutate_at("feature", as.factor)
-par(mar=c(2,2,4,2))
-barplot(table(macau.any$feature)[c("CDS", "exon", "gene", "mRNA", "3'UTR")], 
-        main="Locations of MACAU-identified loci (10x cov. in any smpl)", 
-        ylab="No. of loci", cex.main=1, cex.axis = 1)
+macau75.GO <- macau75.features.df[c("contig.macau75", "start.macau75", "end.macau75", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
+  distinct(contig.macau75, start.macau75, Note, Ontology_term, .keep_all = TRUE) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
+  separate(Ontology_term, sep=",", into=paste("GO", 1:6, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
+  select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term))
+write(macau75.GO$GO_term, file = here::here("analyses/", "macau/", "macau75.GO.txt"))
+
+DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
+  distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
+  separate(Ontology_term, sep=",", into=paste("GO", 1:6, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
+  select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term)) 
+write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
+
+allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
+  distinct(contig.allLoci, start.allLoci, Note, Ontology_term, .keep_all = TRUE) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
+  separate(Ontology_term, sep=",", into=paste("GO", 1:6, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
+  select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term)) 
+write(allLoci.GO$GO_term, file = here::here("analyses/", "allLoci.GO.txt"))
 ```
 

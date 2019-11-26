@@ -1,0 +1,3 @@
+Contig102998	2220	2222	26	Contig102998	RepeatMasker	similarity	2149	2517	34.4	+	.	Target "Motif:Gypsy-59_CGi-I" 3294 3662
+Contig1297	49910	49912	25	Contig1297	RepeatMasker	similarity	49866	50028	24.8	-	.	Target "Motif:Helitron-N4_CGi" 232 471
+Contig5136	1245	1247	31	Contig5136	RepeatMasker	similarity	838	1329	32.4	+	.	Target "Motif:Gypsy-20_CGi-I" 679 1166
