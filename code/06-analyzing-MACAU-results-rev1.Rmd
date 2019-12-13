@@ -31,15 +31,13 @@ lapply(list.of.packages, FUN = function(X) {
 
 ```{r}
 macau.20190812 <- read.table(file=here::here("analyses","macau","output","20190812-macau.assoc.txt"), sep = "\t", stringsAsFactors = F)
-head(macau.20190812)
 colnames(macau.20190812) <- macau.20190812[1,]
 macau.20190812 <- macau.20190812[-1, ] 
 macau.20190812$pvalue <- as.numeric(macau.20190812$pvalue)
 hist(macau.20190812$pvalue)
-tail(macau.20190812)
 
 # Read dataframes in if needed (object created in noteboook 04)
-# meth.destranded.df <- read_delim(here::here("analyses", "meth.destranded.df.txt"), delim = "\t")
+meth.destranded.df <- read_delim(here::here("analyses", "meth.destranded.df.txt"), delim = "\t")
 summary(macau.20190812$id == meth.destranded.df$siteID) #confirm that macau results and original destranded dataframe are in same order 
 
 # bind macau results with df that has contig id and loci information 
@@ -133,22 +131,17 @@ Sample ordered from cluster analysis, where dendogram is constructed from Gower'
 ---> mbd samples #1-9 = Hood Canal population  
 ---> mbd samples #10-18 = South Sound population  
 
-```{r}
-par(cex.main=.8)
-heatmap.2(as.matrix(macau.sign.perc.meth.10x[22:39]), main = "MACAU id'd % methylated\ngray=<10x cov\nOrdered by cluster analysis", 
-          xlab = "mbd sample", ylab = "loci", na.color = "white", col = colorRampPalette(c('#08519c','#bdd7e7'))(30),
-          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="gowers"), trace="none", dendrogram = "column" )
-```
+### Heatmap of % methylated, cluster analysis order. 
 
-### Heatmap of % methylated, cluster analysis order, only loci with 10x coverage across all samples 
-Sample ordered from cluster analysis, where dendogram is constructed from correlation matrix, and Ward cluster method. 
+- Only loci with 10x coverage in color, less than 10x coverage in white.  
+- Sample ordered from cluster analysis, where dendogram is constructed from correlation matrix, and Ward cluster method.  
 
 ```{r}
 par(cex.main=.8)
 heatmap.2(as.matrix(macau.sign.perc.meth.10x[22:39]), 
           main = "MACAU id'd % methylated\n10x cov\nOrdered by cluster analysis", 
           xlab = "mbd sample", ylab = "loci",  
-          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column",
+          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column", na.color = "white",
           col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
 ```
 
@@ -160,17 +153,6 @@ tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep
 par(cex.main=.8)
 heatmap.2(as.matrix(macau.sign.perc.meth.10x[tree.order]), main = "MACAU id'd % methylated\ngray=<10x cov\nOrdered by MethylKit tree", 
           xlab = "mbd sample", ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
-          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
-```
-
-### Heatmap of % methylated, tree order, only loci with 10x coverage across all samples 
-No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
-
-```{r}
-par(cex.main=.8)
-heatmap.2(as.matrix(macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[tree.order]), tree.order]), 
-          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by MethylKit tree", 
-          xlab = "mbd sample", ylab = "loci", trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
           col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
 ```
 
@@ -234,6 +216,10 @@ macau.20190812.c %>%
   dplyr::select(c("chr", "start", "end")) %>%
 write_delim(here::here("analyses","macau", "macau-all-loci.bed"),  delim = '\t', col_names = FALSE)
 ```
+
+
+
+
 
 
 
