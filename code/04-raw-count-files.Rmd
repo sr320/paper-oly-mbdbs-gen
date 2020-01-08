@@ -128,6 +128,19 @@ head(counts.tot.destrand)
 head(counts.meth.destrand)
 ```
 
+#   START HERE 
+
+Filter count dataframes for 
+
+```{r}
+counts.tot.destrand.10x <- counts.tot.destrand %>% 
+  mutate_at(vars(contains('coverage')), funs(ifelse(. < 10, NA, .)))
+require(dplyr)
+counts.tot.destrand[!rowSums(is.na(counts.tot.destrand)) > 0.25*18,]
+```
+
+
+
 Write dataframes to tab delimited .txt files for MACAU. 
 
 ```{r}
