@@ -1,0 +1,24 @@
+##
+## MACAU Version = 1.00alpha
+##
+## Command Line Input = /home/shared/macau/macau -g ../counts.meth.destrand.10x75.txt -t ../counts.tot.destrand.10x75.txt -p ../../data/predictors.size.macau.txt -n 2 -c ../../data/cov.weight.macau.txt -k ../2bRAD/HSmbdsamples_rab.txt -bmm -o 20200107-macau-10x75 
+##
+## Date = Tue Jan  7 20:23:09 2020
+##
+## Summary Statistics:
+## number of total individuals = 18
+## number of analyzed individuals = 18
+## number of total genes/sites = 108490
+## number of analyzed genes/sites = 216980
+## number of covariates = 2
+##
+## Computation time:
+## total computation time = 111.894 min 
+## computation time break down: 
+##      time on eigen-decomposition = 3.06133 min 
+##      time on calculating matrix-vector multiplication = 8.94217 min 
+##      time on sampling Z = 7.95017 min 
+##      time on sampling MW = 10.5178 min 
+##      time on sampling Hyperparameters = 76.7837 min 
+##      time on sampling BAU = 9.25783 min 
+##
