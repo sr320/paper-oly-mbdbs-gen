@@ -1,1 +1,0 @@
-Contig26007	49118	49118	Contig26007	maker	three_prime_UTR	48184	50278	.	+	.	ID=Olurida_00000422-RA:three_prime_utr;Parent=Olurida_00000422-RA;

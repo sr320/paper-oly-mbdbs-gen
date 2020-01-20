@@ -6,3 +6,4 @@ resources/
 .DS_Store
 *.DS_Store
 data/uniprot-SP-GO-sorted.tab
+analyses/BEDtools/AllLoci-ASV.txt
