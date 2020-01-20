@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #### Load libraries 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("methylKit") #add new libraries here 
+list.of.packages <- c("methylKit", "tidyverse") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -43,8 +43,8 @@ load("../analyses/myobj_18")
 "The following function will merge all samples to one object for base-pair locations that are covered in all samples. Setting destrand=TRUE (the default is FALSE) will merge reads on both strands of a CpG dinucleotide. This provides better coverage, but only advised when looking at CpG methylation (for CpH methylation this will cause wrong results in subsequent analyses). In addition, setting destrand=TRUE will only work when operating on base-pair resolution, otherwise setting this option TRUE will have no effect. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples."
 
 ```{r}
-meth.stranded <- unite(myobj_18, destrand=FALSE)
-meth.destrand <- unite(myobj_18, destrand=TRUE)
+meth.stranded <- methylKit::unite(myobj_18, destrand=FALSE)
+meth.destrand <- methylKit::unite(myobj_18, destrand=TRUE)
 ```
 
 Let's take a peek at the object where I retain strandedness 
@@ -111,7 +111,7 @@ counts.meth.stranded <- meth.stranded.df[, grep(c("siteID|numCs"), colnames(meth
 
 ```{r}
 meth.destranded.df <- getData(meth.destrand)
-meth.destranded.df$siteID <- with(meth.destranded.df, paste0(chr, start))  #merge id columns into 1
+meth.destranded.df$siteID <- with(meth.destranded.df, paste(chr, start, sep="_"))  #merge id columns into 1
 ncol(meth.destranded.df) #count total #  columns 
 meth.destranded.df <- subset(meth.destranded.df, select=c(59,1:58)) #move siteID to first  column
 head(meth.destranded.df) #check resulting dataframe 
@@ -128,17 +128,26 @@ head(counts.tot.destrand)
 head(counts.meth.destrand)
 ```
 
-#   START HERE 
-
-Filter count dataframes for 
+Filter count dataframes for loci where at least 75% of samples have 10x and 5x coverage or greater 
 
 ```{r}
-counts.tot.destrand.10x <- counts.tot.destrand %>% 
-  mutate_at(vars(contains('coverage')), funs(ifelse(. < 10, NA, .)))
-require(dplyr)
-counts.tot.destrand[!rowSums(is.na(counts.tot.destrand)) > 0.25*18,]
-```
+# Total counts 
+counts.tot.destrand.10x75 <- counts.tot.destrand[rowSums(counts.tot.destrand[,-1] > 9) > 13,] # 10x or greater in 14 out of the 18 samples 
+counts.tot.destrand.5x75 <- counts.tot.destrand[rowSums(counts.tot.destrand[,-1] > 4) > 13,]  # 5x or greater in 14 out of the 18 samples 
 
+# Get methylation counts for loci identified in the above 10x75 total counts files 
+counts.meth.destrand.10x75 <- subset(counts.meth.destrand, siteID %in% counts.tot.destrand.10x75$siteID) # subset 
+counts.meth.destrand.10x75 <- counts.meth.destrand.10x75[order(match(counts.meth.destrand.10x75$siteID, counts.tot.destrand.10x75$siteID)), ] #reorder to match total count df
+sum(counts.tot.destrand.10x75$siteID != counts.meth.destrand.10x75$siteID) #confirm order is same 
+
+# Get methylation counts for loci identified in the above 5x75 total counts files 
+counts.meth.destrand.5x75 <- subset(counts.meth.destrand, siteID %in% counts.tot.destrand.5x75$siteID)
+counts.meth.destrand.5x75 <- counts.meth.destrand.5x75[order(match(counts.meth.destrand.5x75$siteID, counts.tot.destrand.5x75$siteID)), ]
+sum(counts.tot.destrand.5x75$siteID != counts.meth.destrand.5x75$siteID) #confirm order is same 
+
+nrow(counts.tot.destrand.10x75) == nrow(counts.meth.destrand.10x75) #confirm same # rows 
+nrow(counts.tot.destrand.5x75) == nrow(counts.meth.destrand.5x75)   #confirm same # rows 
+```
 
 
 Write dataframes to tab delimited .txt files for MACAU. 
@@ -148,6 +157,11 @@ write.table(counts.tot.stranded, file = "../analyses/counts-total-stranded.txt",
 write.table(counts.meth.stranded, file = "../analyses/counts-meth-stranded.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 write.table(counts.tot.destrand, file = "../analyses/counts-total-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 write.table(counts.meth.destrand, file = "../analyses/counts-meth-destrand.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+
+write.table(counts.tot.destrand.10x75, file = "../analyses/counts.tot.destrand.10x75.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.tot.destrand.5x75, file = "../analyses/counts.tot.destrand.5x75.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.destrand.10x75, file = "../analyses/counts.meth.destrand.10x75.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth.destrand.5x75, file = "../analyses/counts.meth.destrand.5x75.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
 
 Write out dataframe with merged  ID, contig #, start #, and strand info for later use 
