@@ -24,7 +24,7 @@ sessionInfo()
 ### Where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-DMLfiles <- c("DML-CDS.txt", "DML-exon.txt", "DML-gene.txt", "DML-mRNA.txt", "DML-TE.txt", "DML-ASV.txt", "DML-intragenic.txt")
+DMLfiles <- c("DML-CDS.bed", "DML-exon.bed", "DML-gene.bed", "DML-mRNA.bed", "DML-TE.bed", "DML-ASV.bed", "DML-intragenic.bed")
 DML.features <- list()
 for (i in c(1:7)) {
   DML.features[[i]] <- read_delim(here::here("analyses", "BEDtools", DMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
@@ -60,7 +60,7 @@ print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" r
 ### Where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-macau75files <- c("macau75-CDS.txt", "macau75-exon.txt", "macau75-gene.txt", "macau75-mRNA.txt", "macau75-ASV.txt", "macau75-intragenic.txt")
+macau75files <- c("macau75-CDS.bed", "macau75-exon.bed", "macau75-gene.bed", "macau75-mRNA.bed", "macau75-ASV.bed", "macau75-intragenic.bed")
 macau75.features <- list()
 for (i in c(1:6)) {
   macau75.features[[i]] <- read_delim(here::here("analyses", "BEDtools", macau75files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
@@ -95,7 +95,7 @@ print(macau75.summary <- table(macau75.features.df[c("feature")])) #NOTE this do
 ### Where are all methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-allLocifiles <- c("AllLoci-CDS.txt", "AllLoci-exon.txt", "AllLoci-gene.txt", "AllLoci-mRNA.txt", "AllLoci-TE.txt", "AllLoci-ASV.txt", "AllLoci-intragenic.txt")
+allLocifiles <- c("AllLoci-CDS.bed", "AllLoci-exon.bed", "AllLoci-gene.bed", "AllLoci-mRNA.bed", "AllLoci-TE.bed", "AllLoci-ASV.bed", "AllLoci-intragenic.bed")
 allLoci.features <- list()
 for (i in c(1:7)) {
   allLoci.features[[i]] <- read_delim(here::here("analyses","BEDtools", allLocifiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}

@@ -7,23 +7,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Obtain session information
+## Obtain session information
 
 ```{r}
 sessionInfo()
 ```
 
-# Download files from `gannet`
+## Download files from `gannet`
 
 ```{bash}
 #rsync -avz --progress sr320@mox.hyak.uw.edu:/gscratch/srlab/sr320/analyses/2019/0327/*bismark_bt2.deduplicated.sorted.bam ../analyses/
 ```
 
+## Check current directory 
 
 ```{bash}
 pwd
 ```
 
+## Create list of all bismark data files, which hav reads that are already trimmed and aligned. These BAM files are also sorted and indexed. 
 
 ```{r}
 file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam',
@@ -41,41 +43,50 @@ file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted
 )
 ```
 
+## Require MethylKit 
 
 ```{r}
 library(methylKit)
 ```
 
+## The following command reads sorted BAM files and calls methylation percentage per base, and creates a methylRaw object for CpG methylation.
+It also assigns minimum coverage of 2x and the treatments (in this case, the Olympia oyster population)
+
+NOTE: according to the below code, an outdated Oly genome version was used in Bismark (most current version is v081). 
 
 ```{r, eval = FALSE}
 myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18"), assembly = "v071", read.context="CpG", mincov=2, treatment = c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1))
 ```
+
+## Save the MethylKit object; re-doing the previous step is memory/time intensive, so best to use the saved object moving forward. 
+
+Object is also available at https://d.pr/f/vRtrqZ
+
 
 ```{r, eval = FALSE}
 save(myobj_18, file = "../analyses/myobj_18")
 ```
 
 
-Also available at https://d.pr/f/vRtrqZ
-
-
 ```{bash}
 #zip ../analyses/myobj_18.zip ../analyses/myobj_18
 ```
 
-
+???? not sure what this is referencing, if anything 
 
 ```{r}
 #load("analyses/myobj_52")
 ```
 
+## Check the basic stats about the methylation data - coverage and percent methylation. Index the object to look through each sample
+
 ```{r}
-getMethylationStats(myobj_18[[2]],plot=FALSE,both.strands=FALSE)
+getMethylationStats(myobj_18[[2]],plot=F,both.strands=FALSE)
+myobj_18[[5]]
 ```
 
 ```{r}
-getMethylationStats(myobj_18
-                    [[8]],plot=TRUE,both.strands=FALSE)
+getMethylationStats(myobj_18[[2]],plot=TRUE,both.strands=FALSE)
 ```
 
 ```{r}
@@ -86,10 +97,14 @@ getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=FALSE)
 getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
 ```
 
+## Filter out loci where coverage is less than 10x or greater than 100x. Then, destrand. 
+
 ```{r}
 filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
-meth_filter=unite(filtered.myobj, destrand=TRUE)
+meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE)
+meth_filter #
+
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 PCASamples(meth_filter)
 ```
