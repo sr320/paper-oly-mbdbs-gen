@@ -87,8 +87,8 @@ head(meth.destranded.df <- read.table(file = here::here("analyses", "meth.destra
 ```
 
 ```{r}
-#counts.tot.destrand <- read.table(file = "../analyses/counts-total-destrand.txt", header = T)
-#counts.meth.destrand <- read.table(file = "../analyses/counts-meth-destrand.txt", header = T)
+counts.tot.destrand <- read.table(file = "../analyses/counts-total-destrand.txt", header = T)
+counts.meth.destrand <- read.table(file = "../analyses/counts-meth-destrand.txt", header = T)
 ```
 
 ### Merge MACAU + FDR results with raw count data 
