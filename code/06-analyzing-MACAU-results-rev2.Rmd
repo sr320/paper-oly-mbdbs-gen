@@ -144,6 +144,13 @@ Sample ordered from cluster analysis, where dendogram is constructed from Gower'
 - Sample ordered from cluster analysis, where dendogram is constructed from correlation matrix, and Ward cluster method.  
 
 ```{r}
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[20:37]), 
+          main = "MACAU id'd % methylated\n10x cov\nOrdered by cluster analysis", 
+          xlab = NA, ylab = "loci",  key.ylab = NA, key.title = "% methylated",
+          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column", na.color = "white",
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = c(rep("firebrick3", times=9), rep("dodgerblue3", times=9)))
+
+# Save same heatmap to file 
 pdf(file ="../analyses/macau/macau-heatmap.10x75.cluster.pdf")
 par(cex.main=.8, oma=c(5,1,2,5))
 heatmap.2(as.matrix(macau.sign.perc.meth.10x75[20:37]), 
@@ -161,6 +168,11 @@ No cluster analysis, instead samples are presented in the same order as the Meth
 tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep="")
 pop.colors.tree <- c(rep("dodgerblue3", times=9), rep("firebrick3", times=9))
 
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[tree.order]), main = "MACAU id'd % methylated\nwhite=<10x cov\nOrdered by MethylKit tree", key.ylab = NA, key.title = "% methylated",
+          xlab = NA, ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = pop.colors.tree)
+
+# Save same heatmap to file 
 pdf(file ="../analyses/macau/macau-heatmap.10x75.tree.pdf")
 par(cex.main=.8, oma=c(5,1,2,5))
 heatmap.2(as.matrix(macau.sign.perc.meth.10x75[tree.order]), main = "MACAU id'd % methylated\nwhite=<10x cov\nOrdered by MethylKit tree", key.ylab = NA, key.title = "% methylated",
@@ -185,6 +197,15 @@ size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", 
 mycols <- c("firebrick3", "dodgerblue3")
 pop.colors.length <- c("dodgerblue3", rep("firebrick3", times=7), "dodgerblue3", "dodgerblue3", "dodgerblue3", "firebrick3", "dodgerblue3", "firebrick3", rep("dodgerblue3", times=5))
 
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[!rowSums(is.na(macau.sign.perc.meth.10x75)) > 0.25*18,size.macau$sample]), 
+          main = "MACAU id'd % methylation\nOrdered by shell length\nwhite=<10x cov", xlab = NA, ylab = "loci", 
+          key.ylab = NA, key.title = "% methylated",
+          trace="none",na.color = "white",dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = pop.colors.length)
+barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
+        main = "Shell Length (mm)", las=2, ylab = "Shell Length (mm)")
+
+# Save same plots to file 
 pdf(file ="../analyses/macau/macau-heatmap.10x75.length.pdf")
 par(cex.main=.8, oma=c(5,1,2,5))
 heatmap.2(as.matrix(macau.sign.perc.meth.10x75[!rowSums(is.na(macau.sign.perc.meth.10x75)) > 0.25*18,size.macau$sample]), 
