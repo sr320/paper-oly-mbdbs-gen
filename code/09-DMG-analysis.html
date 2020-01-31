@@ -462,14 +462,10 @@ library( ggplot2 );
 # --------------------------------------------------------------------------
 # If you don't have the scales package installed, uncomment the following line:
 # install.packages( &quot;scales&quot; );
-library( scales );</code></pre>
-<pre><code>## Warning: package 'scales' was built under R version 3.5.2</code></pre>
-<pre><code>## 
-## Attaching package: 'scales'</code></pre>
-<pre><code>## The following object is masked from 'package:readr':
-## 
-##     col_factor</code></pre>
-<pre class="r"><code># --------------------------------------------------------------------------
+library( scales );
+
+
+# --------------------------------------------------------------------------
 # Here is your data from REVIGO. Scroll down for plot configuration options.
 
 revigo.names &lt;- c(&quot;term_ID&quot;,&quot;description&quot;,&quot;frequency_%&quot;,&quot;plot_X&quot;,&quot;plot_Y&quot;,&quot;plot_size&quot;,&quot;log10_p_value&quot;,&quot;uniqueness&quot;,&quot;dispensability&quot;);
@@ -514,13 +510,9 @@ head(one.data);</code></pre>
 p1 &lt;- ggplot( data = one.data );
 p1 &lt;- p1 + geom_point( aes( plot_X, plot_Y, colour = log10_p_value, size = plot_size), alpha = I(0.6) ) + scale_size_area();
 p1 &lt;- p1 + scale_colour_gradientn( colours = c(&quot;blue&quot;, &quot;green&quot;, &quot;yellow&quot;, &quot;red&quot;), limits = c( min(one.data$log10_p_value), 0) );
-p1 &lt;- p1 + geom_point( aes(plot_X, plot_Y, size = plot_size), shape = 21, fill = &quot;transparent&quot;, colour = I (alpha (&quot;black&quot;, 0.6) )) + scale_size_area();</code></pre>
-<pre><code>## Scale for 'size' is already present. Adding another scale for 'size', which
-## will replace the existing scale.</code></pre>
-<pre class="r"><code>p1 &lt;- p1 + scale_size( range=c(5, 30), guide=&quot;none&quot; ) + theme_bw(); # + scale_fill_gradientn(colours = heat_hcl(7), limits = c(-300, 0) );</code></pre>
-<pre><code>## Scale for 'size' is already present. Adding another scale for 'size', which
-## will replace the existing scale.</code></pre>
-<pre class="r"><code>#ex &lt;- one.data [ one.data$dispensability &lt; 0.15, ]; 
+p1 &lt;- p1 + geom_point( aes(plot_X, plot_Y, size = plot_size), shape = 21, fill = &quot;transparent&quot;, colour = I (alpha (&quot;black&quot;, 0.6) )) + scale_size_area();
+p1 &lt;- p1 + scale_size( range=c(5, 30), guide=&quot;none&quot; ) + theme_bw(); # + scale_fill_gradientn(colours = heat_hcl(7), limits = c(-300, 0) );
+#ex &lt;- one.data [ one.data$dispensability &lt; 0.15, ]; 
 p1 &lt;- p1 + geom_text( data = one.data, aes(plot_X, plot_Y, label = as.character(description)), colour = I(alpha(&quot;black&quot;, 0.85)), size = 3 );
 p1 &lt;- p1 + labs (y = &quot;semantic space x&quot;, x = &quot;semantic space y&quot;);
 p1 &lt;- p1 + theme(legend.key = element_blank()) ;

@@ -195,7 +195,7 @@ write_delim(DMGs.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("anal
 
 ## Here is the REVIGO plot showing GO terms associated with DMGs 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # A plotting R script produced by the REVIGO server at http://revigo.irb.hr/
 # If you found REVIGO useful in your work, please cite the following reference:
 # Supek F et al. "REVIGO summarizes and visualizes long lists of Gene Ontology
