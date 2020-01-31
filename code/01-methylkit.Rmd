@@ -112,7 +112,7 @@ meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
 
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
-PCASamples(meth_filter)
+PCASamples(meth_filter, screeplot = TRUE)
 ```
 
 
@@ -163,6 +163,7 @@ myDiff25p
 library(tidyverse)
 ```
 
+Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 ```{r}
 dml25 <-  mutate(myDiff25p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
@@ -170,11 +171,18 @@ dml25 <-  mutate(myDiff25p, start = start -1, end = end + 1) %>% select(chr, sta
 write_delim(dml25, "../analyses/dml25.bed",  delim = '\t', col_names = FALSE)
 ```
 
+##  Subset the filtered methylation count dataframe for only those that are differentially methylated. Save object to file. 
+
 ```{r}
-head(dml25)
+dml25_counts <- meth_filter %>%
+  methylKit::select(meth_filter$chr %in% myDiff25p$chr & 
+           meth_filter$start %in% myDiff25p$start & 
+           meth_filter$end %in% myDiff25p$end)
+
+class(dml25_counts) #class should be methylBase
+save(dml25_counts, file = "../analyses/dml25_counts") #save object to be used in subsequent notebook 
 ```
 
-Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 # Tiling window analysis 
 

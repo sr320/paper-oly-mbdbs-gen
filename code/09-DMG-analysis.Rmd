@@ -1,7 +1,7 @@
 ---
 title: "09-DMG-analysis"
 author: "Laura H Spencer"
-date: "1/29/2020"
+date: "1/30/2020"
 output: html_document
 ---
 
@@ -266,5 +266,20 @@ p1
 
 # ggsave("C:/Users/path_to_your_file/revigo-plot.pdf");
 
+```
+
+## IGV 
+
+Create bed files to visualze as a track of DMGs in IGV 
+
+```{r}
+DMGs.bed <- meth_filter_genes %>%
+  filter(contig_gene %in% DMGs.genes$contig_gene & 
+           start_gene %in% DMGs.genes$start_gene & 
+           end_gene %in% DMGs.genes$end_gene) %>%
+  dplyr::select(contig_gene, start_gene, end_gene, 
+                unknown1_gene, strand_gene, unknown2_gene, notes_gene) 
+DMGs.bed <- DMGs.bed[!duplicated(test$contig_gene),]
+readr::write_delim(DMGs.bed, "../analyses/DMGs.bed",  delim = '\t', col_names = FALSE)
 ```
 

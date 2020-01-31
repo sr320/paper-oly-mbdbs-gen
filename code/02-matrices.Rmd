@@ -110,9 +110,17 @@ PCASamples(meth_filter5)
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
 
+Here I create % methylation matrices for 1) loci with coverate >10x and <100x, 2) loci with coverate >5x and <100x, 3) differentially methylated loci 
+
 ```{r}
 perc.meth10=percMethylation(meth_filter10, rowids=T)
 perc.meth5=percMethylation(meth_filter5, rowids=T)
+
+dml25_counts <- load(here::here("analyses","dml25_counts")) #load DML loci count object if needed
+perc.methDMLs= percMethylation(dml25_counts, rowids=T) 
+
+#out of curiosity, PCA of percent methylation distance matrix, DMLs 
+PCA(perc.methDMLs)
 ```
 
 Extract correlation matrix (pearson) and distance matrix (manhattan) from the % methylated matrix
@@ -123,9 +131,13 @@ cor.pears.10 <- cor(perc.meth10, method="pearson") # create pearson correlation 
 dist.manhat.10 <- dist(t(perc.meth10), method = "manhattan", diag = T, upper = F)
 dist.manhat.10.df <- reshape2::melt(as.matrix(dist.manhat.10), varnames = c("row", "col"))
 
-cor.pears.5 <- cor(perc.meth5, method="pearson") # create pearson correlation matrix. 
-dist.manhat.5 <- dist(t(perc.meth5), method = "manhattan", diag = T, upper = F) #must transform % matrix (samples are rows) for the dist() function
+cor.pears.5 <- cor(perc.meth5, method="pearson") 
+dist.manhat.5 <- dist(t(perc.meth5), method = "manhattan", diag = T, upper = F) 
 dist.manhat.5.df <- reshape2::melt(as.matrix(dist.manhat.5), varnames = c("row", "col"))
+
+cor.pears.DMLs <- cor(perc.methDMLs, method="pearson") 
+dist.manhat.DMLs <- dist(t(perc.methDMLs), method = "manhattan", diag = T, upper = F) 
+dist.manhat.DMLs.df <- reshape2::melt(as.matrix(dist.manhat.DMLs), varnames = c("row", "col"))
 ```
 
 ### Read in sample number key, merge with distance matrix dataframes
@@ -139,4 +151,8 @@ write.csv(dist.manhat.10.df, file=here::here("analyses", "dist.manhat.10.csv"), 
 dist.manhat.5.df <- merge(x=merge(x=dist.manhat.5.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.5.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
 write.csv(dist.manhat.5.df, file=here::here("analyses","dist.manhat.5.csv"), row.names=FALSE)
+
+dist.manhat.DMLs.df <- merge(x=merge(x=dist.manhat.DMLs.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.DMLs.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.DMLs.df, file=here::here("analyses","dist.manhat.DMLs.csv"), row.names=FALSE)
 ```
