@@ -19,6 +19,12 @@ sessionInfo()
 #rsync -avz --progress sr320@mox.hyak.uw.edu:/gscratch/srlab/sr320/analyses/2019/0327/*bismark_bt2.deduplicated.sorted.bam ../analyses/
 ```
 
+
+```{bash}
+curl https://gannet.fish.washington.edu:/seashell/bu-mox/analyses/2019/0327/{*}bismark_bt2.deduplicated.sorted.bam ../analyses/
+```
+
+
 ## Check current directory 
 
 ```{bash}
@@ -86,7 +92,7 @@ myobj_18[[5]]
 ```
 
 ```{r}
-getMethylationStats(myobj_18[[2]],plot=TRUE,both.strands=FALSE)
+getMethylationStats(myobj_18[[2]],plot=T,both.strands=FALSE)
 ```
 
 ```{r}
@@ -103,21 +109,16 @@ getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
 filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE)
-meth_filter #
+save(meth_filter, file = "../analyses/meth_filter") #save object to file 
 
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 PCASamples(meth_filter)
 ```
 
 
-
-
 ```{r}
 myDiff=calculateDiffMeth(meth_filter,mc.cores=4)
 ```
-
-
-
 
 ```{r}
 # get hyper methylated bases
@@ -132,11 +133,9 @@ myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
 ```
 
 
-
 ```{r}
 write.table(myDiff25p, file = "../analyses/myDiff25p.tab", sep = "\t")
 ```
-
 
 
 ```{r}
@@ -156,7 +155,7 @@ library(readr)
 
 
 ```{r}
-head(myDiff25p)
+myDiff25p
 ```
 
 
@@ -165,17 +164,53 @@ library(tidyverse)
 ```
 
 
-
 ```{r}
 dml25 <-  mutate(myDiff25p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
   mutate_if(is.numeric, as.integer)
 write_delim(dml25, "../analyses/dml25.bed",  delim = '\t', col_names = FALSE)
 ```
 
-
 ```{r}
 head(dml25)
 ```
 
-
 Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
+
+# Tiling window analysis 
+
+Summarize methylation information over tiling windows, to then assess differentially methylated regions (DMRs). The function below tiles the genome with windows 1000bp length and 1000bp step-size and summarizes the methylation information on those tiles. In this case, it returns a methylRawList object which can be fed into unite and calculateDiffMeth functions consecutively to get differentially methylated regions. The tilling function adds up C and T counts from each covered cytosine and returns a total C and T count for each tile.
+
+```{r}
+#tiles_1000=tileMethylCounts(filtered.myobj,win.size=1000,step.size=1000, mc.cores=4)
+head(tiles_1000[[1]],3)
+
+#tiles_200=tileMethylCounts(filtered.myobj,win.size=200,step.size=200, mc.cores=4)
+#head(tiles_200)
+```
+
+```{r}
+meth_tile_filter=methylKit::unite(tiles_1000, destrand=TRUE)
+meth_tile_filter 
+
+clusterSamples(meth_tile_filter, dist="correlation", method="ward", plot=TRUE)
+PCASamples(meth_tile_filter)
+```
+
+## Test for differentially methylated regions 
+
+```{r}
+myDiff_tiled=calculateDiffMeth(meth_tile_filter,mc.cores=4)
+```
+
+## Test for differentially methylated regions 
+
+```{r}
+# get hyper methylated regions 
+myDiff_tiled_25p.hyper=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01,type="hyper")
+#
+# get hypo methylated regions
+myDiff_tiled_25p.hypo=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01,type="hypo")
+#
+# get all differentially methylated regions (25% different)
+myDiff_tiled_25p=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01) #only 2 regions! 
+```
