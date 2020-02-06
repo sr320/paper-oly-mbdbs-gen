@@ -279,6 +279,7 @@ ggplot(aes(x = population, y = mean_percMeth, fill = population,
 GO.MWU.GOterms <- allLoci.features.df %>% filter(feature == "gene") %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=",",replacement = ";")) %>%
   mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
   select(ID, Ontology_term) 
 
