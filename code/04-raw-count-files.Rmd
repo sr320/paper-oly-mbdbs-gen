@@ -84,6 +84,9 @@ Convert all NA values to 0 for both total count and methylated count files
 ```{r}
 counts.tot[is.na(counts.tot)] <- 0
 counts.meth[is.na(counts.meth)] <- 0
+
+counts.tot[-1] <- data.frame(lapply(counts.tot[-1], as.integer))
+counts.meth[-1] <- data.frame(lapply(counts.meth[-1], as.integer))
 ```
 
 
