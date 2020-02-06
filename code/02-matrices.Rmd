@@ -1,7 +1,8 @@
 ---
 title: "02-matrices"
-output:
-  html_document: default
+author: "Laura H Spencer"
+date: "1/30/2020"
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -19,121 +20,28 @@ lapply(c("methylKit","reshape2, here"), require, character.only = TRUE)
 sessionInfo()
 ```
 
-Laura Spencer created this notebook to become familiar with the basic methylKit commands, starting from a methylRawList object, which was created in a separate notebook ("01-methylkit.Rmd"). This step takes a long time, so I bypass it here. 
-
-Note: most of the text in this notebook is copied directly from the [methylKit: User Guide v1.10.0
-](https://bioconductor.org/packages/release/bioc/vignettes/methylKit/inst/doc/methylKit.html), by Altuna Akalin1 (2019-05-02).
-
-Methylation percentage calls can be calculated from sorted SAM or BAM file(s) from Bismark aligner and read-in to the memory. Bismark is a popular aligner for bisulfite sequencing reads, available here (Krueger and Andrews 2011).  processBismarkAln function is designed to read-in Bismark SAM/BAM files as methylRaw or methylRawList objects which store per base methylation calls. SAM files must be sorted by chromosome and read position columns, using ‘sort’ command in unix-like machines will accomplish such a sort easily. BAM files should be sorted and indexed. This could be achieved with samtools (http://www.htslib.org/doc/samtools.html).
-
-## downloaded and loaded steven's object from notebook 1, to skip methylKit steps (very time/data consuming)
-
-File download from here: https://d.pr/f/vRtrqZ
-
-```{r}
-load(here::here("analyses","myobj_18"))
-```
-
-Since we read the methylation data now, we can check the basic stats about the methylation data such as coverage and percent methylation. We now have a methylRawList object which contains methylation information per sample. 
-
-The following command prints out percent methylation statistics for sample #1, 2, 3, 9, 10, 11
-
-```{r}
-getMethylationStats(myobj_18[[1]],plot=FALSE,both.strands=FALSE)
-getMethylationStats(myobj_18[[2]],plot=FALSE,both.strands=FALSE)
-getMethylationStats(myobj_18[[3]],plot=FALSE,both.strands=FALSE)
-getMethylationStats(myobj_18[[9]],plot=FALSE,both.strands=FALSE)
-getMethylationStats(myobj_18[[10]],plot=FALSE,both.strands=FALSE)
-getMethylationStats(myobj_18[[11]],plot=FALSE,both.strands=FALSE)
-```
-
-The following command plots the histogram for percent methylation distribution.The figure below is the histogram and numbers on bars denote what percentage of locations are contained in that bin. Typically, percent methylation histogram should have two peaks on both ends. In any given cell, any given base are either methylated or not. Therefore, looking at many cells should yield a similar pattern where we see lots of locations with high methylation and lots of locations with low methylation.
-
-(Interestingly, our samples do not have a peak at 0% methylated)
-
-```{r}
-for (i in 1:18) {
- getMethylationStats(myobj_18[[i]],plot=TRUE,both.strands=FALSE) 
-}
-```
-
-We can also plot the read coverage per base information in a similar way, again numbers on bars denote what percentage of locations are contained in that bin. Experiments that are highly suffering from PCR duplication bias will have a secondary peak towards the right hand side of the histogram.
-
-```{r}
-for (i in 1:18) {
-  getCoverageStats(myobj_18[[i]],plot=TRUE,both.strands=FALSE)
-}
-```
-
-It might be useful to filter samples based on coverage. Particularly, if our samples are suffering from PCR bias it would be useful to discard bases with very high read coverage. Furthermore, we would also like to discard bases that have low read coverage, a high enough read coverage will increase the power of the statistical tests. The code below creates two objects by filtering the methylRawList and discards bases that have coverage below 10X, and below 5x (but no max coverage is set b/c/ hi.perc=100. Could consider discarding the bases that have more than 99.9th percentile of coverage in each sample.)
-
-```{r}
-filtered10.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
-                                      hi.count=100,hi.perc=NULL)
-
-filtered5.myobj=filterByCoverage(myobj_18,lo.count=5,lo.perc=NULL,
-                                      hi.count=100,hi.perc=NULL)
-```
-
-In order to do further analysis, we will need to get the bases covered in all samples. The following function will merge all samples to one object for base-pair locations that are covered in all samples. Setting destrand=TRUE (the default is FALSE) will merge reads on both strands of a CpG dinucleotide. This provides better coverage, but only advised when looking at CpG methylation (for CpH methylation this will cause wrong results in subsequent analyses). In addition, setting destrand=TRUE will only work when operating on base-pair resolution, otherwise setting this option TRUE will have no effect. The unite() function will return a methylBase object which will be our main object for all comparative analysis. The methylBase object contains methylation information for regions/bases that are covered in all samples.
-
-By default, unite function produces bases/regions covered in all samples. That requirement can be relaxed using “min.per.group” option in unite function. For example, to create a methylBase object where only CpGs covered with at least 1 sample per group (i.e. treatment, defined upon reading in Bismark alignment file) will be returned: `meth.min=unite(myobj,min.per.group=1L)`
-
-In this case, we use the default which is to require coverage across all samples. 
-Also, we create 2 methylBase objects: coverage >=10x, and coverage >=5x 
-
-```{r}
-meth_filter10=unite(filtered10.myobj, destrand=TRUE)
-meth_filter5=unite(filtered5.myobj, destrand=TRUE)
-```
-
-We can check the correlation (default=Pearson) between samples using getCorrelation. This function will either plot scatter plot and correlation coefficients or just print a correlation matrix. (I'm showing w/o plotting; takes too much time)
-
-```{r}
-getCorrelation(meth_filter10,plot=FALSE) #correlation matrix, 10x coverage
-getCorrelation(meth_filter5,plot=FALSE)  #correlation matrix, 5x coverage
-```
-
-We can cluster the samples based on the similarity of their methylation profiles. The following function will cluster the samples and draw a dendrogram.
-
-```{r}
-clusterSamples(meth_filter10, dist="correlation", method="ward", plot=TRUE) #cluster analysis 10x, correlation matrix
-clusterSamples(meth_filter5, dist="correlation", method="ward", plot=TRUE) #cluster analysis 5x, correlation matrix
-clusterSamples(meth_filter10, dist="manhattan", method="ward", plot=TRUE)  #cluster analysis 10x, manhattan distance matrix
-clusterSamples(meth_filter5, dist="manhattan", method="ward", plot=TRUE)  #cluster analysis 5x, manhattan distance matrix
-```
-
-```{r}
-PCASamples(meth_filter10)
-PCASamples(meth_filter5)
-```
+## load united, filtered MethylKit object 
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
 
 Here I create % methylation matrices for 1) loci with coverate >10x and <100x, 2) loci with coverate >5x and <100x, 3) differentially methylated loci 
 
 ```{r}
-perc.meth10=percMethylation(meth_filter10, rowids=T)
-perc.meth5=percMethylation(meth_filter5, rowids=T)
-
-dml25_counts <- load(here::here("analyses","dml25_counts")) #load DML loci count object if needed
+perc.meth=percMethylation(meth_filter, rowids=T)
 perc.methDMLs= percMethylation(dml25_counts, rowids=T) 
 
-#out of curiosity, PCA of percent methylation distance matrix, DMLs 
-PCA(perc.methDMLs)
+# Another PCA with % methylation matrices; nice plots show eigenvectors & %variance explained by each dimension 
+FactoMineR::PCA(perc.meth10)
+FactoMineR::PCA(perc.methDMLs)
 ```
 
 Extract correlation matrix (pearson) and distance matrix (manhattan) from the % methylated matrix
 FYI I checked that the correlation matrix in `getCorrelation` is derived from the percent methylated matrix. It is! 
 
 ```{r}
-cor.pears.10 <- cor(perc.meth10, method="pearson") # create pearson correlation matrix. 
-dist.manhat.10 <- dist(t(perc.meth10), method = "manhattan", diag = T, upper = F)
-dist.manhat.10.df <- reshape2::melt(as.matrix(dist.manhat.10), varnames = c("row", "col"))
-
-cor.pears.5 <- cor(perc.meth5, method="pearson") 
-dist.manhat.5 <- dist(t(perc.meth5), method = "manhattan", diag = T, upper = F) 
-dist.manhat.5.df <- reshape2::melt(as.matrix(dist.manhat.5), varnames = c("row", "col"))
+cor.pears <- cor(perc.meth, method="pearson") # create pearson correlation matrix. 
+dist.manhat <- dist(t(perc.meth), method = "manhattan", diag = T, upper = F)
+dist.manhat.df <- reshape2::melt(as.matrix(dist.manhat), varnames = c("row", "col"))
 
 cor.pears.DMLs <- cor(perc.methDMLs, method="pearson") 
 dist.manhat.DMLs <- dist(t(perc.methDMLs), method = "manhattan", diag = T, upper = F) 
@@ -144,13 +52,10 @@ dist.manhat.DMLs.df <- reshape2::melt(as.matrix(dist.manhat.DMLs), varnames = c(
 
 ```{r}
 key <- read.csv(here::here("data", "sample-key.csv"))
-dist.manhat.10.df <- merge(x=merge(x=dist.manhat.10.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
-colnames(dist.manhat.10.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.10.df, file=here::here("analyses", "dist.manhat.10.csv"), row.names=FALSE) 
 
-dist.manhat.5.df <- merge(x=merge(x=dist.manhat.5.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
-colnames(dist.manhat.5.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.5.df, file=here::here("analyses","dist.manhat.5.csv"), row.names=FALSE)
+dist.manhat.df <- merge(x=merge(x=dist.manhat.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.df, file=here::here("analyses", "dist.manhat.csv"), row.names=FALSE) 
 
 dist.manhat.DMLs.df <- merge(x=merge(x=dist.manhat.DMLs.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.DMLs.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")

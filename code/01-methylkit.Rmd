@@ -7,6 +7,20 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+### Load libraries 
+
+```{r setup, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+sessionInfo()
+```
+
 ## Obtain session information
 
 ```{r}
@@ -49,11 +63,6 @@ file.list_18=list('../data/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted
 )
 ```
 
-## Require MethylKit 
-
-```{r}
-library(methylKit)
-```
 
 ## The following command reads sorted BAM files and calls methylation percentage per base, and creates a methylRaw object for CpG methylation.
 It also assigns minimum coverage of 2x and the treatments (in this case, the Olympia oyster population)
@@ -92,7 +101,7 @@ myobj_18[[5]]
 ```
 
 ```{r}
-getMethylationStats(myobj_18[[2]],plot=T,both.strands=FALSE)
+getMethylationStats(myobj_18[[13]],plot=T,both.strands=FALSE)
 ```
 
 ```{r}
@@ -103,12 +112,12 @@ getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=FALSE)
 getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
 ```
 
-## Filter out loci where coverage is less than 10x or greater than 100x. Then, destrand. 
+## Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
 
 ```{r}
 filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
-meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE)
+meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=8L)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
 
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
@@ -139,7 +148,7 @@ write.table(myDiff25p, file = "../analyses/myDiff25p.tab", sep = "\t")
 
 
 ```{r}
-write.table(myDiff50p, file = "../analyses/myDiff50p.tab", sep = "\t")
+#write.table(myDiff50p, file = "../analyses/myDiff50p.tab", sep = "\t")
 ```
 
 
@@ -181,6 +190,120 @@ dml25_counts <- meth_filter %>%
 
 class(dml25_counts) #class should be methylBase
 save(dml25_counts, file = "../analyses/dml25_counts") #save object to be used in subsequent notebook 
+```
+
+### Reshape data to create a new column with sample info, and calculate %methylation for each locus/sample 
+
+```{r}
+meth_filter_reshaped <- melt(data=meth_filter, id=c("chr", "start", "end", "strand"), value.name = "count") %>%
+ tidyr::separate(col = "variable" , into = c("variable", "sample"), sep = "(?<=[a-zA-Z])\\s*(?=[0-9])") %>%
+  dcast(chr+start+end+strand+sample ~  variable) %>%
+  mutate(percMeth = 100*(numCs/coverage)) %>% 
+  mutate(population=as.character(sample))
+meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('1', '2', '3', '4', '5', '6', '7', '8', '9')='HC'") 
+meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
+readr::write_delim(meth_filter_reshaped, here::here("analyses", "meth_filter.tab"),  delim = '\t', col_names = FALSE)
+save(meth_filter_reshaped, file = here::here("analyses", "meth_filter_reshaped"))
+```
+
+## Barplots showing % methylation of DMLs by population 
+
+```{r}
+# Look at coverage for each DML, by population 
+# mean % methylation across samples  
+dml25_counts_unique <- unique(getData(dml25_counts)[,c("chr", "start")])
+
+for (i in 1:nrow(dml25_counts_unique)) {
+  temp <-  meth_filter_reshaped %>% 
+  filter(chr == dml25_counts_unique[i,"chr"] & 
+           start == dml25_counts_unique[i,"start"]) %>%
+  group_by(population, chr, start) %>%
+  summarise(mean_percentMeth = mean(percMeth, na.rm=TRUE))
+    print((ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
+    geom_bar(stat="identity") + ylim(0,100) +
+    theme_light() + ggtitle(paste("Locus = ", dml25_counts_unique[i, "chr"], "_", dml25_counts_unique[i, "start"], sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
+}
+```
+
+## Find which loci are hypomethylated in each population 
+
+```{r}
+#Calculate ratio between mean % methylation in Hood Canal : South Sound 
+DML.ratios <- meth_filter_reshaped %>% 
+  filter(chr %in% dml25_counts_unique[,"chr"] & 
+           start %in% dml25_counts_unique[,"start"]) %>% 
+  group_by(population, chr, start) %>%
+  summarise(mean_percentMeth = mean(percMeth, na.rm = TRUE)) %>% #could instead use ... allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+  dcast(chr + start ~ population) %>% 
+  mutate(ratio_HC.SS = HC/SS) #in this ratio column, values <1 = HC hypomethylated, values >1 = SS hypomethylated 
+
+# For all loci, calculate mean and sd percent methylation across samples by population 
+DML.calcs <- meth_filter_reshaped %>% 
+  group_by(population, chr, start) %>% 
+  dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n()) 
+
+# Extract separate dataframes for HC and SS hypomethylated loci 
+hypo_HC <- DML.calcs %>% 
+  filter(chr %in% c(DML.ratios[DML.ratios$ratio_HC.SS<1,"chr"]) & 
+           start %in% c(DML.ratios[DML.ratios$ratio_HC.SS<1,"start"]))
+hypo_SS <- DML.calcs %>% 
+  filter(chr %in% c(DML.ratios[DML.ratios$ratio_HC.SS>1,"chr"]) & 
+           start %in% c(DML.ratios[DML.ratios$ratio_HC.SS>1,"start"]))
+
+# Generate DF with unique contigs + loci to use in ggplot loops  
+hypo_HC_unique <- hypo_HC %>% ungroup() %>% select(chr, start) %>% distinct()
+hypo_SS_unique <- hypo_SS %>% ungroup() %>% select(chr, start) %>% distinct()
+
+# Barplots of all hypomethylated loci in Hood Canal population 
+for (i in 1:nrow(hypo_HC_unique)) {
+  test <- hypo_HC %>%
+    filter(chr==hypo_HC_unique$chr[i] &
+             start==hypo_HC_unique$start[i])
+  print(ggplot(test, aes(x = population, y = mean_percMeth, fill = population, label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,100) +
+      geom_errorbar(aes(ymin=mean_percMeth-sd_percMeth, ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle(paste("Contig = ", hypo_HC_unique[i, "chr"], ", Locus = ", hypo_HC_unique[i, "start"], sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+}
+
+# Barplots of all hypomethylated loci in South Sound population 
+hypo_SS_plots <- list()
+for (i in 1:nrow(hypo_SS_unique)) {
+  test <- hypo_SS %>% 
+    filter(chr==hypo_SS_unique$chr[i] &
+             start==hypo_SS_unique$start[i])
+  hypo_SS_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle(paste("Contig = ", hypo_SS_unique[i, "chr"], ", Locus = ", 
+                                    hypo_SS_unique[i, "start"], sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+}
+do.call("grid.arrange", hypo_SS_plots)
+
+install.packages("viridis")
+library(viridis)
+# Heatmap 
+
+test <- meth_filter_reshaped %>%
+  mutate(sample=factor(sample, levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)))  %>%
+  filter(
+           start %in% dml25_counts_unique$start & 
+           chr %in% DML.ratios$chr)
+
+ggplotly(ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile() +
+  scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr)) + 
+  #scale_fill_viridis(discrete=FALSE) 
+  scale_fill_distiller(palette = "YlGnBu"))
+  #scale_fill_gradient(low="gray5", high="white")
 ```
 
 
