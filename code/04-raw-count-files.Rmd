@@ -72,13 +72,20 @@ Create dataframe with methylated counts
 counts.meth <- meth_filter.df[, grep(c("siteID|numCs"), colnames(meth_filter.df))]
 ```
 
-
 Inspect count dataframes  
 
 ```{r}
 head(counts.tot)
 head(counts.meth)
 ```
+
+Convert all NA values to 0 for both total count and methylated count files 
+
+```{r}
+counts.tot[is.na(counts.tot)] <- 0
+counts.meth[is.na(counts.meth)] <- 0
+```
+
 
 Write dataframes to tab delimited .txt files for MACAU. 
 
