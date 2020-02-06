@@ -24,12 +24,11 @@ sessionInfo()
 ### Where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-DMLfiles <- c("DML-CDS.txt", "DML-exon.txt", "DML-intron.txt", "DML-gene.txt", "DML-UTR3.txt", "DML-mRNA.txt", "DML-TE.txt", "DML-intragenic.txt")
+DMLfiles <- c("DML-CDS.bed", "DML-exon.bed", "DML-gene.bed", "DML-mRNA.bed", "DML-TE.bed", "DML-ASV.bed", "DML-intragenic.bed")
 DML.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:7)) {
   DML.features[[i]] <- read_delim(here::here("analyses", "BEDtools", DMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-DML.features[[3]] <- merge(x=DML.features[[3]][1:4], by="X1" , y=DML.features[[6]][c(1,5:13)])
-for (i in 1:7) {
+for (i in 1:6) {
   DML.features[[i]] <- DML.features[[i]] %>%
     setNames(c("contig.dml","start.dml","end.dml","score.dml","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -44,15 +43,16 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(DML.features) <- c("DML.CDS", "DML.exon", "DML.intron", "DML.gene", "DML.UTR3", "DML.mRNA", "DML.TE", "DML.intragenic")
+names(DML.features) <- c("DML.CDS", "DML.exon", "DML.gene", "DML.mRNA", "DML.TE", "DML.ASV", "DML.intragenic")
 DML.features[["DML.intragenic"]] <- 
   DML.features[["DML.intragenic"]] %>% 
   setNames(c("contig.DML", "start.dml", "end.dml", "score.dml"))
 
 DML.features[[1]] <- DML.features[[1]] %>% mutate_at("unknown2", as.character)
-DML.features[[7]] <- DML.features[[7]] %>% mutate_at("unknown1", as.character)
-DML.features.df <- bind_rows(DML.features[-8])
-print(DML.summary <- table(DML.features.df[c("feature")]))
+DML.features[[5]] <- DML.features[[5]] %>% mutate_at("unknown1", as.character)
+DML.features[[6]] <- DML.features[[6]] %>% mutate_at("unknown1", as.character)
+DML.features.df <- bind_rows(DML.features[-6:-7])
+print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" refers to transposable elements; also NO alternative splice variants are included. 
 ```
 
 ## 2. MACAU loci
@@ -60,12 +60,11 @@ print(DML.summary <- table(DML.features.df[c("feature")]))
 ### Where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-macau75files <- c("macau75-CDS.txt", "macau75-exon.txt", "macau75-intron.txt", "macau75-gene.txt", "macau75-UTR3.txt", "macau75-mRNA.txt", "macau75-TE.txt", "macau75-intragenic.txt")
+macau75files <- c("macau75-CDS.bed", "macau75-exon.bed", "macau75-gene.bed", "macau75-mRNA.bed", "macau75-ASV.bed", "macau75-intragenic.bed")
 macau75.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:6)) {
   macau75.features[[i]] <- read_delim(here::here("analyses", "BEDtools", macau75files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-macau75.features[[3]] <- merge(x=macau75.features[[3]][1:4], by="X1" , y=macau75.features[[6]][c(1,5:12)])
-for (i in 1:7) {
+for (i in 1:5) {
   macau75.features[[i]] <- macau75.features[[i]] %>%
     setNames(c("contig.macau75","start.macau75","end.macau75","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -80,15 +79,15 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(macau75.features) <- c("macau75.CDS", "macau75.exon", "macau75.intron", "macau75.gene", "macau75.UTR3", "macau75.mRNA", "macau75.TE", "macau75.intragenic")
+names(macau75.features) <- c("macau75.CDS", "macau75.exon","macau75.gene", "macau75.mRNA", "macau75.ASV", "macau75.intragenic")
 macau75.features[["macau75.intragenic"]] <- 
   macau75.features[["macau75.intragenic"]] %>% 
   setNames(c("contig.macau75", "start.macau75", "end.macau75"))
 
 macau75.features[[1]] <- macau75.features[[1]] %>% mutate_at("unknown2", as.character)
-macau75.features[[7]] <- macau75.features[[7]] %>% mutate_at("unknown1", as.character)
-macau75.features.df <- bind_rows(macau75.features[-8])
-print(macau75.summary <- table(macau75.features.df[c("feature")]))
+macau75.features[[5]] <- macau75.features[[5]] %>% mutate_at("unknown1", as.character)
+macau75.features.df <- bind_rows(macau75.features[-5:-6])
+print(macau75.summary <- table(macau75.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
 ```
 
 ## 3. All loci 
@@ -96,12 +95,11 @@ print(macau75.summary <- table(macau75.features.df[c("feature")]))
 ### Where are all methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-allLocifiles <- c("AllLoci-CDS.txt", "AllLoci-exon.txt", "AllLoci-intron.txt", "AllLoci-gene.txt", "AllLoci-UTR3.txt", "AllLoci-UTR5.txt", "AllLoci-mRNA.txt", "AllLoci-TE.txt", "AllLoci-intragenic.txt")
+allLocifiles <- c("AllLoci-CDS.bed", "AllLoci-exon.bed", "AllLoci-gene.bed", "AllLoci-mRNA.bed", "AllLoci-TE.bed", "AllLoci-ASV.bed", "AllLoci-intragenic.bed")
 allLoci.features <- list()
-for (i in c(1:9)) {
+for (i in c(1:7)) {
   allLoci.features[[i]] <- read_delim(here::here("analyses","BEDtools", allLocifiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-allLoci.features[[3]] <- full_join(allLoci.features[[3]][1:4], allLoci.features[[7]][c(1,2,5:12)], by = c("X1", "X2"))
-for (i in 1:8) {
+for (i in 1:6) {
   allLoci.features[[i]] <- allLoci.features[[i]] %>%
     setNames(c("contig.allLoci","start.allLoci","end.allLoci", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -116,13 +114,14 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(allLoci.features) <- c("allLoci.CDS","allLoci.exon","allLoci.intron","allLoci.gene","allLoci.UTR3","allLoci.UTR5","allLoci.mRNA","allLoci.TE","allLoci.intragenic")
+names(allLoci.features) <- c("allLoci.CDS","allLoci.exon","allLoci.gene","allLoci.mRNA","allLoci.TE","allLoci.ASV","allLoci.intragenic")
 allLoci.features[["allLoci.intragenic"]] <- 
   allLoci.features[["allLoci.intragenic"]] %>% 
   setNames(c("contig.allLoci", "start.allLoci", "end.allLoci"))
 allLoci.features[[1]] <- allLoci.features[[1]] %>% mutate_at("unknown2", as.character)
-allLoci.features.df <- bind_rows(allLoci.features[-9])
-print(allLoci.summary <- table(allLoci.features.df[c("feature")]))
+allLoci.features[[6]] <- allLoci.features[[6]] %>% mutate_at("unknown1", as.character)
+allLoci.features.df <- bind_rows(allLoci.features[1:5]) #don't include alternative splice variants or intragenic 
+print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
 ```
 
 
@@ -143,24 +142,24 @@ summaryL <- summaryL %>%
 
 ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=log(count), fill=analysis)) +
   geom_bar(stat="identity") + 
-  scale_fill_brewer(palette="Paired") + ggtitle("Macau loci and all methylated loci, Log-counts") +
+  scale_fill_brewer(palette="Paired") + ggtitle("DMLs loci and all methylated loci, Log-counts") +
   theme_minimal()
 
 ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=log(count), fill=analysis)) +
   geom_bar(stat="identity") +
-  scale_fill_brewer(palette="Paired") + ggtitle("DMLs and all methylated loci, Log-counts") +
+  scale_fill_brewer(palette="Paired") + ggtitle("MACAU and all methylated loci, Log-counts") +
   theme_minimal()
 
 ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=percent, fill=analysis)) +
   geom_bar(stat="identity", position=position_dodge()) + 
-  scale_fill_brewer(palette="Paired") + ggtitle("% of MACAU loci, and all loci, in each feature") +
+  scale_fill_brewer(palette="Paired") + ggtitle("% of DML loci, and all loci, in each feature") +
   geom_text(aes(label=paste(round(percent), "%", sep="")), vjust=-0.5, color="gray30",
             position = position_dodge(0.9), size=3)+
   theme_minimal()
 
 ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=percent, fill=analysis)) +
   geom_bar(stat="identity", position=position_dodge()) +
-  scale_fill_brewer(palette="Paired") + ggtitle("% of DML loci, and all loci, in each feature") +
+  scale_fill_brewer(palette="Paired") + ggtitle("% of MACAU loci, and all loci, in each feature") +
   geom_text(aes(label=paste(round(percent), "%", sep="")), vjust=-0.5, color="gray30",
             position = position_dodge(0.9), size=3) +
   theme_minimal()
@@ -177,7 +176,8 @@ macau75.GO <- macau75.features.df[c("contig.macau75", "start.macau75", "end.maca
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
   select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term))
-write(macau75.GO$GO_term, file = here::here("analyses/", "macau/", "macau75.GO.txt"))
+write_csv(macau75.features.df, path = here::here("analyses/", "macau/", "macau75.features.csv")) #write out df with all MACAU features 
+write(macau75.GO$GO_term, file = here::here("analyses/", "macau/", "macau75.GO.txt")) #write out df with just GO terms 
 
 DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -187,6 +187,7 @@ DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "st
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
   select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
+write_csv(DML.features.df, path = here::here("analyses/", "DML.features.txt")) #write out df with all DML features 
 write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
 
 allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
@@ -197,6 +198,77 @@ allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allL
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
   select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
+write_csv(allLoci.features.df, path = here::here("analyses/", "AllLoci.features.txt")) #write out df with all loci features 
 write(allLoci.GO$GO_term, file = here::here("analyses/", "allLoci.GO.txt"))
+```
+
+## Create separate dataframes with annotation information for all hypomethylated loci in Hood Canal & South Sound, separately 
+
+```{r}
+hypo_HC_genes <-
+  DML.features.df %>% 
+  filter(contig.dml %in% hypo_HC$chr &
+         start.dml %in% 1+hypo_HC$start & 
+         feature == "gene" & 
+         Note != "Note=Protein of unknown function;") %>% 
+  distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE)
+  
+hypo_HC_GO <- hypo_HC_genes %>%
+mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  separate(Ontology_term, sep=",", into=paste("GO", 1:3, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3"), names_to = "GO_number", values_to = "GO_term") %>%
+  select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term)) 
+write(hypo_HC_GO$GO_term, file = here::here("analyses/", "hypo_HC_GO.txt"))
+
+
+hypo_SS_genes <- DML.features.df %>% 
+  filter(contig.dml %in% hypo_SS$chr &
+         start.dml %in% 1+hypo_SS$start & 
+           feature == "gene" & 
+           Note != "Note=Protein of unknown function;") %>% 
+  distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE)
+
+hypo_SS_GO <- hypo_SS_genes %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  separate(Ontology_term, sep=",", into=paste("GO", 1:5, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3", "GO_4", "GO_5"), names_to = "GO_number", values_to = "GO_term") %>%
+  select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term)) 
+write(hypo_HC_GO$GO_term, file = here::here("analyses/", "hypo_SS_GO.txt"))
+
+
+# Barplots of differentially methylated loci that are located in known genes 
+
+hypo_HC %>%
+   filter(chr %in% hypo_HC_genes$contig.dml &
+         start %in% hypo_HC_genes$start.dml-1) %>%
+ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.1) +
+      theme_minimal() + xlab("Population") + ylab("% Methylation") +
+  scale_y_continuous(breaks=c(0,25,50,75,100)) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
+   facet_wrap_paginate(~chr + start, nrow=2, ncol=3, page=2)
+
+
+hypo_SS %>%
+   filter(chr %in% hypo_SS_genes$contig.dml &
+         start %in% hypo_SS_genes$start.dml-1) %>%
+ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.1) +
+      theme_minimal() + xlab("Population") + ylab("% Methylation") +
+  scale_y_continuous(breaks=c(0,25,50,75,100)) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
+   facet_wrap_paginate(~chr + start, nrow=2, ncol=3, page=2)
 ```
 

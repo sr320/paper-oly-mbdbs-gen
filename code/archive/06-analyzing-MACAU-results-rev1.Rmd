@@ -1,0 +1,587 @@
+---
+title: "06-Analyzing MACAU results-rev"
+author: "Laura H Spencer"
+date: "9/12/2019"
+output: html_document
+---
+## MACAU results - visualize and FDR correct  
+
+Ran MACAU in a Jupyter Notebook. See [05-MACAU.ipynb](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/05-MACAU.ipynb)
+
+In this notebook I assess patterns in methylated loci that MACAU identified as influence by oyster phenotype, aka oyster shell length. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load libraries 
+
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("vegan", "dplyr", "factoextra", "FactoMineR", "tidyverse", "tibble", "reshape2", "gplots", "qvalue", "cluster", "here", "gridExtra") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
+### Read in dataframe with MACAU assocation results 
+
+```{r}
+macau.20190812 <- read.table(file=here::here("analyses","macau","output","20190812-macau.assoc.txt"), sep = "\t", stringsAsFactors = F)
+colnames(macau.20190812) <- macau.20190812[1,]
+macau.20190812 <- macau.20190812[-1, ] 
+macau.20190812$pvalue <- as.numeric(macau.20190812$pvalue)
+hist(macau.20190812$pvalue)
+
+# Read dataframes in if needed (object created in noteboook 04)
+meth.destranded.df <- read_delim(here::here("analyses", "meth.destranded.df.txt"), delim = "\t")
+summary(macau.20190812$id == meth.destranded.df$siteID) #confirm that macau results and original destranded dataframe are in same order 
+
+# bind macau results with df that has contig id and loci information 
+macau.20190812.c <- cbind(meth.destranded.df[,1:4],macau.20190812) 
+write.table(macau.20190812.c, file = here::here("analyses", "macau", "macau.20190812.c.tab"), sep = "\t", row.names = FALSE,  quote = FALSE)
+```
+
+### Correct for multiple comparisons 
+
+From Mac's 2019 salmon paper, [doi:10.3390/genes10050356](10.3390/genes10050356)  
+"Multiple hypothesis testing was performed on P-values extracted from the MACAU output for each CG site using the false discovery rate (FDR) approach used in the R package qvalue [45]. We considered a CG site to be differentially methylated (i.e., differentially methylated cytosine (DMC) if it passed a 10% FDR threshold, consistent with [46]."
+
+```{r}
+hist(macau.20190812$pvalue) # p-value distribution looks good (i.e. not u-shaped)
+macau.qvalue <- qvalue(p = macau.20190812$pvalue, fdr.level = 0.1) # create qvalue object, setting FDR=10%
+summary(macau.qvalue) 
+100*(1- macau.qvalue$pi0) #% of all loci in df as truely sign.  
+hist(macau.qvalue)
+
+#if one wants to estimate the false discovery rate when calling all p-values ≤ 0.01 significant: 
+max(macau.qvalue$qvalues[macau.qvalue$pvalues <= 0.01])
+
+# The main purpose of the upper-left plot is to gauge the reliability of the π0 estimate, where the estimated π0 is plotted versus the tuning parameter λ. The remaining plots show how many tests are significant, as well as how many false positives to expect for each q-value cut-off.
+plot(macau.qvalue)
+
+# Given our FDR=10% level, how many are significant? 
+summary(macau.qvalue$significant) #219 sign. (# TRUE)
+
+# Add qvalue results to macau df 
+macau.FDR <- cbind(macau.20190812, do.call(cbind.data.frame, macau.qvalue[c("qvalues", "pvalues", "significant")]))
+
+#plot macau p-values against pvalues in the qvalue results - should all fall on 1:1 line (double check that pvalues are in same order) - 
+plot(macau.FDR$pvalue, macau.FDR$pvalues) # looks good! 
+```
+
+### Extract IDs for loci where MACAU indicates DML, FDR test (at 10%) deemed loci significantt 
+
+```{r}
+head(macau.sign <- subset(macau.FDR, significant=="TRUE"), n=20)
+```
+
+### Read in count data 
+Use dataframe that has the siteID, and original contig, start #, and end # info 
+
+```{r}
+head(meth.destranded.df <- read.table(file = here::here("analyses", "meth.destranded.df.txt"), sep = "\t", header=T, stringsAsFactors = F))
+```
+
+```{r}
+counts.tot.destrand <- read.table(file = "../analyses/counts-total-destrand.txt", header = T)
+counts.meth.destrand <- read.table(file = "../analyses/counts-meth-destrand.txt", header = T)
+```
+
+### Merge MACAU + FDR results with raw count data 
+**This constitutes a master dataframe** 
+
+```{r}
+# merge macau results with count dataframe, save to file 
+head(macau.sign.counts <- merge(x=macau.sign, y=subset(meth.destranded.df, siteID %in% macau.sign$id), by.x="id", by.y="siteID"))
+write.table(macau.sign.counts, file = here::here("analyses", "combined-macau-FDR-counts.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
+```
+
+### Pull out separate methylation count & coverage count dfs 
+
+```{r}
+macau.sign.tot.counts <- macau.sign.counts[, !(grepl("num", colnames(macau.sign.counts)))]
+macau.sign.meth.counts <- macau.sign.counts[, !(grepl("numT|coverage", colnames(macau.sign.counts)))]
+```
+
+### Create df where coverage counts <5 replaced with NA 
+
+```{r}
+macau.sign.tot.counts.10x <- macau.sign.tot.counts %>% 
+  mutate_at(vars(contains('coverage')), funs(ifelse(. < 10, NA, .)))
+```
+
+### Create % methylated dataframe with sign. MACAU loci 
+
+```{r}
+# duplicate macau methylated count dataframe to make % methylated df for 10x coverage (all <10x cov will be "NA"")
+macau.sign.perc.meth.10x <- macau.sign.meth.counts
+
+# divide macau methylated counts by total counts 
+macau.sign.perc.meth.10x[,22:39] <- 100*(macau.sign.meth.counts[,22:39]/macau.sign.tot.counts.10x[,22:39])
+rownames(macau.sign.perc.meth.10x) <- macau.sign.perc.meth.10x[,1]
+```
+
+### Heatmap of % methylated, cluster analysis order, with NA for instances that loci coverage <10x 
+Sample ordered from cluster analysis, where dendogram is constructed from Gower's distance matrix (lots of NA values), and Ward cluster method. 
+
+---> mbd samples #1-9 = Hood Canal population  
+---> mbd samples #10-18 = South Sound population  
+
+### Heatmap of % methylated, cluster analysis order. 
+
+- Only loci with 10x coverage in color, less than 10x coverage in white.  
+- Sample ordered from cluster analysis, where dendogram is constructed from correlation matrix, and Ward cluster method.  
+
+```{r}
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[22:39]), 
+          main = "MACAU id'd % methylated\n10x cov\nOrdered by cluster analysis", 
+          xlab = "mbd sample", ylab = "loci",  
+          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column", na.color = "white",
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+```
+
+### Heatmap of % methylated, tree order, with NA for instances that loci coverage <10x  
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+```{r}
+tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep="")
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[tree.order]), main = "MACAU id'd % methylated\ngray=<10x cov\nOrdered by MethylKit tree", 
+          xlab = "mbd sample", ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+```
+
+### Heatmap of % methylated, tree order, only loci with 10x coverage across 75% of samples 
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+```{r}
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,tree.order]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by MethylKit tree", 
+          xlab = "mbd sample", ylab = "loci", trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+
+```
+
+### Heatmap of % methylated, size order, only loci with 10x coverage across all samples 
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+### Prepare size data to plot in same order as this heat map 
+This is laborious code with some room for error - needs fixing  
+
+```{r}
+size <- read.csv(file = here::here("data","mbd_size.csv"), header=T, sep = "\t")
+key <- read.csv(file=here::here("data","sample-key.csv"))
+size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")) %>%
+  mutate(population=as.factor(c(rep("HC", times=9), rep("SS",  times=9)))) %>%
+  mutate(sample=paste("numCs", y.MBD.FILENAME, sep="")) %>%
+  arrange(y.Length)
+mycols <- c("indianred", "darkcyan")
+
+#pdf(file = here::here("..", "analyses","macau-heatmap.pdf"))
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,size.macau$sample]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x (75% of samples)\nOrdered by Length", xlab = "mbd sample", ylab = "loci", 
+          trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+par(oma=c(0,8,0,0))
+barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
+        main = "Shell Length (mm)", las=2)
+#dev.off()
+```
+
+
+### Create BED files for MACAU id'd loci with 10x coverage for 1) any samples, 2) all samples 
+
+```{r}
+macau.sign.perc.meth.10x %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau","macau-any10x.bed"),  delim = '\t', col_names = FALSE)
+
+macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[22:39]), ] %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all10x.bed"),  delim = '\t', col_names = FALSE)
+
+macau.sign.perc.meth.10x[!rowSums(is.na(macau.sign.perc.meth.10x)) > 0.25*18,] %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-10x75perc.bed"),  delim = '\t', col_names = FALSE)
+
+# All loci fed into/from macau 
+macau.20190812.c %>%
+  dplyr::select(c("chr", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all-loci.bed"),  delim = '\t', col_names = FALSE)
+```
+
+
+
+# Re-do analysis with new MACAU results run with filtered count data 
+
+I re-ran MACAU twice using two sets of count files: 
+
+1) Contigs retained if 75% of samples (14 out of 18) had 10x coverage
+- Total count data: analyses/counts.tot.destrand.10x75
+- Methylated count data: analyses/counts.meth.destrand.10x75
+
+2) Contigs retained if 75% of samples (14 out of 18) had 5x coverage
+
+- Total count data: analyses/counts.tot.destrand.5x75.txt
+- Methylated count data: analyses/counts.meth.destrand.5x75.txt
+
+See my Jupyter notebook on these runs: [code/05-MACAU.ipynb](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/code/05-MACAU.ipynb)
+s
+Here, I re-do the above analyses and figures with the new MACAU results. 
+
+
+```{r}
+macau.10x75 <- read.table(file=here::here("analyses","macau","output","20200107-macau-10x75.assoc.txt"), sep = "\t", stringsAsFactors = F)
+colnames(macau.10x75) <- macau.10x75[1,]
+macau.10x75 <- macau.10x75[-1, ] 
+macau.10x75$pvalue <- as.numeric(macau.10x75$pvalue)
+hist(macau.10x75$pvalue)
+
+# Read dataframes in if needed (object created in noteboook 04)
+#counts.tot.destrand.10x75 <- read_delim(here::here("analyses", "counts.tot.destrand.10x75.txt"), delim = "\t")
+summary(macau.10x75$id == counts.tot.destrand.10x75$siteID) #confirm that macau results and original destranded dataframe are in same order 
+
+# bind macau results with df that has contig id and loci information 
+macau.10x75.c <- cbind(counts.tot.destrand.10x75[,1],macau.10x75) %>%
+   separate(`counts.tot.destrand.10x75[, 1]`, into = c("contig", "locus"), sep = "_")
+
+write.table(macau.10x75.c, file = here::here("analyses", "macau", "macau.10x75.c.tab"), sep = "\t", row.names = FALSE,  quote = FALSE)
+```
+
+### Correct for multiple comparisons 
+
+From Mac's 2019 salmon paper, [doi:10.3390/genes10050356](10.3390/genes10050356)  
+"Multiple hypothesis testing was performed on P-values extracted from the MACAU output for each CG site using the false discovery rate (FDR) approach used in the R package qvalue [45]. We considered a CG site to be differentially methylated (i.e., differentially methylated cytosine (DMC) if it passed a 10% FDR threshold, consistent with [46]."
+
+```{r}
+hist(macau.10x75.c$pvalue) # p-value distribution looks good (i.e. not u-shaped)
+macau.qvalue.10x75 <- qvalue(p = macau.10x75.c$pvalue, fdr.level = 0.1) # create qvalue object, setting FDR=10%
+summary(macau.qvalue.10x75) 
+100*(1- macau.qvalue.10x75$pi0) #% of all loci in df as truely sign.  
+hist(macau.qvalue.10x75)
+
+#if one wants to estimate the false discovery rate when calling all p-values ≤ 0.01 significant: 
+max(macau.qvalue.10x75$qvalues[macau.qvalue.10x75$pvalues <= 0.01])
+
+# The main purpose of the upper-left plot is to gauge the reliability of the π0 estimate, where the estimated π0 is plotted versus the tuning parameter λ. The remaining plots show how many tests are significant, as well as how many false positives to expect for each q-value cut-off.
+plot(macau.qvalue.10x75)
+
+# Given our FDR=10% level, how many are significant? 
+summary(macau.qvalue.10x75$significant) #219 sign. (# TRUE)
+
+# Add qvalue results to macau df 
+macau.FDR.10x75 <- cbind(macau.10x75.c, do.call(cbind.data.frame, macau.qvalue.10x75[c("qvalues", "pvalues", "significant")]))
+
+#plot macau p-values against pvalues in the qvalue results - should all fall on 1:1 line (double check that pvalues are in same order) - 
+plot(macau.FDR.10x75$pvalue, macau.FDR.10x75$pvalues) # looks good! 
+```
+
+### Extract IDs for loci where MACAU indicates DML, FDR test (at 10%) deemed loci significantt 
+
+```{r}
+head(macau.sign.10x75 <- subset(macau.FDR.10x75, significant=="TRUE"), n=20)
+nrow(macau.sign.10x75) #72
+```
+
+### Read in count data 
+Use dataframe that has the siteID, and original contig, start #, and end # info 
+
+```{r}
+head(counts.meth.destrand.10x75 <- read.table(file = here::here("analyses", "counts.meth.destrand.10x75.txt"), sep = "\t", header=T, stringsAsFactors = F))
+```
+
+```{r}
+counts.tot.destrand <- read.table(file = "../analyses/counts.meth.destrand.10x75.txt", header = T)
+counts.meth.destrand <- read.table(file = "../analyses/counts.meth.destrand.10x75.txt", header = T)
+```
+
+### Merge MACAU + FDR results with raw count data 
+**This constitutes a master dataframe** 
+
+```{r}
+# merge macau results with count dataframe, save to file 
+head(macau.sign.meth.counts.10x75 <- merge(x=macau.sign.10x75, y=subset(counts.meth.destrand.10x75, siteID %in% macau.sign.10x75$id), by.x="id", by.y="siteID"))
+head(macau.sign.tot.counts.10x75 <- merge(x=macau.sign.10x75, y=subset(counts.tot.destrand.10x75, siteID %in% macau.sign.10x75$id), by.x="id", by.y="siteID"))
+
+write.table(macau.sign.meth.counts.10x75, file = here::here("analyses", "combined-macau-FDR-meth-counts.10x75.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
+write.table(macau.sign.tot.counts.10x75, file = here::here("analyses", "combined-macau-FDR-tot-counts.10x75.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
+```
+
+### Create df where coverage counts <10 replaced with NA 
+
+```{r}
+macau.sign.tot.counts.10x75.na <- macau.sign.tot.counts.10x75 %>% 
+  mutate_at(vars(contains('coverage')), funs(ifelse(. < 10, NA, .)))
+```
+
+### Create % methylated dataframe with sign. MACAU loci 
+
+```{r}
+# duplicate macau methylated count dataframe to make % methylated df for 10x coverage (all <10x cov will be "NA"")
+macau.sign.perc.meth.10x75 <- macau.sign.meth.counts.10x75
+
+# divide macau methylated counts by total counts 
+macau.sign.perc.meth.10x75[,20:37] <- 100*(macau.sign.meth.counts.10x75[,20:37]/macau.sign.tot.counts.10x75.na[,20:37])
+rownames(macau.sign.perc.meth.10x75) <- macau.sign.perc.meth.10x75[,1]
+```
+
+### Heatmap of % methylated, cluster analysis order, with NA for instances that loci coverage <10x 
+Sample ordered from cluster analysis, where dendogram is constructed from Gower's distance matrix (lots of NA values), and Ward cluster method. 
+
+---> mbd samples #1-9 = Hood Canal population  
+---> mbd samples #10-18 = South Sound population  
+
+### Heatmap of % methylated, cluster analysis order. 
+
+- Only loci with 10x coverage in color, less than 10x coverage in white.  
+- Sample ordered from cluster analysis, where dendogram is constructed from correlation matrix, and Ward cluster method.  
+
+```{r}
+pdf(file ="../analyses/macau/macau-heatmap.10x75.cluster.pdf")
+par(cex.main=.8, oma=c(5,1,2,5))
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[20:37]), 
+          main = "MACAU id'd % methylated\n10x cov\nOrdered by cluster analysis", 
+          xlab = NA, ylab = "loci",  key.ylab = NA, key.title = "% methylated",
+          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column", na.color = "white",
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = c(rep("firebrick3", times=9), rep("dodgerblue3", times=9)))
+dev.off()
+```
+
+### Heatmap of % methylated, tree order, with NA for instances that loci coverage <10x  
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+```{r}
+tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep="")
+pop.colors.tree <- c(rep("dodgerblue3", times=9), rep("firebrick3", times=9))
+
+pdf(file ="../analyses/macau/macau-heatmap.10x75.tree.pdf")
+par(cex.main=.8, oma=c(5,1,2,5))
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[tree.order]), main = "MACAU id'd % methylated\nwhite=<10x cov\nOrdered by MethylKit tree", key.ylab = NA, key.title = "% methylated",
+          xlab = NA, ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = pop.colors.tree)
+dev.off()
+```
+
+### Heatmap of % methylated, ordered by shell length 
+No cluster analysis, instead samples are presented in the same order as the MethylKit tree. 
+
+### Prepare size data to plot in same order as this heat map 
+This is laborious code with some room for error - needs fixing  
+
+```{r}
+size <- read.csv(file = here::here("data","mbd_size.csv"), header=T, sep = "\t")
+key <- read.csv(file=here::here("data","sample-key.csv"))
+size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")) %>%
+  mutate(population=as.factor(c(rep("HC", times=9), rep("SS",  times=9)))) %>%
+  mutate(sample=paste("numCs", y.MBD.FILENAME, sep="")) %>%
+  arrange(y.Length)
+mycols <- c("firebrick3", "dodgerblue3")
+pop.colors.length <- c("dodgerblue3", rep("firebrick3", times=7), "dodgerblue3", "dodgerblue3", "dodgerblue3", "firebrick3", "dodgerblue3", "firebrick3", rep("dodgerblue3", times=5))
+
+pdf(file ="../analyses/macau/macau-heatmap.10x75.length.pdf")
+par(cex.main=.8, oma=c(5,1,2,5))
+heatmap.2(as.matrix(macau.sign.perc.meth.10x75[!rowSums(is.na(macau.sign.perc.meth.10x75)) > 0.25*18,size.macau$sample]), 
+          main = "MACAU id'd % methylation\nOrdered by shell length\nwhite=<10x cov", xlab = NA, ylab = "loci", 
+          key.ylab = NA, key.title = "% methylated",
+          trace="none",na.color = "white",dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = pop.colors.length)
+par(oma=c(2,4,5,2))
+barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
+        main = "Shell Length (mm)", las=2, ylab = "Shell Length (mm)")
+dev.off()
+```
+
+
+### Create BED files for MACAU id'd loci with 10x coverage for 1) any samples, 2) all samples 
+
+```{r}
+macau.sign.perc.meth.10x75 %>% 
+  mutate(end = locus) %>% 
+  rename(start = locus) %>%
+  dplyr::select(c("contig", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau.sign.perc.meth.10x75.bed"),  delim = '\t', col_names = FALSE)
+
+# All loci fed into/from macau 
+macau.10x75.c %>%
+  mutate(end = locus) %>% 
+  rename(start = locus) %>%
+  dplyr::select(c("contig", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all-loci.10x75.bed"),  delim = '\t', col_names = FALSE)
+```
+
+
+
+
+
+# Re-do analysis with 5x75 
+
+```{r}
+macau.5x75 <- read.table(file=here::here("analyses","macau","output","20200108-macau-5x75.assoc.txt"), sep = "\t", stringsAsFactors = F)
+colnames(macau.5x75) <- macau.5x75[1,]
+macau.5x75 <- macau.5x75[-1, ] 
+macau.5x75$pvalue <- as.numeric(macau.5x75$pvalue)
+hist(macau.5x75$pvalue)
+summary(macau.5x75$id == counts.tot.destrand.5x75$siteID) #confirm that macau results and original destranded dataframe are in same order 
+macau.5x75.c <- cbind(counts.tot.destrand.5x75[,1],macau.5x75) %>%
+   separate(`counts.tot.destrand.5x75[, 1]`, into = c("contig", "locus"), sep = "_")
+write.table(macau.5x75.c, file = here::here("analyses", "macau", "macau.5x75.c.tab"), sep = "\t", row.names = FALSE,  quote = FALSE)
+```
+
+### Correct for multiple comparisons 
+
+```{r}
+hist(macau.5x75.c$pvalue) # p-value distribution looks good (i.e. not u-shaped)
+macau.qvalue.5x75 <- qvalue(p = macau.5x75.c$pvalue, fdr.level = 0.1) # create qvalue object, setting FDR=10%
+summary(macau.qvalue.5x75) 
+100*(1- macau.qvalue.5x75$pi0) #% of all loci in df as truely sign.  
+hist(macau.qvalue.5x75)
+max(macau.qvalue.5x75$qvalues[macau.qvalue.5x75$pvalues <= 0.01])
+plot(macau.qvalue.5x75)
+summary(macau.qvalue.5x75$significant) #219 sign. (# TRUE)
+macau.FDR.5x75 <- cbind(macau.5x75.c, do.call(cbind.data.frame, macau.qvalue.5x75[c("qvalues", "pvalues", "significant")]))
+plot(macau.FDR.5x75$pvalue, macau.FDR.5x75$pvalues) # looks good! 
+```
+
+### Extract IDs for loci where MACAU indicates DML, FDR test (at 10%) deemed loci significantt 
+### Merge MACAU + FDR results with raw count data 
+**This constitutes a master dataframe** 
+
+```{r}
+head(macau.sign.5x75 <- subset(macau.FDR.5x75, significant=="TRUE"), n=20)
+nrow(macau.sign.5x75) #146
+head(counts.meth.destrand.5x75 <- read.table(file = here::here("analyses", "counts.meth.destrand.5x75.txt"), sep = "\t", header=T, stringsAsFactors = F))
+head(macau.sign.meth.counts.5x75 <- merge(x=macau.sign.5x75, y=subset(counts.meth.destrand.5x75, siteID %in% macau.sign.5x75$id), by.x="id", by.y="siteID"))
+head(macau.sign.tot.counts.5x75 <- merge(x=macau.sign.5x75, y=subset(counts.tot.destrand.5x75, siteID %in% macau.sign.5x75$id), by.x="id", by.y="siteID"))
+write.table(macau.sign.meth.counts.5x75, file = here::here("analyses", "combined-macau-FDR-meth-counts.5x75.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
+write.table(macau.sign.tot.counts.5x75, file = here::here("analyses", "combined-macau-FDR-tot-counts.5x75.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
+```
+
+### Create df where coverage counts <5 replaced with NA, create % methylated dataframe with sign. MACAU loci 
+
+```{r}
+macau.sign.tot.counts.5x75.na <- macau.sign.tot.counts.5x75 %>% 
+  mutate_at(vars(contains('coverage')), funs(ifelse(. < 5, NA, .)))
+macau.sign.perc.meth.5x75 <- macau.sign.meth.counts.5x75
+macau.sign.perc.meth.5x75[,20:37] <- 100*(macau.sign.meth.counts.5x75[,20:37]/macau.sign.tot.counts.5x75.na[,20:37])
+rownames(macau.sign.perc.meth.5x75) <- macau.sign.perc.meth.5x75[,1]
+```
+
+### Heatmaps 
+
+```{r}
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.5x75[20:37]), 
+          main = "MACAU id'd % methylated\n10x cov\nOrdered by cluster analysis", 
+          xlab = "mbd sample", ylab = "loci",  
+          hclustfun = function(x) hclust(x, method="ward.D"), distfunc <- function(x) daisy(x,metric="correlation"), trace="none", dendrogram = "column", na.color = "white",
+          col = rev(colorRampPalette(c('#08519c','#bdd7e7'))(30)))
+
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.5x75[tree.order]), main = "MACAU id'd % methylated\ngray=<10x cov\nOrdered by MethylKit tree", 
+          xlab = "mbd sample", ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = rev(colorRampPalette(c('#08519c','#bdd7e7'))(30)))
+
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.5x75[!rowSums(is.na(macau.sign.perc.meth.5x75)) > 0.25*18,tree.order]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x\nOrdered by MethylKit tree", 
+          xlab = "mbd sample", ylab = "loci", trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = rev(colorRampPalette(c('#08519c','#bdd7e7'))(30)))
+
+#pdf(file = here::here("..", "analyses","macau-heatmap.pdf"))
+par(cex.main=.8)
+heatmap.2(as.matrix(macau.sign.perc.meth.5x75[!rowSums(is.na(macau.sign.perc.meth.5x75)) > 0.25*18,size.macau$sample]), 
+          main = "MACAU id'd % methylation\nFDR=10%, loci cov=10x (75% of samples)\nOrdered by Length", xlab = "mbd sample", ylab = "loci", 
+          trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col = colorRampPalette(c('#08519c','#bdd7e7'))(30))
+par(oma=c(0,8,0,0))
+barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
+        main = "Shell Length (mm)", las=2)
+#dev.off()
+```
+
+### Create BED files for MACAU id'd loci with 10x coverage for 1) any samples, 2) all samples 
+
+```{r}
+macau.sign.perc.meth.5x75 %>% 
+  mutate(end = locus) %>% 
+  rename(start = locus) %>%
+  dplyr::select(c("contig", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau.sign.perc.meth.5x75.bed"),  delim = '\t', col_names = FALSE)
+
+# All loci fed into/from macau 
+macau.5x75.c %>%
+  mutate(end = locus) %>% 
+  rename(start = locus) %>%
+  dplyr::select(c("contig", "start", "end")) %>%
+write_delim(here::here("analyses","macau", "macau-all-loci.5x75.bed"),  delim = '\t', col_names = FALSE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# BONEYARD 
+
+#### PCA with % methylated df, only with loci w/ 10x coverage across all samples 
+
+```{r}
+source(here::here("resources","biostats.R"))
+
+# Transpose methylated count df, remove any loci with NA values (i.e. <10x) 
+macau.sign.perc.meth.10x.t <- macau.sign.perc.meth.10x[complete.cases(macau.sign.perc.meth.10x[22:39]), c(1,22:39)] %>% remove_rownames %>% gather(column, value, -id) %>% spread(id, value) %>% column_to_rownames(var="column")
+
+# Run PCA on transposed matrix, scale=F creates variance-covariance matrix since all data is same units 
+met.perc.pca <- prcomp(macau.sign.perc.meth.10x.t, scale=F) 
+```
+
+#### Inspect PCA axes, etc. 
+
+```{r}
+summary(met.perc.pca)
+pca.eigenval(met.perc.pca) #The Proporation of Variance = %variance 
+fviz_screeplot(met.perc.pca, addlabels = TRUE) #PC 1, 2 & 3 may be sign. 
+ordi.monte(macau.sign.perc.meth.10x.t,ord="pca",dim=5) #only pc 1 sign. according to ordi.monte 
+fviz_contrib(met.perc.pca, choice = "var", axes = 1, top=50)
+fviz_contrib(met.perc.pca, choice = "var", axes = 2, top=50)
+fviz_contrib(met.perc.pca, choice = "var", axes = 3, top=50)
+```
+
+#### Create PCA cluster plots (not with variables) 
+
+```{r}
+pops <- c("HC", rep("SS", times=9), rep("HC", times=8)) #create pop vector for color-coding 
+
+fviz_pca_biplot(met.perc.pca, label="ind", invisible = "var", col.ind=pops, axes = c(1,2), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 1x2")
+
+fviz_pca_biplot(met.perc.pca, label="ind",  invisible = "var",col.ind=pops, axes = c(1,3), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 1x3")
+
+fviz_pca_biplot(met.perc.pca, label="ind", invisible = "var", col.ind=pops, axes = c(2,3), pointsize=3) + ggtitle(label="PCA % methylated, loci id'd by MACAU, PC 2x3")  #dimension 2 = pop separation 
+```
