@@ -298,11 +298,14 @@ test <- meth_filter_reshaped %>%
   filter(
            start %in% dml25_counts_unique$start & 
            chr %in% DML.ratios$chr)
-
-ggplotly(ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile() +
+#ggplotly(
+ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile() +
   scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr)) + 
   #scale_fill_viridis(discrete=FALSE) 
-  scale_fill_distiller(palette = "YlGnBu"))
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  scale_fill_distiller(palette = "YlGnBu") #)
   #scale_fill_gradient(low="gray5", high="white")
 ```
 

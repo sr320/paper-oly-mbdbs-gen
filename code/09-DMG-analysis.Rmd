@@ -69,7 +69,6 @@ meth_filter_genes <-
   mutate(population=as.character(sample))
 meth_filter_genes$population <- car::recode(meth_filter_genes$population, "c('1', '2', '3', '4', '5', '6', '7', '8', '9')='HC'") 
 meth_filter_genes$population <- car::recode(meth_filter_genes$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
-View(meth_filter_genes)
 ```
 
 ### Here is the number of genes that are represented in our methylation data set: 
@@ -108,7 +107,7 @@ for(i in 1:length(gs)){
   sub_meth_table1 <- subset(sub_meth_table, gene ==gs[i])
   
   # fit glm position model
-  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population), 
+  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
              data=sub_meth_table1, family=binomial)
   a <- anova(fit, test="Chisq")
   
@@ -307,21 +306,49 @@ DMG_counts <- meth_filter_genes %>%
            start_gene %in% DMGs.genes$start_gene & 
            end_gene %in% DMGs.genes$end_gene)
 
-
+library(plotly)
 # Look at coverage for each DMG locus, by population 
 # mean % methylation across samples  
 DMG_genes_unique <- unique(DMG_counts$gene)
 for (i in 1:length(DMG_genes_unique)) {
   temp <-  DMG_counts %>% 
-  filter(gene == DMG_genes_unique[i]) %>%
+  filter(chr == "Contig22489") %>%
   group_by(population, chr, start) %>%
   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
             mean_percentMeth = mean(percMeth))
     print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
     geom_bar(stat="identity") + 
     facet_wrap(~start) + 
-    theme_light() + ggtitle(paste("gene = ", DMG_genes_unique[i], sep="")) +
+    theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
   }
+```
+
+## Identify DMGs that contain DMLs 
+
+```{bash}
+intersectBed \
+  -wb \
+  -a "../analyses/DMGs.bed" \
+  -b "../analyses/dml25.bed" \
+  > "../analyses/DMGs-with-DMLs.tab"
+```
+
+### Here is the number of loci associated with gene regions: 
+
+```{bash}
+wc -l "../analyses/DMGs-with-DMLs.tab"
+```
+
+```{r}
+DMLs.in.DMGs <- 
+  read_delim(file = here::here("analyses", "DMGs-with-DMLs.tab"), delim = "\t", col_names = c(colnames(DMGs.bed), colnames(dml25))) %>%
+  mutate(gene=paste(contig_gene, start_gene, sep="_")) 
+
+meth_filter_genes %>% 
+  mutate(start=start-1) %>% 
+  mutate(gene=paste(chr, start, sep="_")) %>% 
+  filter(gene %in% DMLs.in.DMGs$gene)
+
 ```
 
