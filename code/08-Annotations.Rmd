@@ -92,7 +92,7 @@ print(macau75.summary <- table(macau75.features.df[c("feature")])) #NOTE this do
 
 ## 3. All loci 
 
-### Where are all methylated loci located? 
+### Where are ALL methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
 allLocifiles <- c("AllLoci-CDS.bed", "AllLoci-exon.bed", "AllLoci-gene.bed", "AllLoci-mRNA.bed", "AllLoci-TE.bed", "AllLoci-ASV.bed", "AllLoci-intragenic.bed")
@@ -123,7 +123,6 @@ allLoci.features[[6]] <- allLoci.features[[6]] %>% mutate_at("unknown1", as.char
 allLoci.features.df <- bind_rows(allLoci.features[1:5]) #don't include alternative splice variants or intragenic 
 print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
 ```
-
 
 ## Summary 
 
@@ -189,6 +188,8 @@ DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "st
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(DML.features.df, path = here::here("analyses/", "DML.features.txt")) #write out df with all DML features 
 write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
+
+View(allLoci.features.df["Ontology_term"])
 
 allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.allLoci, start.allLoci, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -270,5 +271,48 @@ ggplot(aes(x = population, y = mean_percMeth, fill = population,
   scale_y_continuous(breaks=c(0,25,50,75,100)) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
    facet_wrap_paginate(~chr + start, nrow=2, ncol=3, page=2)
+```
+
+## Save loci IDS and GO TERMS for All LOCI that were identified in the GENE feature file, for use in GO_MWU (notebook 12)
+
+```{r}
+GO.MWU.GOterms <- allLoci.features.df %>% filter(feature == "gene") %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
+  select(ID, Ontology_term) 
+
+write.table(GO.MWU.GOterms, here::here("analyses", "GO_MWU_GO-terms"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+## Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file, for use in GO_MWU (notebook 12)
+
+```{r}
+GO.MWU.DML.loci <- DML.features.df %>% filter(feature == "gene") %>%
+  mutate(start=(start.dml+1)) %>%
+  mutate(ID = paste(contig.dml, start, sep="_")) %>% 
+  select(ID) 
+
+GO.MWU.signif <- GO.MWU.GOterms %>%
+  select(ID) %>%
+  add_column(sig = c(1))
+
+GO.MWU.signif[which(GO.MWU.signif$ID %in% GO.MWU.DML.loci$ID),]$sig <- 0
+
+write.table(GO.MWU.signif, here::here("analyses", "GO_MWU_signif"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+## Save loci IDS and SIGNIFICANCE (q-values)  
+
+ON HOLD - NOT SURE WHY THE NUMBER OF LOCI DIFFER SO MUCH HERE 
+
+```{r}
+# Create loi 
+ getData(myDiff) %>% 
+  mutate(ID = paste(chr, start, sep="_")) %>% 
+  select(ID, qvalue) %>%
+  filter(ID %in% GO.MWU.signif$ID) %>% nrow()
+
+nrow(GO.MWU.signif)
 ```
 
