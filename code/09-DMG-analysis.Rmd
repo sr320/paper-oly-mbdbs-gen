@@ -24,20 +24,10 @@ lapply(list.of.packages, FUN = function(X) {
 })
 ```
 
-### Load filtered methylation data object which was created in the notebook "01-methylkit" 
+### Load filtered methylation data object with sample info which was created in the notebook "01-methylkit" 
 
 ```{r}
-load(here::here("analyses", "meth_filter")) 
-```
-
-### Reshape data to create a new column with sample info, and calculate %methylation for each locus/sample 
-
-```{r, message=FALSE, warning=FALSE, }
-meth_filter_reshaped <- melt(data=meth_filter, id=c("chr", "start", "end", "strand"), value.name = "count") %>%
- tidyr::separate(col = "variable" , into = c("variable", "sample"), sep = "(?<=[a-zA-Z])\\s*(?=[0-9])") %>%
-  dcast(chr+start+end+strand+sample ~  variable) %>%
-  mutate(percMeth = 100*(numCs/coverage))
-readr::write_delim(meth_filter_reshaped, "../analyses/meth_filter.tab",  delim = '\t', col_names = FALSE)
+load(here::here("analyses", "meth_filter_reshaped")) 
 ```
 
 ### Use intersectBed to find where loci and genes intersect, allowing loci to be mapped to annotated genes
@@ -73,7 +63,7 @@ library(car)
 
 ```{r}
 meth_filter_genes <- 
-  read_delim(file = here::here("analyses", "meth_filter_gene.tab"), delim = "\t", col_names = c(colnames(meth_filter_reshaped), "contig_gene", "source_gene", "feature_gene", "start_gene", "end_gene", "unknown1_gene", "strand_gene", "unknown2_gene", "notes_gene")) %>%
+  read_delim(file = here::here("analyses", "meth_filter_gene.tab"), delim = "\t", col_names = c(colnames(meth_filter_reshaped[-10]), "contig_gene", "source_gene", "feature_gene", "start_gene", "end_gene", "unknown1_gene", "strand_gene", "unknown2_gene", "notes_gene")) %>%
   mutate(gene=paste(contig_gene, start_gene, end_gene, sep="_")) %>%
   mutate(group=paste(sample, gene, sep="_")) %>%
   mutate(population=as.character(sample))
@@ -117,7 +107,7 @@ for(i in 1:length(gs)){
   sub_meth_table1 <- subset(sub_meth_table, gene ==gs[i])
   
   # fit glm position model
-  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population), 
+  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
              data=sub_meth_table1, family=binomial)
   a <- anova(fit, test="Chisq")
   
@@ -167,6 +157,7 @@ DMGs.genes <- DMGs.genes %>%
        Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
        Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
        )
+write_csv(DMGs.genes, path = here::here("analyses", "DMGs.genes.csv"))
 
 #Extract GO terms 
 DMGs.genes.GO <- DMGs.genes %>%
@@ -177,7 +168,7 @@ DMGs.genes.GO <- DMGs.genes %>%
   dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term))
 
-write_delim(DMGs.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMRs.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
+write_delim(DMGs.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
 ```
 
 ## The file "../analyses/DMRs.GO.txt" was opened outside of RMarkdown and the GO terms and p-values were pasted into REVIGO. I then exported the R script to generate the Biological Processes scatterplot. Here is the REVIGO table: 
@@ -281,5 +272,83 @@ DMGs.bed <- meth_filter_genes %>%
                 unknown1_gene, strand_gene, unknown2_gene, notes_gene) 
 DMGs.bed <- DMGs.bed[!duplicated(test$contig_gene),]
 readr::write_delim(DMGs.bed, "../analyses/DMGs.bed",  delim = '\t', col_names = FALSE)
+```
+
+# Barplots showing % methylation of all methylated genes by population 
+
+```{r}
+
+ggplotly(meth_filter_genes %>%
+  filter(contig_gene %in% DMGs.genes$contig_gene & 
+           start_gene %in% DMGs.genes$start_gene & 
+           end_gene %in% DMGs.genes$end_gene) %>% 
+  group_by(population, gene) %>%
+  summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+            mean_percentMeth = mean(percMeth)) %>%
+  ggplot(aes(x = population, y = mean_percentMeth, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+
+#checking to make sure numCs + numTs = coverage
+plot(meth_filter_genes$numCs + meth_filter_genes$numTs ~ meth_filter_genes$coverage)  
+
+
+## Look at coverage for each DMG by population (mean % methylation across samples)
+ggplotly(meth_filter_genes %>%
+  filter(contig_gene %in% DMGs.genes$contig_gene & 
+           start_gene %in% DMGs.genes$start_gene & 
+           end_gene %in% DMGs.genes$end_gene) %>% 
+  group_by(population, gene) %>%
+  summarise(sum_cov = sum(coverage), 
+            mean_cov = mean(coverage)) %>%
+  ggplot(aes(x = population, y = mean_cov, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+
+DMG_counts <- meth_filter_genes %>%
+  filter(contig_gene %in% DMGs.genes$contig_gene & 
+           start_gene %in% DMGs.genes$start_gene & 
+           end_gene %in% DMGs.genes$end_gene)
+
+library(plotly)
+# Look at coverage for each DMG locus, by population 
+# mean % methylation across samples  
+DMG_genes_unique <- unique(DMG_counts$gene)
+for (i in 1:length(DMG_genes_unique)) {
+  temp <-  DMG_counts %>% 
+  filter(chr == "Contig22489") %>%
+  group_by(population, chr, start) %>%
+  summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+            mean_percentMeth = mean(percMeth))
+    print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
+    geom_bar(stat="identity") + 
+    facet_wrap(~start) + 
+    theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
+  }
+```
+
+## Identify DMGs that contain DMLs 
+
+```{bash}
+intersectBed \
+  -wb \
+  -a "../analyses/DMGs.bed" \
+  -b "../analyses/dml25.bed" \
+  > "../analyses/DMGs-with-DMLs.tab"
+```
+
+### Here is the number of loci associated with gene regions: 
+
+```{bash}
+wc -l "../analyses/DMGs-with-DMLs.tab"
+```
+
+```{r}
+DMLs.in.DMGs <- 
+  read_delim(file = here::here("analyses", "DMGs-with-DMLs.tab"), delim = "\t", col_names = c(colnames(DMGs.bed), colnames(dml25))) %>%
+  mutate(gene=paste(contig_gene, start_gene, sep="_")) 
+
+meth_filter_genes %>% 
+  mutate(start=start-1) %>% 
+  mutate(gene=paste(chr, start, sep="_")) %>% 
+  filter(gene %in% DMLs.in.DMGs$gene)
+
 ```
 

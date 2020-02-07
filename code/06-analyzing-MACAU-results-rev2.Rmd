@@ -237,6 +237,7 @@ macau.10x75.c %>%
 write_delim(here::here("analyses","macau", "macau-all-loci.10x75.bed"),  delim = '\t', col_names = FALSE)
 ```
 
+
 # Re-do analysis with 5x75 
 
 That is, MACAU results which analyzed count data for loci where 75% of samples had **5x coverage** or greater. 
