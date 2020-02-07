@@ -60,44 +60,47 @@ head(meth_filter.df) #check resulting dataframe
 
 Create dataframe with total counts (aka coverage), and location info (chromosome, start, strand). End was not pulled, since count are of single base pairs (start and end are the same)
 
-meth.destranded.df[, grep(c("siteID|coverage"), colnames(meth.destranded.df))]
-
-
-Convert all NA values to 0 for both total count and methylated count files 
+IMPORTANT NOTE: MACAU does not work if there are any missing (NA) or 0 values in the total count file.  Because I still want to analyze the loci where one sample per population was filtered out due to <10x or >100x coverage, I need to do some merging. 
 
 ```{r}
-meth_filter.df.zeros <- meth_filter.df %>% replace(is.na(.), 0)
+# Create a low threshold object, needed to merge with the filtered dataframe so I can replace NA values with actual values 
+
+# load("../analyses/myobj_18") #load original count object if needed 
+
+meth_united_alldf <- methylKit::unite(myobj_18, destrand=TRUE, min.per.group=1L) %>% getData()
+meth_united_alldf$siteID <- with(meth_united_alldf, paste(chr, start, sep="_"))  #merge id columns into 1
+meth_united_alldf <- subset(meth_united_alldf, select=c(59,1:58)) #move siteID to first  column
+
+# Select loci from the full dataset that are only contained within the filtered dataset 
+meth_filter.df.noNA <- meth_united_alldf %>%
+  filter(siteID %in% meth_filter.df$siteID)
+
+# See if there are any NA values left in the total count file 
+sapply(meth_filter.df.noNA[, grep(c("coverage"), colnames(meth_filter.df.noNA))], function(x) sum(is.na(x))) #yes, there are some 
+meth_filter.df.noNA[is.na(meth_filter.df.noNA$coverage15),]  #check out the highest instance 
+
+# Extract only loci without NA values 
+meth_filter.df.noNA.final <- meth_filter.df.noNA[complete.cases(meth_filter.df.noNA[, grep(c("coverage"), colnames(meth_filter.df.noNA))]), ]
+
+# Check for NAs again - should 
+sapply(meth_filter.df.noNA.final[, grep(c("coverage"), colnames(meth_filter.df.noNA.final))], function(x) sum(is.na(x))) #nope!  
+
+# See how many loci were dropped 
+nrow(meth_filter.df.noNA) - nrow(meth_filter.df.noNA.final) # just 104, not a big deal 
 ```
 
+## Create separate objects for total counts (coverage) and for methylated counts (numCs)
 
 ```{r}
-counts.tot <- meth_filter.df.zeros[, grep(c("siteID|coverage"), colnames(meth_filter.df.zeros))]
+head(counts.tot <- meth_filter.df.noNA.final[, grep(c("siteID|coverage"), colnames(meth_filter.df.noNA.final))])
+head(counts.meth <- meth_filter.df.noNA.final[, grep(c("siteID|numCs"), colnames(meth_filter.df.noNA.final))])
 ```
 
-Create dataframe with methylated counts  
+Confirm that rows (loci) are in same order for total counts and methylated counts 
 
 ```{r}
-counts.meth <- meth_filter.df.zeros[, grep(c("siteID|numCs"), colnames(meth_filter.df.zeros))]
-
 table(counts.tot$siteID == counts.meth$siteID)
 nrow(counts.tot)==nrow(counts.meth)
-
-#counts.tot[-1] <- data.frame(lapply(counts.tot[-1], as.integer))
-#counts.meth[-1] <- data.frame(lapply(counts.meth[-1], as.integer))
-```
-
-Inspect count dataframes  
-
-```{r}
-head(counts.tot)
-head(counts.meth)
-```
-
-Inspect count dataframes  
-
-```{r}
-head(counts.tot)
-head(counts.meth)
 ```
 
 Write dataframes to tab delimited .txt files for MACAU. 
@@ -109,8 +112,10 @@ write.table(counts.meth, file = "../analyses/counts-filtered-meth.txt", sep = "\
 
 Write out dataframe with merged  ID, contig #, start #, and strand info for later use 
 
+## NOTE: the meth_filter.df.noNA.final object is the list of loci that will be fed into MACAU. This constitutes the background list of loci. 
+
 ```{r}
-write.table(meth_filter.df, file = "../analyses/meth_filter.df.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(meth_filter.df.noNA.final, file = "../analyses/meth_filter.df.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
 ```
 
 ### Prepare other files for MACAU

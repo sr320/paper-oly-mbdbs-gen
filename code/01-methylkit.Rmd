@@ -27,22 +27,20 @@ sessionInfo()
 sessionInfo()
 ```
 
-## Download files from `gannet`
-
-```{bash}
-#rsync -avz --progress sr320@mox.hyak.uw.edu:/gscratch/srlab/sr320/analyses/2019/0327/*bismark_bt2.deduplicated.sorted.bam ../analyses/
-```
-
-
-```{bash}
-curl https://gannet.fish.washington.edu:/seashell/bu-mox/analyses/2019/0327/{*}bismark_bt2.deduplicated.sorted.bam ../analyses/
-```
-
 
 ## Check current directory 
 
+```{r}
+getwd()
+```
+
+## Download files from `gannet` 
+
+wget -r -l1 --no-parent -A "*_s456_bismark_bt2.deduplicated.sorted.bam" https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/ --directory-prefix="../data/"
+
+
 ```{bash}
-pwd
+#rsync -avz --progress sr320@mox.hyak.uw.edu:/gscratch/srlab/sr320/analyses/2019/0327/*bismark_bt2.deduplicated.sorted.bam ../analyses/
 ```
 
 ## Create list of all bismark data files, which hav reads that are already trimmed and aligned. These BAM files are also sorted and indexed. 
@@ -87,10 +85,10 @@ save(myobj_18, file = "../analyses/myobj_18")
 #zip ../analyses/myobj_18.zip ../analyses/myobj_18
 ```
 
-???? not sure what this is referencing, if anything 
+Load object if needed 
 
 ```{r}
-#load("analyses/myobj_52")
+load("../analyses/myobj_18")
 ```
 
 ## Check the basic stats about the methylation data - coverage and percent methylation. Index the object to look through each sample
@@ -121,7 +119,7 @@ meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=8L)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
 
 clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
-PCASamples(meth_filter, screeplot = TRUE)
+PCASamples(meth_filter, screeplot = F)
 ```
 
 
@@ -175,9 +173,15 @@ library(tidyverse)
 Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 ```{r}
+# Write out bedfile for DMLs 
 dml25 <-  mutate(myDiff25p, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
   mutate_if(is.numeric, as.integer)
 write_delim(dml25, "../analyses/dml25.bed",  delim = '\t', col_names = FALSE)
+
+# Write out bedfile for all loci fed into DML analysis, to use as background for enrichment 
+mydiff.all <-  mutate(myDiff, start = start -1, end = end + 1) %>% select(chr, start, end, meth.diff) %>%
+  mutate_if(is.numeric, as.integer)
+write_delim(mydiff.all, "../analyses/mydiff-all.bed",  delim = '\t', col_names = FALSE)
 ```
 
 ##  Subset the filtered methylation count dataframe for only those that are differentially methylated. Save object to file. 
@@ -244,50 +248,42 @@ DML.calcs <- meth_filter_reshaped %>%
   dplyr::summarise(
     mean_percMeth = mean(percMeth, na.rm=TRUE),
     sd_percMeth=sd(percMeth, na.rm=TRUE),
-    n()) 
-
-# Extract separate dataframes for HC and SS hypomethylated loci 
-hypo_HC <- DML.calcs %>% 
-  filter(chr %in% c(DML.ratios[DML.ratios$ratio_HC.SS<1,"chr"]) & 
-           start %in% c(DML.ratios[DML.ratios$ratio_HC.SS<1,"start"]))
-hypo_SS <- DML.calcs %>% 
-  filter(chr %in% c(DML.ratios[DML.ratios$ratio_HC.SS>1,"chr"]) & 
-           start %in% c(DML.ratios[DML.ratios$ratio_HC.SS>1,"start"]))
-
-# Generate DF with unique contigs + loci to use in ggplot loops  
-hypo_HC_unique <- hypo_HC %>% ungroup() %>% select(chr, start) %>% distinct()
-hypo_SS_unique <- hypo_SS %>% ungroup() %>% select(chr, start) %>% distinct()
-
-# Barplots of all hypomethylated loci in Hood Canal population 
-for (i in 1:nrow(hypo_HC_unique)) {
-  test <- hypo_HC %>%
-    filter(chr==hypo_HC_unique$chr[i] &
-             start==hypo_HC_unique$start[i])
-  print(ggplot(test, aes(x = population, y = mean_percMeth, fill = population, label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
-      geom_bar(stat="identity", width = 0.5) + ylim(0,100) +
-      geom_errorbar(aes(ymin=mean_percMeth-sd_percMeth, ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
-      geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle(paste("Contig = ", hypo_HC_unique[i, "chr"], ", Locus = ", hypo_HC_unique[i, "start"], sep="")) +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3")))
-}
+    n())  %>% 
+  filter(chr %in% c(DML.ratios$chr) & 
+           start %in% c(DML.ratios$start))
 
 # Barplots of all hypomethylated loci in South Sound population 
-hypo_SS_plots <- list()
-for (i in 1:nrow(hypo_SS_unique)) {
-  test <- hypo_SS %>% 
-    filter(chr==hypo_SS_unique$chr[i] &
-             start==hypo_SS_unique$start[i])
+DML_plots <- list()
+for (i in 1:nrow(DML.ratios)) {
+  test <- DML.calcs %>% 
+    filter(chr==DML.ratios$chr[i] &
+             start==DML.ratios$start[i])
   hypo_SS_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
                          label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
       geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
       geom_pointrange(aes(ymin=mean_percMeth, 
                         ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
       geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle(paste("Contig = ", hypo_SS_unique[i, "chr"], ", Locus = ", 
-                                    hypo_SS_unique[i, "start"], sep="")) +
+      theme_light() + ggtitle(paste("Contig = ", DML.ratios[i, "chr"], ", Locus = ", 
+                                    DML.ratios[i, "start"], sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 }
-do.call("grid.arrange", hypo_SS_plots)
+do.call("grid.arrange", DML_plots)
+
+
+# use this to call specific contigs 
+DML.calcs %>% 
+    filter(chr=="Contig26041") %>%
+ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle("Tonsoku-like protein, DNA repair") +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+
+
 
 install.packages("viridis")
 library(viridis)
@@ -299,7 +295,7 @@ test <- meth_filter_reshaped %>%
            start %in% dml25_counts_unique$start & 
            chr %in% DML.ratios$chr)
 #ggplotly(
-ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile() +
+ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T, ) +
   scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr)) + 
   #scale_fill_viridis(discrete=FALSE) 
   theme(axis.title.y=element_blank(),

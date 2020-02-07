@@ -166,11 +166,13 @@ No cluster analysis, instead samples are presented in the same order as the Meth
 
 ```{r}
 tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep="")
+sample.order <- paste("numCs",c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18), sep="")
 pop.colors.tree <- c(rep("dodgerblue3", times=9), rep("firebrick3", times=9))
 
-heatmap.2(as.matrix(macau.sign.perc.meth.10x75[tree.order]), main = "MACAU id'd % methylated\nwhite=<10x cov\nOrdered by MethylKit tree", key.ylab = NA, key.title = "% methylated",
-          xlab = NA, ylab = "loci", na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
-          col = colorRampPalette(c('#08519c','#bdd7e7'))(30), colCol = pop.colors.tree)
+par(cex.main=.8, oma=c(2,1,2,1))
+heatmap.2(as.matrix(subset(macau.sign.perc.meth.10x75, pvalue<0.000005)[sample.order]), main = "Methylation associated with\nshell length", key.ylab = NA, key.title = "% methylated",
+          xlab = NA, ylab = NA, na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
+          col =  colorRampPalette(rev(brewer.pal(9,"YlGnBu"))), colCol = c(rep("firebrick3", times=9), rep("dodgerblue3", times=9)))
 
 # Save same heatmap to file 
 pdf(file ="../analyses/macau/macau-heatmap.10x75.tree.pdf")
