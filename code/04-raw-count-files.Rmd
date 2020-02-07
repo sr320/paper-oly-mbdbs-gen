@@ -62,14 +62,28 @@ Create dataframe with total counts (aka coverage), and location info (chromosome
 
 meth.destranded.df[, grep(c("siteID|coverage"), colnames(meth.destranded.df))]
 
+
+Convert all NA values to 0 for both total count and methylated count files 
+
 ```{r}
-counts.tot <- meth_filter.df[, grep(c("siteID|coverage"), colnames(meth_filter.df))]
+meth_filter.df.zeros <- meth_filter.df %>% replace(is.na(.), 0)
+```
+
+
+```{r}
+counts.tot <- meth_filter.df.zeros[, grep(c("siteID|coverage"), colnames(meth_filter.df.zeros))]
 ```
 
 Create dataframe with methylated counts  
 
 ```{r}
-counts.meth <- meth_filter.df[, grep(c("siteID|numCs"), colnames(meth_filter.df))]
+counts.meth <- meth_filter.df.zeros[, grep(c("siteID|numCs"), colnames(meth_filter.df.zeros))]
+
+table(counts.tot$siteID == counts.meth$siteID)
+nrow(counts.tot)==nrow(counts.meth)
+
+#counts.tot[-1] <- data.frame(lapply(counts.tot[-1], as.integer))
+#counts.meth[-1] <- data.frame(lapply(counts.meth[-1], as.integer))
 ```
 
 Inspect count dataframes  
@@ -79,16 +93,12 @@ head(counts.tot)
 head(counts.meth)
 ```
 
-Convert all NA values to 0 for both total count and methylated count files 
+Inspect count dataframes  
 
 ```{r}
-counts.tot[is.na(counts.tot)] <- 0
-counts.meth[is.na(counts.meth)] <- 0
-
-counts.tot[-1] <- data.frame(lapply(counts.tot[-1], as.integer))
-counts.meth[-1] <- data.frame(lapply(counts.meth[-1], as.integer))
+head(counts.tot)
+head(counts.meth)
 ```
-
 
 Write dataframes to tab delimited .txt files for MACAU. 
 
