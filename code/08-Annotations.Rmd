@@ -90,9 +90,44 @@ macau75.features.df <- bind_rows(macau75.features[-5:-6])
 print(macau75.summary <- table(macau75.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
 ```
 
+Are any MACAU associated with DMLs / DMGs ? 
+
+```{r}
+
+
+# Barplots of all DMLs also located in DMGs 
+
+meth_filter_calcs <- meth_filter_reshaped %>% 
+  group_by(population, chr, start) %>% 
+  dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n()) 
+
+meth_filter_calcs %>% 
+    filter(chr=="Contig18084" &
+             start=="10113") %>%
+  ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle("") +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+
+```
+
+
+
+```{r}
+macau75.features.df
+```
+
+
 ## 3. All loci 
 
-### Where are all methylated loci located? 
+### Where are ALL methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
 allLocifiles <- c("AllLoci-CDS.bed", "AllLoci-exon.bed", "AllLoci-gene.bed", "AllLoci-mRNA.bed", "AllLoci-TE.bed", "AllLoci-ASV.bed", "AllLoci-intragenic.bed")
@@ -123,7 +158,6 @@ allLoci.features[[6]] <- allLoci.features[[6]] %>% mutate_at("unknown1", as.char
 allLoci.features.df <- bind_rows(allLoci.features[1:5]) #don't include alternative splice variants or intragenic 
 print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
 ```
-
 
 ## Summary 
 
@@ -178,6 +212,7 @@ macau75.GO <- macau75.features.df[c("contig.macau75", "start.macau75", "end.maca
   filter(!is.na(Note) & !is.na(GO_term))
 write_csv(macau75.features.df, path = here::here("analyses/", "macau/", "macau75.features.csv")) #write out df with all MACAU features 
 write(macau75.GO$GO_term, file = here::here("analyses/", "macau/", "macau75.GO.txt")) #write out df with just GO terms 
+write.table(subset(macau75.features.df, feature=="gene"), here::here("analyses/", "macau/", "MACAU.geneinfo.txt"), sep = "\t") #write out gene info for MACAU loci to associate with UniprotIDs
 
 DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -189,6 +224,7 @@ DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "st
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(DML.features.df, path = here::here("analyses/", "DML.features.txt")) #write out df with all DML features 
 write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
+write.table(subset(DML.features.df, feature=="gene"), here::here("analyses/", "DML.geneinfo.txt"), sep = "\t") #write out gene info for DMLs to associate with UniprotIDs
 
 allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.allLoci, start.allLoci, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -200,6 +236,8 @@ allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allL
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(allLoci.features.df, path = here::here("analyses/", "AllLoci.features.txt")) #write out df with all loci features 
 write(allLoci.GO$GO_term, file = here::here("analyses/", "allLoci.GO.txt"))
+write.table(subset(allLoci.features.df, feature=="gene"), here::here("analyses/", "macau/", "allLoci.geneinfo.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
+
 ```
 
 ## Create separate dataframes with annotation information for all hypomethylated loci in Hood Canal & South Sound, separately 
@@ -271,4 +309,3 @@ ggplot(aes(x = population, y = mean_percMeth, fill = population,
     scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
    facet_wrap_paginate(~chr + start, nrow=2, ncol=3, page=2)
 ```
-
