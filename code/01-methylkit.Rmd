@@ -117,9 +117,14 @@ filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=8L)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
+```
 
-clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
-PCASamples(meth_filter, screeplot = F)
+Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
+
+Here I create % methylation matrices from the filtered object, and use it to do another cluster analysis 
+
+```{r}
+perc.meth=percMethylation(meth_filter, rowids=T)
 ```
 
 
@@ -148,8 +153,6 @@ write.table(myDiff25p, file = "../analyses/myDiff25p.tab", sep = "\t")
 ```{r}
 #write.table(myDiff50p, file = "../analyses/myDiff50p.tab", sep = "\t")
 ```
-
-
 
 ---
 # Taking the DMLs to a bed
@@ -193,10 +196,115 @@ dml25_counts <- meth_filter %>%
            meth_filter$end %in% myDiff25p$end)
 
 class(dml25_counts) #class should be methylBase
+perc.methDMLs= percMethylation(dml25_counts, rowids=T) #create a percent methylated object for DMLs
+
+# save count and percent objects 
 save(dml25_counts, file = "../analyses/dml25_counts") #save object to be used in subsequent notebook 
+save(perc.methDMLs, file="../analyses/perc.methDMLs")
 ```
 
-### Reshape data to create a new column with sample info, and calculate %methylation for each locus/sample 
+
+### Extract correlation matrix (pearson) and distance matrix (manhattan) from the % methylated matrix
+FYI I checked that the correlation matrix in `getCorrelation` is derived from the percent methylated matrix. It is! 
+
+```{r}
+cor.pears <- cor(perc.meth, method="pearson") # create pearson correlation matrix. 
+dist.manhat <- dist(t(perc.meth), method = "manhattan", diag = T, upper = F)
+dist.manhat.df <- reshape2::melt(as.matrix(dist.manhat), varnames = c("row", "col"))
+
+cor.pears.DMLs <- cor(perc.methDMLs, method="pearson") 
+dist.manhat.DMLs <- dist(t(perc.methDMLs), method = "manhattan", diag = T, upper = F) 
+dist.manhat.DMLs.df <- reshape2::melt(as.matrix(dist.manhat.DMLs), varnames = c("row", "col"))
+```
+
+### Read in sample number key, merge with distance matrix dataframes
+
+```{r}
+key <- read.csv(here::here("data", "sample-key.csv"))
+
+dist.manhat.df <- merge(x=merge(x=dist.manhat.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.df, file=here::here("analyses", "dist.manhat.csv"), row.names=FALSE) 
+
+dist.manhat.DMLs.df <- merge(x=merge(x=dist.manhat.DMLs.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
+colnames(dist.manhat.DMLs.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
+write.csv(dist.manhat.DMLs.df, file=here::here("analyses","dist.manhat.DMLs.csv"), row.names=FALSE)
+```
+
+
+## Figures
+
+### Hierarchical Clustering using methylation data
+
+The function clusters samples using hclust function and various distance metrics derived from percent methylation per base or per region for each sample.
+
+```{r}
+clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
+```
+
+
+```{r}
+PCASamples(meth_filter, screeplot = F)
+```
+
+###### Principal Component Analyses
+
+Customized `methylKit` biplots from Yaamini Venkataraman's code,  [https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270](https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270)
+
+```{r}
+#Create dataframe with sample treatment information, color & symbol scheme 
+plotCustomization <- data.frame(sample = 1:18, population=c(
+                                rep("HC", times=9), 
+                                rep("SS", times=9)),
+                                color=c(rep("firebrick3", times=9),
+                                rep("dodgerblue3", times=9)),
+                                symbol=c(rep(16, times=9),
+                                rep(17, times=9))) 
+PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+summary(PCA.filtered) #Look at summary statistics. The first PC explains 21.9% of variation, the second PC explains 18.3% of variation
+
+require(vegan)
+
+#pdf("../analyses/2018-10-25-MethylKit/2019-11-19-All-Data-PCA.pdf", width = 11, height = 8.5)
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+PCA.figure <- ordiplot(PCA.filtered, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
+points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 3) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
+#Add multiple white boxes on top of the default black box to manually change the color
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
+ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (21.9%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (18.3%)", line = 3, cex = 1.5) #Add y-axis label
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
+#dev.off()
+```
+
+
+
+# Another PCA option with % methylation matrices  
+
+```{r}
+FactoMineR::PCA(perc.meth)
+FactoMineR::PCA(perc.methDMLs)
+```
+
+### Reshape filtered data to create a new column with sample info, and calculate %methylation for each locus/sample 
+
 
 ```{r}
 meth_filter_reshaped <- melt(data=meth_filter, id=c("chr", "start", "end", "strand"), value.name = "count") %>%
@@ -210,7 +318,7 @@ readr::write_delim(meth_filter_reshaped, here::here("analyses", "meth_filter.tab
 save(meth_filter_reshaped, file = here::here("analyses", "meth_filter_reshaped"))
 ```
 
-## Barplots showing % methylation of DMLs by population 
+### Barplots showing % methylation of DMLs by population 
 
 ```{r}
 # Look at coverage for each DML, by population 
@@ -295,7 +403,7 @@ test <- meth_filter_reshaped %>%
            start %in% dml25_counts_unique$start & 
            chr %in% DML.ratios$chr)
 #ggplotly(
-ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T, ) +
+ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T) +
   scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr)) + 
   #scale_fill_viridis(discrete=FALSE) 
   theme(axis.title.y=element_blank(),
