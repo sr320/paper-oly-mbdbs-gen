@@ -457,4 +457,9 @@ MACAU.results.c %>%
   rename(start = locus) %>%
   dplyr::select(c("contig", "start", "end")) %>%
 write_delim(here::here("analyses","macau", "macau-all-loci.bed"),  delim = '\t', col_names = FALSE)
+
+
+# All loci fed into/from macau with q-values  
+macau.FDR %>%
+write_delim(here::here("analyses","macau", "macau-all-loci_qvalues.tab"),  delim = '\t', col_names = FALSE)
 ```
