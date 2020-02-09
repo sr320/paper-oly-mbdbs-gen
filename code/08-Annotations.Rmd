@@ -53,6 +53,8 @@ DML.features[[5]] <- DML.features[[5]] %>% mutate_at("unknown1", as.character)
 DML.features[[6]] <- DML.features[[6]] %>% mutate_at("unknown1", as.character)
 DML.features.df <- bind_rows(DML.features[-6:-7])
 print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" refers to transposable elements; also NO alternative splice variants are included. 
+
+DML.features.df
 ```
 
 ## 2. MACAU loci
@@ -60,13 +62,13 @@ print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" r
 ### Where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-macau75files <- c("macau75-CDS.bed", "macau75-exon.bed", "macau75-gene.bed", "macau75-mRNA.bed", "macau75-ASV.bed", "macau75-intragenic.bed")
-macau75.features <- list()
+macau.files <- c("macau-CDS.bed", "macau-exon.bed", "macau-gene.bed", "macau-mRNA.bed", "macau-ASV.bed", "macau-intragenic.bed")
+macau.features <- list()
 for (i in c(1:6)) {
-  macau75.features[[i]] <- read_delim(here::here("analyses", "BEDtools", macau75files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+  macau.features[[i]] <- read_delim(here::here("analyses", "BEDtools", macau.files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
 for (i in 1:5) {
-  macau75.features[[i]] <- macau75.features[[i]] %>%
-    setNames(c("contig.macau75","start.macau75","end.macau75","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+  macau.features[[i]] <- macau.features[[i]] %>%
+    setNames(c("contig.macau","start.macau","end.macau","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Parent=str_extract(attribute, "Parent=(.*?);"),
        Name=str_extract(attribute, "Name=(.*?);"),
@@ -79,23 +81,23 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(macau75.features) <- c("macau75.CDS", "macau75.exon","macau75.gene", "macau75.mRNA", "macau75.ASV", "macau75.intragenic")
-macau75.features[["macau75.intragenic"]] <- 
-  macau75.features[["macau75.intragenic"]] %>% 
-  setNames(c("contig.macau75", "start.macau75", "end.macau75"))
+names(macau.features) <- c("macau.CDS", "macau.exon","macau.gene", "macau.mRNA", "macau.ASV", "macau.intragenic")
+macau.features[["macau.intragenic"]] <- 
+  macau.features[["macau.intragenic"]] %>% 
+  setNames(c("contig.macau", "start.macau", "end.macau"))
 
-macau75.features[[1]] <- macau75.features[[1]] %>% mutate_at("unknown2", as.character)
-macau75.features[[5]] <- macau75.features[[5]] %>% mutate_at("unknown1", as.character)
-macau75.features.df <- bind_rows(macau75.features[-5:-6])
-print(macau75.summary <- table(macau75.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
+macau.features[[1]] <- macau.features[[1]] %>% mutate_at("unknown2", as.character)
+macau.features[[5]] <- macau.features[[5]] %>% mutate_at("unknown1", as.character)
+macau.features.df <- bind_rows(macau.features[-5:-6])
+print(macau.summary <- table(macau.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
+
+macau.features[[3]]
 ```
 
 Are any MACAU associated with DMLs / DMGs ? 
 
 ```{r}
-
-
-# Barplots of all DMLs also located in DMGs 
+# Barplots of all MACAU loci  
 
 meth_filter_calcs <- meth_filter_reshaped %>% 
   group_by(population, chr, start) %>% 
@@ -105,15 +107,15 @@ meth_filter_calcs <- meth_filter_reshaped %>%
     n()) 
 
 meth_filter_calcs %>% 
-    filter(chr=="Contig18084" &
-             start=="10113") %>%
+      filter(chr %in% macau.features[[3]]$contig.macau &
+           start %in% macau.features[[3]]$start.macau) %>%
   ggplot(aes(x = population, y = mean_percMeth, fill = population, 
                          label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
       geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
       geom_pointrange(aes(ymin=mean_percMeth, 
                         ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
       geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle("") +
+      theme_light() + ggtitle("") + facet_wrap(~chr) + 
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 
 ```
@@ -121,7 +123,7 @@ meth_filter_calcs %>%
 
 
 ```{r}
-macau75.features.df
+macau.features.df
 ```
 
 
@@ -163,7 +165,7 @@ print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "simil
 
 ```{r, message=FALSE, warning=FALSE}
 summary <- merge(x=merge(x=melt(DML.summary, varnames = "feature", value.name = "DML"), 
-      y=melt(macau75.summary, varnames = "feature", value.name = "macau75"),
+      y=melt(macau.summary, varnames = "feature", value.name = "macau"),
       by="feature", all=TRUE), 
       y=melt(allLoci.summary, varnames = "feature", value.name = "allLoci"),
       by="feature", all=TRUE)
@@ -174,7 +176,7 @@ summaryL <- summaryL %>%
   group_by(analysis) %>%
   mutate(percent=100*(count/sum(count)))
 
-ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=log(count), fill=analysis)) +
+ggplot(data=subset(summaryL, analysis!="macau"), aes(x=feature, y=log(count), fill=analysis)) +
   geom_bar(stat="identity") + 
   scale_fill_brewer(palette="Paired") + ggtitle("DMLs loci and all methylated loci, Log-counts") +
   theme_minimal()
@@ -184,7 +186,7 @@ ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=log(count), fill
   scale_fill_brewer(palette="Paired") + ggtitle("MACAU and all methylated loci, Log-counts") +
   theme_minimal()
 
-ggplot(data=subset(summaryL, analysis!="macau75"), aes(x=feature, y=percent, fill=analysis)) +
+ggplot(data=subset(summaryL, analysis!="macau"), aes(x=feature, y=percent, fill=analysis)) +
   geom_bar(stat="identity", position=position_dodge()) + 
   scale_fill_brewer(palette="Paired") + ggtitle("% of DML loci, and all loci, in each feature") +
   geom_text(aes(label=paste(round(percent), "%", sep="")), vjust=-0.5, color="gray30",
@@ -202,17 +204,17 @@ ggplot(data=subset(summaryL, analysis!="DML"), aes(x=feature, y=percent, fill=an
 ## Extract GO terms 
 
 ```{r}
-macau75.GO <- macau75.features.df[c("contig.macau75", "start.macau75", "end.macau75", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
-  distinct(contig.macau75, start.macau75, Note, Ontology_term, .keep_all = TRUE) %>%
+macau.GO <- macau.features.df[c("contig.macau", "start.macau", "end.macau", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
+  distinct(contig.macau, start.macau, Note, Ontology_term, .keep_all = TRUE) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:6, sep="_")) %>%
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
   select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term))
-write_csv(macau75.features.df, path = here::here("analyses/", "macau/", "macau75.features.csv")) #write out df with all MACAU features 
-write(macau75.GO$GO_term, file = here::here("analyses/", "macau/", "macau75.GO.txt")) #write out df with just GO terms 
-write.table(subset(macau75.features.df, feature=="gene"), here::here("analyses/", "macau/", "macau75.genes.txt"), sep = "\t") #write out gene info for MACAU loci to associate with UniprotIDs
+write_csv(macau.features.df, path = here::here("analyses/", "macau/", "macau.features.csv")) #write out df with all MACAU features 
+write(macau.GO$GO_term, file = here::here("analyses/", "macau/", "macau.GO.txt")) #write out df with just GO terms 
+write.table(subset(macau.features.df, feature=="gene"), here::here("analyses/", "macau/", "MACAU.geneinfo.txt"), sep = "\t") #write out gene info for MACAU loci to associate with UniprotIDs
 
 DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.dml, start.dml, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -224,7 +226,7 @@ DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "st
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(DML.features.df, path = here::here("analyses/", "DML.features.txt")) #write out df with all DML features 
 write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
-write.table(subset(DML.features.df, feature=="gene"), here::here("analyses/", "macau/", "macau75.genes.txt"), sep = "\t") #write out gene info for DMLs to associate with UniprotIDs
+write.table(subset(DML.features.df, feature=="gene"), here::here("analyses/", "DML.geneinfo.txt"), sep = "\t") #write out gene info for DMLs to associate with UniprotIDs
 
 allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.allLoci, start.allLoci, Note, Ontology_term, .keep_all = TRUE) %>%
@@ -236,7 +238,7 @@ allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allL
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(allLoci.features.df, path = here::here("analyses/", "AllLoci.features.txt")) #write out df with all loci features 
 write(allLoci.GO$GO_term, file = here::here("analyses/", "allLoci.GO.txt"))
-write.table(subset(allLoci.features.df, feature=="gene"), here::here("analyses/", "macau/", "macau75.genes.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
+write.table(subset(allLoci.features.df, feature=="gene"), here::here("analyses/", "macau/", "allLoci.geneinfo.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
 
 ```
 

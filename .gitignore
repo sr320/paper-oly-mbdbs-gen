@@ -8,6 +8,4 @@ resources/
 data/uniprot-SP-GO-sorted.tab
 analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
-.DS_Store
-analyses/.DS_Store
-.DS_Store
+data/uniprot_sprot.fasta
