@@ -94,7 +94,7 @@ myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","
 ## Save the MethylKit object; re-doing the previous step is memory/time intensive, so best to use the saved object moving forward. 
 
 Object prepared by Steven in 2019 is also available at https://d.pr/f/vRtrqZ
-Object prepared by Laura in March 2020 
+Object prepared by Laura in March 2020 is available at TBD 
 
 ```{r, eval = FALSE}
 save(myobj_18, file = "../analyses/myobj_18") 
@@ -289,15 +289,21 @@ head(perc.meth, 3)
 ```
 
 ```{r}
-perc.meth.Pst <- as.data.frame(perc.meth) 
-perc.meth.Pst$var_all <- rowVars(perc.meth, na.rm = TRUE)
-perc.meth.Pst$var_hc <- rowVars(perc.meth[,1:9], na.rm = TRUE)
-perc.meth.Pst$var_ss <- rowVars(perc.meth[,10:18], na.rm = TRUE)
-perc.meth.Pst$Pst.hc <- (perc.meth.Pst$var_all - perc.meth.Pst$var_hc) / perc.meth.Pst$var_all
-perc.meth.Pst$Pst.ss <- (perc.meth.Pst$var_all - perc.meth.Pst$var_ss) / perc.meth.Pst$var_all
-plot(perc.meth.Pst$Pst.hc ~ perc.meth.Pst$Pst.ss)
-hist(perc.meth.Pst$Pst.hc)
-hist(perc.meth.Pst$Pst.ss)
+write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+require(matrixStats)
+require(readr)
+require(tidyverse)
+
+perc.meth.Pst <- read_delim(file = "../analyses/percent-methylation-filtered.tab", delim = "\t", col_names = TRUE) 
+perc.meth.Pst$var_all <- rowVars((perc.meth.Pst[-1] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across all samples
+perc.meth.Pst$var_hc <- rowVars((perc.meth.Pst[,2:10] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across Hood Canal samples (sample #1 - #9) 
+perc.meth.Pst$var_ss <- rowVars((perc.meth.Pst[,11:19] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across South Sound samples (sample #10 - #18) 
+perc.meth.Pst$Pst.hc <- (perc.meth.Pst$var_all - perc.meth.Pst$var_hc) / perc.meth.Pst$var_all #calculate Pst using Hood Canal variance as the within-group variance 
+perc.meth.Pst$Pst.ss <- (perc.meth.Pst$var_all - perc.meth.Pst$var_ss) / perc.meth.Pst$var_all  #calculate Pst using South Sound variance as the within-group variance 
+plot(perc.meth.Pst$Pst.hc ~ perc.meth.Pst$Pst.ss)  #Do Pst calculated using HC variance and SS variance differ? Yes, not 1:1 
+hist(perc.meth.Pst$Pst.hc) # Slightly right skewed 
+hist(perc.meth.Pst$Pst.ss) # Slightly left skewed 
 ```
 
 
