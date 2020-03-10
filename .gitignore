@@ -10,3 +10,4 @@ data/uniprot_sprot.fasta
 analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
 analyses/myobj_18
+data/uniprot_sprot.fasta
