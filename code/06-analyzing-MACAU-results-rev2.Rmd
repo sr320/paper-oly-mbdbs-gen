@@ -384,7 +384,7 @@ plot(macau.FDR$pvalue, macau.FDR$pvalues) # looks good!
 
 ```{r}
 head(macau.sign <- subset(macau.FDR, significant=="TRUE"), n=20)
-nrow(macau.sign) #146
+nrow(macau.sign) #13
 macau.sign.meth.counts <- merge(x=macau.sign, y=subset(counts.filtered.meth, siteID %in% macau.sign$id), by.x="id", by.y="siteID")
 macau.sign.tot.counts <- merge(x=macau.sign, y=subset(counts.filtered.tot, siteID %in% macau.sign$id), by.x="id", by.y="siteID")
 write.table(macau.sign.meth.counts, file = here::here("analyses", "combined-macau-FDR-meth-counts.txt"), sep = "\t", row.names = FALSE,  quote = FALSE) 
@@ -407,8 +407,6 @@ tree.order <- paste("numCs",c(15,17,12,10,11,13,18,14,16,8,1,6,9,2,4,5,3,7), sep
 sample.order <- paste("numCs",c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18), sep="")
 pop.colors.tree <- c(rep("dodgerblue3", times=9), rep("firebrick3", times=9))
 
-rowMeans(macau.sign.perc.meth[,20:28])/rowMeans(macau.sign.perc.meth[,29:37])
-
 macau.sign.perc.meth <- macau.sign.perc.meth %>%
   mutate(mean.HC = rowMeans(macau.sign.perc.meth[,20:28])) %>%
   mutate(mean.SS = rowMeans(macau.sign.perc.meth[,29:37])) %>%
@@ -429,7 +427,7 @@ heatmap.2(as.matrix(macau.sign.perc.meth[, grep(c("numCs"), colnames(macau.sign.
          xlab = NA, ylab = NA, 
          na.color = "white",trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
           col = colorRampPalette(brewer.pal(4,"YlGnBu")), colCol = pop.colors.tree)
-
+View(macau.sign.perc.meth)
 par(cex.main=.8)
 heatmap.2(as.matrix(macau.sign.perc.meth[, size.macau$sample]), 
           main = "MACAU id'd % methylation\nFDR=10%\nOrdered by Length", 
@@ -437,9 +435,8 @@ heatmap.2(as.matrix(macau.sign.perc.meth[, size.macau$sample]),
           trace="none", dendrogram = "none", Rowv=FALSE, Colv = FALSE,
           col = colorRampPalette(brewer.pal(4,"YlGnBu")), colCol = pop.colors.length)
 
-par(oma=c(0,8,0,0))
-barplot(height = size.macau$y.Length,  names.arg = size.macau$sample, col = mycols[size.macau$pop], cex.names =  0.8,
-        main = "Shell Length (mm)", las=2)
+par(oma=c(0,0,5,0))
+barplot(size.macau[order(size.macau$y.MBD.FILENAME),]$y.Length,  names.arg = size.macau[order(size.macau$y.MBD.FILENAME),]$sample, col = mycols[size.macau[order(size.macau$y.MBD.FILENAME),]$pop], cex.names =  0.8, main = "Shell Length (mm)", las=2, space=1)
 ```
 
 ### Create BED files for 1) MACAU id'd loci with 5x coverage, and 2) all loci with 5x coverage  

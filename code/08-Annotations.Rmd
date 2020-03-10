@@ -19,6 +19,15 @@ lapply(list.of.packages, FUN = function(X) {
 sessionInfo()
 ```
 
+
+```{r}
+uniprot <- read_delim(here::here("data", "Olgene_blastx_uniprot.05-20191122-sort.tab"), delim="\t", col_names = FALSE) %>%
+  setNames(c("gene", "UniprotID", "unknown")) %>% 
+  separate(gene, into = c("contig.feat", "start.feat", "end.feat"), sep = '[:-]') %>%
+  mutate_at(c("start.feat", "end.feat"),as.numeric)
+```
+
+
 ## 1. DMLs 
 
 ### Where are differentially methylated loci located? 
@@ -54,7 +63,7 @@ DML.features[[6]] <- DML.features[[6]] %>% mutate_at("unknown1", as.character)
 DML.features.df <- bind_rows(DML.features[-6:-7])
 print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" refers to transposable elements; also NO alternative splice variants are included. 
 
-DML.features.df
+DML.features[[3]] %>% left_join(uniprot, by=c("contig.feat","start.feat", "end.feat"))
 ```
 
 ## 2. MACAU loci
@@ -91,7 +100,8 @@ macau.features[[5]] <- macau.features[[5]] %>% mutate_at("unknown1", as.characte
 macau.features.df <- bind_rows(macau.features[-5:-6])
 print(macau.summary <- table(macau.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
 
-macau.features[[3]]
+View(macau.features[[3]])
+macau.features[[3]] %>% inner_join(uniprot, by=c("contig.feat","start.feat", "end.feat"))
 ```
 
 Are any MACAU associated with DMLs / DMGs ? 
@@ -117,9 +127,7 @@ meth_filter_calcs %>%
       geom_text(size=3, vjust=-0.5, hjust=1.25) +
       theme_light() + ggtitle("") + facet_wrap(~chr) + 
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
-
 ```
-
 
 
 ```{r}
@@ -132,13 +140,13 @@ macau.features.df
 ### Where are ALL methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-allLocifiles <- c("AllLoci-CDS.bed", "AllLoci-exon.bed", "AllLoci-gene.bed", "AllLoci-mRNA.bed", "AllLoci-TE.bed", "AllLoci-ASV.bed", "AllLoci-intragenic.bed")
-allLoci.features <- list()
+allLociDMLfiles <- c("AllLociDMLs-CDS.bed", "AllLociDMLs-exon.bed", "AllLociDMLs-gene.bed", "AllLociDMLs-mRNA.bed", "AllLociDMLs-TE.bed", "AllLociDMLs-ASV.bed", "AllLociDMLs-intragenic.bed")
+allLociDML.features <- list()
 for (i in c(1:7)) {
-  allLoci.features[[i]] <- read_delim(here::here("analyses","BEDtools", allLocifiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+  allLociDML.features[[i]] <- read_delim(here::here("analyses","BEDtools", allLociDMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
 for (i in 1:6) {
-  allLoci.features[[i]] <- allLoci.features[[i]] %>%
-    setNames(c("contig.allLoci","start.allLoci","end.allLoci", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+  allLociDML.features[[i]] <- allLociDML.features[[i]] %>%
+    setNames(c("contig.allLoci","start.allLoci","end.allLoci", "unknown", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Parent=str_extract(attribute, "Parent=(.*?);"),
        Name=str_extract(attribute, "Name=(.*?);"),
@@ -151,14 +159,14 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(allLoci.features) <- c("allLoci.CDS","allLoci.exon","allLoci.gene","allLoci.mRNA","allLoci.TE","allLoci.ASV","allLoci.intragenic")
-allLoci.features[["allLoci.intragenic"]] <- 
-  allLoci.features[["allLoci.intragenic"]] %>% 
+names(allLociDML.features) <- c("allLociDML.CDS","allLociDML.exon","allLociDML.gene","allLociDML.mRNA","allLociDML.TE","allLociDML.ASV","allLociDML.intragenic")
+allLociDML.features[["allLociDML.intragenic"]] <- 
+  allLociDML.features[["allLociDML.intragenic"]] %>% 
   setNames(c("contig.allLoci", "start.allLoci", "end.allLoci"))
-allLoci.features[[1]] <- allLoci.features[[1]] %>% mutate_at("unknown2", as.character)
-allLoci.features[[6]] <- allLoci.features[[6]] %>% mutate_at("unknown1", as.character)
-allLoci.features.df <- bind_rows(allLoci.features[1:5]) #don't include alternative splice variants or intragenic 
-print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
+allLociDML.features[[1]] <- allLociDML.features[[1]] %>% mutate_at("unknown2", as.character)
+allLociDML.features[[6]] <- allLociDML.features[[6]] %>% mutate_at("unknown1", as.character)
+allLociDML.features.df <- bind_rows(allLociDML.features[1:5]) #don't include alternative splice variants or intragenic 
+print(allLociDML.summary <- table(allLociDML.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
 ```
 
 ## Summary 
@@ -167,7 +175,7 @@ print(allLoci.summary <- table(allLoci.features.df[c("feature")])) #Note, "simil
 summary <- merge(x=merge(x=melt(DML.summary, varnames = "feature", value.name = "DML"), 
       y=melt(macau.summary, varnames = "feature", value.name = "macau"),
       by="feature", all=TRUE), 
-      y=melt(allLoci.summary, varnames = "feature", value.name = "allLoci"),
+      y=melt(allLociDML.summary, varnames = "feature", value.name = "allLociDML"),
       by="feature", all=TRUE)
 summaryL <- melt(summary, variable.name = "analysis", value.name = "count")
 summaryL$feature <- as.factor(str_replace(summaryL$feature, "similarity", "TE"))
@@ -228,7 +236,7 @@ write_csv(DML.features.df, path = here::here("analyses/", "DML.features.txt")) #
 write(DML.GO$GO_term, file = here::here("analyses/", "DML.GO.txt"))
 write.table(subset(DML.features.df, feature=="gene"), here::here("analyses/", "DML.geneinfo.txt"), sep = "\t") #write out gene info for DMLs to associate with UniprotIDs
 
-allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
+allLociDML.GO <- allLociDML.features.df[c("contig.allLoci", "start.allLoci", "end.allLoci", "feature", "start.feat", "end.feat", "Note", "Ontology_term")] %>%
   distinct(contig.allLoci, start.allLoci, Note, Ontology_term, .keep_all = TRUE) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
@@ -236,9 +244,9 @@ allLoci.GO <- allLoci.features.df[c("contig.allLoci", "start.allLoci", "end.allL
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
   select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
-write_csv(allLoci.features.df, path = here::here("analyses/", "AllLoci.features.txt")) #write out df with all loci features 
-write(allLoci.GO$GO_term, file = here::here("analyses/", "allLoci.GO.txt"))
-write.table(subset(allLoci.features.df, feature=="gene"), here::here("analyses/", "macau/", "allLoci.geneinfo.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
+write_csv(allLociDML.features.df, path = here::here("analyses/", "allLociDML.features.txt")) #write out df with all loci features 
+write(allLociDML.GO$GO_term, file = here::here("analyses/", "allLociDML.GO.txt"))
+write.table(subset(allLociDML.features.df, feature=="gene"), here::here("analyses/", "macau/", "allLociDML.geneinfo.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
 
 ```
 
