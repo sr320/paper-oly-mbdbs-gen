@@ -6,6 +6,7 @@ resources/
 .DS_Store
 *.DS_Store
 data/uniprot-SP-GO-sorted.tab
+data/uniprot_sprot.fasta
 analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
-data/uniprot_sprot.fasta
+analyses/myobj_18
