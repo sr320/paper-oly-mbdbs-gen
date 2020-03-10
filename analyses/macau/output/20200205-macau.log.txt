@@ -3,7 +3,7 @@
 ##
 ## Command Line Input = /home/shared/macau/macau -g ../counts-filtered-meth.txt -t ../counts-filtered-total.txt -p ../../data/predictors.size.macau.txt -n 2 -c ../../data/cov.weight.macau.txt -k ../2bRAD/HCSSmbdsamples_rab.txt -bmm -o 20200205-macau 
 ##
-## Date = Fri Feb  7 15:31:45 2020
+## Date = Tue Mar 10 14:54:14 2020
 ##
 ## Summary Statistics:
 ## number of total individuals = 18
@@ -13,12 +13,12 @@
 ## number of covariates = 2
 ##
 ## Computation time:
-## total computation time = 20.1332 min 
+## total computation time = 20.2 min 
 ## computation time break down: 
-##      time on eigen-decomposition = 0.5475 min 
-##      time on calculating matrix-vector multiplication = 1.64117 min 
-##      time on sampling Z = 1.464 min 
-##      time on sampling MW = 1.7635 min 
-##      time on sampling Hyperparameters = 13.919 min 
-##      time on sampling BAU = 1.66033 min 
+##      time on eigen-decomposition = 0.558 min 
+##      time on calculating matrix-vector multiplication = 1.62267 min 
+##      time on sampling Z = 1.45067 min 
+##      time on sampling MW = 1.77517 min 
+##      time on sampling Hyperparameters = 13.9278 min 
+##      time on sampling BAU = 1.68983 min 
 ##
