@@ -122,12 +122,14 @@ write.table(meth_filter.df.noNA.final, file = "../analyses/meth_filter.df.txt", 
 
 I need the predictor variable and  relatedness matrix to be in the same order as the count files.  
 Read in size data (predictor variable), and sample ID key. 
+
 ```{r}
 print(size <- read.csv(file = "../data/mbd_size.csv", header=T, sep = "\t"))
 print(key <- read.csv("../data/sample-key.csv"))
 ```
 
 Merge size and sample key, making sure that the size data is ordered from sample #1 to #18. Include a  column of 1's - these are needed for the MACAU covariate file as it's used as the intercept. 
+
 ```{r}
 print(size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")))
 ```
@@ -143,4 +145,13 @@ write.table(size.macau[c(1,4)],  file="../data/cov.weight.macau.txt", sep="\t", 
 write.table(size.macau[c(1,5)],  file="../data/cov.length.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
 ```
 
+## Prepare dummy numeric predictor variables for 2nd MACAU run - population comparison 
+
+I found out that I can use dummy/binary predictor variables, and run MACAU to identify loci associated with population while controlling for relatedness. Here I prep a .txt file with numeric predictors 1 (Hood Canal) and 2 (South Sound) 
+
+```{r}
+pop.macau <- size.macau[-4:-5] %>%
+  mutate(population=c(rep(1, times=9), rep(2, times=9)))
+write.table(pop.macau[c(1,4)],  file="../data/predictors.pop.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+```
 
