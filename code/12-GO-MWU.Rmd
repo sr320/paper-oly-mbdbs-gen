@@ -9,18 +9,24 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Make input files for GO_MWU 
 
-## Save loci IDS and GO TERMS for All LOCI that were identified in the GENE feature file, for use in GO_MWU (notebook 12)
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("reshape2","tidyverse", "ape") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
 
-```{r}
-install.packages("ape")
-require(ape)
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
 ```
 
+## Make input files for GO_MWU 
+
+## Save loci IDS and GO TERMS for All LOCI that were identified in the list of methylated loci analyzed, in the GENE feature file
 
 ```{r}
-GO.MWU.GOterms <- allLoci.features.df %>% filter(feature == "gene") %>%
+GO.MWU.GOterms <- allLociDML.features.df %>% filter(feature == "gene") %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
   mutate(Ontology_term = str_replace_all(Ontology_term, pattern=",",replacement = ";")) %>%
@@ -30,7 +36,7 @@ GO.MWU.GOterms <- allLoci.features.df %>% filter(feature == "gene") %>%
 write.table(GO.MWU.GOterms, here::here("analyses", "GO_MWU", "GO_MWU_GO-terms"),sep="\t",quote = F,row.names = F, col.names=F)
 ```
 
-## Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file, for use in GO_MWU (notebook 12)
+## Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file
 
 ```{r}
 GO.MWU.DML.loci <- DML.features.df %>% filter(feature == "gene") %>%
@@ -42,8 +48,12 @@ GO.MWU.signif <- GO.MWU.GOterms %>%
   select(ID) %>%
   add_column(sig = c(1))
 
+### WHY IS THIS NOT WORKING? 
+
 GO.MWU.signif[which(GO.MWU.signif$ID %in% GO.MWU.DML.loci$ID),]$sig <- 0
 
+nrow(GO.MWU.signif)
+nrow(GO.MWU.DML.loci)
 
 table(GO.MWU.GOterms$ID == GO.MWU.signif$ID)
   

@@ -100,7 +100,6 @@ macau.features[[5]] <- macau.features[[5]] %>% mutate_at("unknown1", as.characte
 macau.features.df <- bind_rows(macau.features[-5:-6])
 print(macau.summary <- table(macau.features.df[c("feature")])) #NOTE this does not contain alternative splice variants 
 
-View(macau.features[[3]])
 macau.features[[3]] %>% inner_join(uniprot, by=c("contig.feat","start.feat", "end.feat"))
 ```
 
@@ -108,6 +107,7 @@ Are any MACAU associated with DMLs / DMGs ?
 
 ```{r}
 # Barplots of all MACAU loci  
+load(here::here("analyses", "meth_filter_reshaped"))
 
 meth_filter_calcs <- meth_filter_reshaped %>% 
   group_by(population, chr, start) %>% 
@@ -249,6 +249,8 @@ write(allLociDML.GO$GO_term, file = here::here("analyses/", "allLociDML.GO.txt")
 write.table(subset(allLociDML.features.df, feature=="gene"), here::here("analyses/", "macau/", "allLociDML.geneinfo.txt"), sep = "\t") #write out gene info for All loci fed into MACAU to associate with UniprotIDs
 
 ```
+
+# BONEYARD
 
 ## Create separate dataframes with annotation information for all hypomethylated loci in Hood Canal & South Sound, separately 
 

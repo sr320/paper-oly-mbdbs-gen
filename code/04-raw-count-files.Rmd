@@ -152,6 +152,6 @@ I found out that I can use dummy/binary predictor variables, and run MACAU to id
 ```{r}
 pop.macau <- size.macau[-4:-5] %>%
   mutate(population=c(rep(1, times=9), rep(2, times=9)))
-write.table(pop.macau[c(1,4)],  file="../data/predictors.pop.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(pop.macau[c(2:4)],  file="../data/predictors.pop.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
 ```
 
