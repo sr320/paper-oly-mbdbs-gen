@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries 
 
 ```{r setup, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -213,11 +213,6 @@ library(readr)
 myDiff25p
 ```
 
-
-```{r}
-library(tidyverse)
-```
-
 Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 ```{r}
@@ -288,24 +283,47 @@ I looked through their code, and it's not totally clear how they did this calcul
 head(perc.meth, 3)
 ```
 
+The following R code was provided by Kevin Johnson
+
 ```{r}
 write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 
-require(matrixStats)
-require(readr)
-require(tidyverse)
+perc.meth.Pst <- read_delim(file = here::here("analyses", "percent-methylation-filtered.tab"), delim = "\t", col_names = TRUE) 
+apply(perc.meth.Pst, 2, function(x) any(is.na(x))) #any NA values? 
 
-perc.meth.Pst <- read_delim(file = "../analyses/percent-methylation-filtered.tab", delim = "\t", col_names = TRUE) 
-perc.meth.Pst$var_all <- rowVars((perc.meth.Pst[-1] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across all samples
-perc.meth.Pst$var_hc <- rowVars((perc.meth.Pst[,2:10] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across Hood Canal samples (sample #1 - #9) 
-perc.meth.Pst$var_ss <- rowVars((perc.meth.Pst[,11:19] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across South Sound samples (sample #10 - #18) 
-perc.meth.Pst$Pst.hc <- (perc.meth.Pst$var_all - perc.meth.Pst$var_hc) / perc.meth.Pst$var_all #calculate Pst using Hood Canal variance as the within-group variance 
-perc.meth.Pst$Pst.ss <- (perc.meth.Pst$var_all - perc.meth.Pst$var_ss) / perc.meth.Pst$var_all  #calculate Pst using South Sound variance as the within-group variance 
-plot(perc.meth.Pst$Pst.hc ~ perc.meth.Pst$Pst.ss)  #Do Pst calculated using HC variance and SS variance differ? Yes, not 1:1 
-hist(perc.meth.Pst$Pst.hc) # Slightly right skewed 
-hist(perc.meth.Pst$Pst.ss) # Slightly left skewed 
+#Here I removed rows with NA values, the Pstat function will work with some NA values, but to speed things up I removed them
+perc.meth.Pst2 <- perc.meth.Pst[c(complete.cases(perc.meth.Pst)),]
+apply(perc.meth.Pst2, 2, function(x) any(is.na(x))) #confirm no more NA values 
+
+#I also removed rows that had a mean methylation value of 0 as these throw off the calculation
+perc.meth.Pst2 <- perc.meth.Pst2[c(rowMeans(perc.meth.Pst2[-1] )>0),]
+
+#If you want to see how this influences the Pst.hc vs Pst.ss comparison run the next line:
+#perc.meth.Pst <- perc.meth.Pst2
+
+#Now I modify the data a little bit, first setting contig as row name
+#perc.meth.Pst2 <- as.data.frame(perc.meth.Pst)
+row.names(perc.meth.Pst2) <- perc.meth.Pst2$contig
+perc.meth.Pst2$contig = NULL
+
+#Now I flip the data frame so that each column is a unique loci
+perc.meth.Pst2 <- as.data.frame(t(perc.meth.Pst2))
+
+#Now add a new column that has population assignment
+perc.meth.Pst2$Population <- c("HC","HC","HC","HC","HC","HC","HC","HC","HC","SS","SS","SS","SS","SS","SS","SS","SS","SS")
+ncol(perc.meth.Pst2)
+
+#reorder these columns so that population is the first column
+perc.meth.Pst2 <- perc.meth.Pst2[,c(7826,1:7825)]
+
+require(Pstat)
+
+#Now run the following line and it will provide Pst estimates for every gene.
+perc.meth.Pst.done <- Pst(perc.meth.Pst2)
+
+# Write out Pst results 
+write.table(perc.meth.Pst.done, file = here::here("analyses", "Pst_locus.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
 ```
-
 
 
 ## Figures
@@ -390,32 +408,14 @@ meth_filter_reshaped <- melt(data=meth_filter, id=c("chr", "start", "end", "stra
 meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('1', '2', '3', '4', '5', '6', '7', '8', '9')='HC'") 
 meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
 readr::write_delim(meth_filter_reshaped, here::here("analyses", "meth_filter.tab"),  delim = '\t', col_names = FALSE)
-save(meth_filter_reshaped, file = here::here("analyses", "meth_filter_reshaped"))
+ 
 ```
 
-### Barplots showing % methylation of DMLs by population 
-
+### Calculations of % methylation by population 
 ```{r}
-# Look at coverage for each DML, by population 
 # mean % methylation across samples  
 dml25_counts_unique <- unique(getData(dml25_counts)[,c("chr", "start")])
 
-for (i in 1:nrow(dml25_counts_unique)) {
-  temp <-  meth_filter_reshaped %>% 
-  filter(chr == dml25_counts_unique[i,"chr"] & 
-           start == dml25_counts_unique[i,"start"]) %>%
-  group_by(population, chr, start) %>%
-  summarise(mean_percentMeth = mean(percMeth, na.rm=TRUE))
-    print((ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
-    geom_bar(stat="identity") + ylim(0,100) +
-    theme_light() + ggtitle(paste("Locus = ", dml25_counts_unique[i, "chr"], "_", dml25_counts_unique[i, "start"], sep="")) +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
-}
-```
-
-## Find which loci are hypomethylated in each population 
-
-```{r}
 #Calculate ratio between mean % methylation in Hood Canal : South Sound 
 DML.ratios <- meth_filter_reshaped %>% 
   filter(chr %in% dml25_counts_unique[,"chr"] & 
@@ -434,6 +434,24 @@ DML.calcs <- meth_filter_reshaped %>%
     n())  %>% 
   filter(chr %in% c(DML.ratios$chr) & 
            start %in% c(DML.ratios$start))
+```
+
+### Barplots showing % methylation of DMLs by population 
+
+```{r}
+# First look at coverage for each DML, by population 
+
+for (i in 1:nrow(dml25_counts_unique)) {
+  temp <-  meth_filter_reshaped %>% 
+  filter(chr == dml25_counts_unique[i,"chr"] & 
+           start == dml25_counts_unique[i,"start"]) %>%
+  group_by(population, chr, start) %>%
+  summarise(mean_percentMeth = mean(percMeth, na.rm=TRUE))
+    print((ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
+    geom_bar(stat="identity") + ylim(0,100) +
+    theme_light() + ggtitle(paste("Locus = ", dml25_counts_unique[i, "chr"], "_", dml25_counts_unique[i, "start"], sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
+}
 
 # Barplots of all hypomethylated loci in South Sound population 
 DML_plots <- list()
@@ -524,4 +542,26 @@ myDiff_tiled_25p.hypo=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01,type=
 #
 # get all differentially methylated regions (25% different)
 myDiff_tiled_25p=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01) #only 2 regions! 
+```
+
+
+# BONEYARD 
+
+
+```{r}
+write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+require(matrixStats)
+require(readr)
+require(tidyverse)
+
+perc.meth.Pst <- read_delim(file = "../analyses/percent-methylation-filtered.tab", delim = "\t", col_names = TRUE) 
+perc.meth.Pst$var_all <- rowVars((perc.meth.Pst[-1] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across all samples
+perc.meth.Pst$var_hc <- rowVars((perc.meth.Pst[,2:10] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across Hood Canal samples (sample #1 - #9) 
+perc.meth.Pst$var_ss <- rowVars((perc.meth.Pst[,11:19] %>% as.matrix()), na.rm = TRUE) #calculate % methylation variance across South Sound samples (sample #10 - #18) 
+perc.meth.Pst$Pst.hc <- (perc.meth.Pst$var_all - perc.meth.Pst$var_hc) / perc.meth.Pst$var_all #calculate Pst using Hood Canal variance as the within-group variance 
+perc.meth.Pst$Pst.ss <- (perc.meth.Pst$var_all - perc.meth.Pst$var_ss) / perc.meth.Pst$var_all  #calculate Pst using South Sound variance as the within-group variance 
+plot(perc.meth.Pst$Pst.hc ~ perc.meth.Pst$Pst.ss)  #Do Pst calculated using HC variance and SS variance differ? Yes, not 1:1 
+hist(perc.meth.Pst$Pst.hc) # Slightly right skewed 
+hist(perc.meth.Pst$Pst.ss) # Slightly left skewed 
 ```

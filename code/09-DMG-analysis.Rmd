@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car") #add new libraries here 
+list.of.packages <- c("reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car", "Pstat") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -99,9 +99,9 @@ intersectBed \
 wc -l "../analyses/meth_filter_gene.tab"
 ```
 
-## Binomial GLMs to test for differentially methylated genes
+### Binomial GLMs to test for differentially methylated genes
 
-### Add columns for organization / filtering: 
+#### Add columns for organization / filtering: 
 -- gene = contig number + start/end locus 
 -- group = sample number + gene 
 -- population = HC for Hood Canal, or SS for South Sound 
@@ -134,15 +134,20 @@ length(unique(meth_filter_genes_2kbslop$gene))
 ### Filter for genes with **at minimum 5 methylated loci**
 
 ```{r}
-min.filt <- dplyr::count(meth_filter_genes_2kbslop, vars = c(group))
-newdata <- min.filt[which(min.filt$n > 4), ]
-sub_meth_table <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata$vars,]
+min.filt_2kbslop <- dplyr::count(meth_filter_genes_2kbslop, vars = c(group))
+newdata <- min.filt_2kbslop[which(min.filt_2kbslop$n > 4), ]
+sub_meth_table_2kbslop <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata$vars,]
 ```
 
-### Here is the number of genes that remain after filtering for those with 5 or more methylated loci within each gene:
+```{r}
+meth_filter_genes_2kbslop
+```
+
+
+### Here is the number of genes that remain after filtering for those with 5 or more methylated loci within each gene region:
 
 ```{r}
-length(unique(sub_meth_table$gene))  
+length(unique(sub_meth_table_2kbslop$gene))  
 ```
 
 ### Run GLM to test for differences among population for each gene individually 
@@ -150,57 +155,57 @@ Note: this script was created by Hollie Putnam ([GM.Rmd](https://raw.githubuserc
 
 ```{r}
 # create data frame to stored results
-results <- data.frame()
+results_2kbslop <- data.frame()
 
-gs <- unique(sub_meth_table$gene)
+gs <- unique(sub_meth_table_2kbslop$gene)
 
 #first subset the unique dataframes and second run the GLMs
 for(i in 1:length(gs)){
   
   #subset the dataframe gene by gene
-  sub_meth_table1 <- subset(sub_meth_table, gene ==gs[i])
+  sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop, gene ==gs[i])
   
   # fit glm position model
   fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
-             data=sub_meth_table1, family=binomial)
+             data=sub_meth_table_2kbslop1, family=binomial)
   a <- anova(fit, test="Chisq")
   
   # capture summary stats to data frame
-  df <- data.frame(sub_meth_table1[c("population", "sample", "contig_gene", "start_gene", "end_gene", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
+  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene", "end_gene", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
                    pval.treatment = a$`Pr(>Chi)`[2],
                    #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
                    #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
                    stringsAsFactors = F)
   
   # bind rows of temporary data frame to the results data frame
-  results <- rbind(results, df)
+  results_2kbslop <- rbind(results_2kbslop, df)
   
 }
-results[is.na(results)] <- 0
-results$adj.pval.pop <- p.adjust(results$pval.treatment, method='BH')
-#results$adj.pval.position <- p.adjust(results$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
-#results$adj.pval.treatment_x_position <- p.adjust(results$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
+results_2kbslop[is.na(results_2kbslop)] <- 0
+results_2kbslop$adj.pval.pop <- p.adjust(results_2kbslop$pval.treatment, method='BH')
+#results_2kbslop$adj.pval.position <- p.adjust(results_2kbslop$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
+#results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
 ```
 
 ### Extract only genes that were differentially methylated (p-adj < 0.05), 
 
 ```{r}
-DMGs <- subset(results, adj.pval.pop < 0.05) #safe df with differentially methylated genes 
-DMGs.genes <- DMGs[!duplicated(DMGs$gene), c("contig_gene", "start_gene", "end_gene", "notes_gene", "pval.treatment", "adj.pval.pop")]
+DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #safe df with differentially methylated genes 
+DMGs_2kbslop.genes <- DMGs_2kbslop[!duplicated(DMGs_2kbslop$gene), c("contig_gene", "start_gene", "end_gene", "notes_gene", "pval.treatment", "adj.pval.pop")]
 ```
 
 ### Here is the number of differentially methylated genes: 
 
 ```{r}
-length(unique(DMGs$gene))  
+length(unique(DMGs_2kbslop$gene))  
 ```
 
 
-### Extract GO terms for DMGs and save to file 
+### Extract GO terms for DMGs_2kbslop and save to file 
 
 ```{r}
 # split gene data in "notes_gene" column into separate columns 
-DMGs.genes <- DMGs.genes %>%
+DMGs_2kbslop.genes <- DMGs_2kbslop.genes %>%
   mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
        Parent=str_extract(notes_gene, "Parent=(.*?);"),
        Name=str_extract(notes_gene, "Name=(.*?);"),
@@ -211,10 +216,10 @@ DMGs.genes <- DMGs.genes %>%
        Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
        Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
        )
-write_csv(DMGs.genes, path = here::here("analyses", "DMGs.genes.csv"))
+write_csv(DMGs_2kbslop.genes, path = here::here("analyses", "DMGs_2kbslop.genes.csv"))
 
 #Extract GO terms 
-DMGs.genes.GO <- DMGs.genes %>%
+DMGs_2kbslop.genes.GO <- DMGs_2kbslop.genes %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
@@ -222,10 +227,10 @@ DMGs.genes.GO <- DMGs.genes %>%
   dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term))
 
-write_delim(DMGs.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
+write_delim(DMGs_2kbslop.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs_2kbslop.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
 ```
 
-## The file "../analyses/DMGs.GO.txt" was opened outside of RMarkdown and the GO terms and p-values were pasted into REVIGO. I then exported the R script to generate the Biological Processes scatterplot. Here is the REVIGO table: 
+### The file "../analyses/DMGs_2kbslop.GO.txt" was opened outside of RMarkdown and the GO terms and p-values were pasted into REVIGO. I then exported the R script to generate the Biological Processes scatterplot. Here is the REVIGO table: 
 
 
 term_ID | description | frequency | plot_X | plot_Y | plot_size | log10 p-value | uniqueness | dispensability | representative | eliminated
@@ -258,7 +263,7 @@ GO:0007165 | signal transduction | 6.62% | null | null | 5.929 | -1.4769 | 0.594
 GO:0006814 | sodium ion transport | 0.31% | -5.839 | 0.651 | 4.592 | -2.0455 | 0.784 | 0.656 | 6814 | 0
 GO:0006310 | DNA recombination | 1.64% | 5.722 | -0.412 | 5.323 | -1.3059 | 0.697 | 0.688 | 6310 | 0
 
-## Here is the REVIGO plot showing GO terms associated with DMGs 
+### Here is the REVIGO plot showing GO terms associated with DMGs_2kbslop 
 
 ```{r, message=FALSE, warning=FALSE}
 # A plotting R script produced by the REVIGO server at http://revigo.irb.hr/
@@ -352,124 +357,215 @@ p1;
 
 ```
 
-## IGV 
+### IGV 
 
-Create bed files to visualze as a track of DMGs in IGV 
+Create bed files to visualze as a track of DMGs_2kbslop in IGV 
 
 ```{r}
-DMGs.bed <- meth_filter_genes_2kbslop %>%
-  filter(contig_gene %in% DMGs.genes$contig_gene & 
-           start_gene %in% DMGs.genes$start_gene & 
-           end_gene %in% DMGs.genes$end_gene) %>%
+DMGs_2kbslop.bed <- meth_filter_genes_2kbslop %>%
+  filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+           start_gene %in% DMGs_2kbslop.genes$start_gene & 
+           end_gene %in% DMGs_2kbslop.genes$end_gene) %>%
   dplyr::select(contig_gene, start_gene, end_gene, 
                 unknown1_gene, strand_gene, unknown2_gene, notes_gene) %>%
   distinct(contig_gene, start_gene, end_gene)
-#DMGs.bed <- DMGs.bed[!duplicated(test$contig_gene),]
-readr::write_delim(DMGs.bed, "../analyses/DMGs.bed",  delim = '\t', col_names = FALSE)
+#DMGs_2kbslop.bed <- DMGs_2kbslop.bed[!duplicated(test$contig_gene),]
+readr::write_delim(DMGs_2kbslop.bed, "../analyses/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
 ```
 
-# Barplots showing % methylation of all methylated genes by population 
+### Barplots showing % methylation of all methylated genes by population 
 
 ```{r}
-ggplotly(meth_filter_genes_2kbslop %>%
-  filter(contig_gene %in% DMGs.genes$contig_gene & 
-           start_gene %in% DMGs.genes$start_gene & 
-           end_gene %in% DMGs.genes$end_gene) %>% 
-  group_by(population, gene) %>%
-  summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
-            mean_percentMeth = mean(percMeth)) %>%
-  ggplot(aes(x = population, y = mean_percentMeth, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
-
-#checking to make sure numCs + numTs = coverage; should be 1:1 line 
-plot(meth_filter_genes_2kbslop$numCs + meth_filter_genes_2kbslop$numTs ~ meth_filter_genes_2kbslop$coverage)  
-
-## Look at coverage for each DMG by population (mean % methylation across samples)
-ggplotly(meth_filter_genes_2kbslop %>%
-  filter(contig_gene %in% DMGs.genes$contig_gene & 
-           start_gene %in% DMGs.genes$start_gene & 
-           end_gene %in% DMGs.genes$end_gene) %>% 
-  group_by(population, gene) %>%
-  summarise(sum_cov = sum(coverage), 
-            mean_cov = mean(coverage)) %>%
-  ggplot(aes(x = population, y = mean_cov, fill = population)) + 
-    geom_bar(stat="identity") + 
-    facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
-
-DMG_counts <- meth_filter_genes_2kbslop %>%
-  filter(contig_gene %in% DMGs.genes$contig_gene & 
-           start_gene %in% DMGs.genes$start_gene & 
-           end_gene %in% DMGs.genes$end_gene)
-
-# Look at coverage for each DMG locus, by population 
-# mean % methylation across samples  
-DMG_genes_unique <- unique(DMG_counts$gene)
-for (i in 1:length(DMG_genes_unique)) {
-  temp <-  DMG_counts %>% 
-  filter(chr == "Contig22489") %>%
-  group_by(population, chr, start) %>%
-  summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
-            mean_percentMeth = mean(percMeth))
-    print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
-    geom_bar(stat="identity") + 
-    facet_wrap(~start) + 
-    theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
-  }
+# ggplotly(meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
+#   group_by(population, gene) %>%
+#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+#             mean_percentMeth = mean(percMeth)) %>%
+#   ggplot(aes(x = population, y = mean_percentMeth, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+# 
+# #checking to make sure numCs + numTs = coverage; should be 1:1 line 
+# plot(meth_filter_genes_2kbslop$numCs + meth_filter_genes_2kbslop$numTs ~ meth_filter_genes_2kbslop$coverage)  
+# 
+# ## Look at coverage for each DMG by population (mean % methylation across samples)
+# ggplotly(meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
+#   group_by(population, gene) %>%
+#   summarise(sum_cov = sum(coverage), 
+#             mean_cov = mean(coverage)) %>%
+#   ggplot(aes(x = population, y = mean_cov, fill = population)) + 
+#     geom_bar(stat="identity") + 
+#     facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+# 
+# DMG_counts <- meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene)
+# 
+# # Look at coverage for each DMG locus, by population 
+# # mean % methylation across samples  
+# DMG_genes_unique <- unique(DMG_counts$gene)
+# for (i in 1:length(DMG_genes_unique)) {
+#   temp <-  DMG_counts %>% 
+#   filter(chr == "Contig22489") %>%
+#   group_by(population, chr, start) %>%
+#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+#             mean_percentMeth = mean(percMeth))
+#     print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
+#     geom_bar(stat="identity") + 
+#     facet_wrap(~start) + 
+#     theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
+#     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
+#   }
 ```
 
-## Identify DMGs that contain DMLs 
+### Identify DMGs_2kbslop that contain DMLs 
 
 ```{bash}
 intersectBed \
   -wb \
-  -a "../analyses/DMGs.bed" \
+  -a "../analyses/DMGs_2kbslop.bed" \
   -b "../analyses/dml25.bed" \
-  > "../analyses/DMGs-with-DMLs.tab"
+  > "../analyses/DMGs_2kbslop-with-DMLs.tab"
 ```
 
 ### Here is the number of loci associated with gene regions: 
 
 ```{bash}
-wc -l "../analyses/DMGs-with-DMLs.tab"
+wc -l "../analyses/DMGs_2kbslop-with-DMLs.tab"
 ```
 
 ```{r}
 dml25 <-   read_delim(file = here::here("analyses", "dml25.bed"), delim = "\t")
 
-DMLs.in.DMGs <- 
-  read_delim(file = here::here("analyses", "DMGs-with-DMLs.tab"), delim = "\t", col_names = c(colnames(DMGs.bed), colnames(dml25))) #%>%
+DMLs.in.DMGs_2kbslop <- 
+  read_delim(file = here::here("analyses", "DMGs_2kbslop-with-DMLs.tab"), delim = "\t", col_names = c(colnames(DMGs_2kbslop.bed), colnames(dml25))) #%>%
   #mutate(gene=paste(contig_gene, start_gene, sep="_")) 
-write.csv(DMLs.in.DMGs, file = "../analyses/DMLS.in.DMGS.csv")
+write.csv(DMLs.in.DMGs_2kbslop, file = "../analyses/DMLS.in.DMGs_2kbslop.csv")
 
 
-# Barplots of all DMLs also located in DMGs 
+# Barplots of all DMLs also located in DMGs_2kbslop 
 
-DMLs.in.DMGs.calcs <- meth_filter_reshaped %>% 
-  filter(chr %in% DMLs.in.DMGs$contig_gene & 
-           start %in% DMLs.in.DMGs$start_gene+1 & 
-           end %in% DMLs.in.DMGs$end_gene-1) %>% 
+DMLs.in.DMGs_2kbslop.calcs <- meth_filter_reshaped %>% 
+  filter(chr %in% DMLs.in.DMGs_2kbslop$contig_gene & 
+           start %in% DMLs.in.DMGs_2kbslop$start_gene+1 & 
+           end %in% DMLs.in.DMGs_2kbslop$end_gene-1) %>% 
   group_by(population, chr, start) %>% 
   dplyr::summarise(
     mean_percMeth = mean(percMeth, na.rm=TRUE),
     sd_percMeth=sd(percMeth, na.rm=TRUE),
     n()) 
 
-DMLs.in.DMGs.calcs %>% ungroup() %>% select(chr, start) %>% distinct()
-DMLs_in_DMGs_plots <- list()
-for (i in 1:nrow(DMLs.in.DMGs)) {
-  test <- DMLs.in.DMGs.calcs %>% 
-    filter(chr==DMLs.in.DMGs$contig_gene[i] &
-             start==DMLs.in.DMGs$start_gene[i]+1)
-  DMLs_in_DMGs_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
+DMLs.in.DMGs_2kbslop.calcs %>% ungroup() %>% select(chr, start) %>% distinct()
+DMLs_in_DMGs_2kbslop_plots <- list()
+for (i in 1:nrow(DMLs.in.DMGs_2kbslop)) {
+  test <- DMLs.in.DMGs_2kbslop.calcs %>% 
+    filter(chr==DMLs.in.DMGs_2kbslop$contig_gene[i] &
+             start==DMLs.in.DMGs_2kbslop$start_gene[i]+1)
+  DMLs_in_DMGs_2kbslop_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
                          label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
       geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
       geom_pointrange(aes(ymin=mean_percMeth, 
                         ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
       geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle(paste("Contig = ", DMLs.in.DMGs[i, "contig_gene"], ", Locus = ", 
-                                    DMLs.in.DMGs[i+1, "start_gene"], sep="")) +
+      theme_light() + ggtitle(paste("Contig = ", DMLs.in.DMGs_2kbslop[i, "contig_gene"], ", Locus = ", 
+                                    DMLs.in.DMGs_2kbslop[i+1, "start_gene"], sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 }
-DMLs_in_DMGs_plots
+DMLs_in_DMGs_2kbslop_plots
 ```
+
+### Calculate Pst for each gene 
+
+#### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+head(sub_meth_table_2kbslop)
+head(meth_filter_reshaped)
+
+perc_meth_genes_2kbslop <- sub_meth_table_2kbslop %>% 
+  filter(chr %in% meth_filter_reshaped$chr & 
+           start %in% meth_filter_reshaped$start) %>% 
+   group_by(population, sample, contig_gene, start_gene, end_gene) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes_2kbslop %>% filter(contig_gene=="Contig0", start_gene==10497, end_gene==95068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+head(perc_meth_genes_2kbslop) #current format 
+head(perc.meth.Pst2) #desired format for Pst calculations
+
+perc_meth_genes_2kbslop_wide <- perc_meth_genes_2kbslop %>% 
+  ungroup() %>%
+  unite("gene_region", c("contig_gene", "start_gene", "end_gene"), sep = "_", remove = FALSE) %>%
+  select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  column_to_rownames(var = "sample")
+
+head(perc_meth_genes_2kbslop_wide) #confirm correct format 
+
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_2kbslop_Pst <- Pst(perc_meth_genes_2kbslop_wide)
+head(genes_2kbslop_Pst)
+
+# Write out Pst results 
+write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene_2kbslop.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+```
+
+#### Second, calculate Pst of average % methylation only within genes. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+# Read in data file with gene bodies that contain methylated loci 
+meth_filter_genes <- 
+  read_delim(file = here::here("analyses", "meth_filter_gene.tab"), delim = "\t", col_names = c(colnames(meth_filter_reshaped[-10]), "population", "contig_gene", "source_gene", "feature_gene", "start_gene", "end_gene", "unknown1_gene", "strand_gene", "unknown2_gene", "notes_gene")) %>%
+  mutate(gene=paste(contig_gene, start_gene, end_gene, sep="_")) %>%
+  mutate(group=paste(sample, gene, sep="_"))
+
+# Filter for gene bodies that have 5 or more methylated loci 
+min.filt_genes <- dplyr::count(meth_filter_genes, vars = c(group))
+newdata <- min.filt_genes[which(min.filt_genes$n > 4), ]
+sub_meth_table <- meth_filter_genes[meth_filter_genes$group %in% newdata$vars,]
+
+# Calculate average % methylation within gene bodies by sample 
+perc_meth_genes <- sub_meth_table %>% 
+  filter(chr %in% meth_filter_reshaped$chr & 
+           start %in% meth_filter_reshaped$start) %>% 
+   group_by(population, sample, contig_gene, start_gene, end_gene) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes %>% filter(contig_gene=="Contig0", start_gene==12497, end_gene==93068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+perc_meth_genes_wide <- perc_meth_genes %>% 
+  ungroup() %>%
+  unite("gene_region", c("contig_gene", "start_gene", "end_gene"), sep = "_", remove = FALSE) %>%
+  select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  column_to_rownames(var = "sample")
+head(perc_meth_genes_wide) #confirm correct format 
+
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_Pst <- Pst(perc_meth_genes_wide)
+head(genes_Pst)
+hist(genes_Pst$Pst_Values)
+
+# Write out Pst results 
+write.table(genes_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+```
+
+
+
 
