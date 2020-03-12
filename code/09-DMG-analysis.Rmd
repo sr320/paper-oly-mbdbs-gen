@@ -475,7 +475,7 @@ for (i in 1:nrow(DMLs.in.DMGs_2kbslop)) {
                                     DMLs.in.DMGs_2kbslop[i+1, "start_gene"], sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 }
-DMLs_in_DMGs_2kbslop_plots
+DMLs_in_DMGs_2kbslop_plots[1:6]
 ```
 
 ### Calculate Pst for each gene 

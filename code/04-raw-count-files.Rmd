@@ -86,7 +86,7 @@ meth_filter.df.noNA.final <- meth_filter.df.noNA[complete.cases(meth_filter.df.n
 sapply(meth_filter.df.noNA.final[, grep(c("coverage"), colnames(meth_filter.df.noNA.final))], function(x) sum(is.na(x))) #nope!  
 
 # See how many loci were dropped 
-nrow(meth_filter.df.noNA) - nrow(meth_filter.df.noNA.final) # just 104, not a big deal 
+nrow(meth_filter.df.noNA) - nrow(meth_filter.df.noNA.final) # 454 loci dropped 
 ```
 
 ## Create separate objects for total counts (coverage) and for methylated counts (numCs)

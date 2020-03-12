@@ -136,7 +136,7 @@ getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
 filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
 
-meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=8L)
+meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
 clusterSamples(meth_filter)
 ```
@@ -208,9 +208,11 @@ library(readr)
 
 ```
 
+### Check out differentially methylated dataframe, and count number of DMLs 
 
 ```{r}
 myDiff25p
+nrow(myDiff25p)
 ```
 
 Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
@@ -328,7 +330,7 @@ write.table(perc.meth.Pst.done, file = here::here("analyses", "Pst_locus.tab"), 
 
 ## Figures
 
-### Hierarchical Clustering using methylation data
+### Hierarchical Clustering using filtered methylation data
 
 The function clusters samples using hclust function and various distance metrics derived from percent methylation per base or per region for each sample.
 
@@ -412,6 +414,7 @@ readr::write_delim(meth_filter_reshaped, here::here("analyses", "meth_filter.tab
 ```
 
 ### Calculations of % methylation by population 
+
 ```{r}
 # mean % methylation across samples  
 dml25_counts_unique <- unique(getData(dml25_counts)[,c("chr", "start")])
@@ -546,7 +549,6 @@ myDiff_tiled_25p=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01) #only 2 r
 
 
 # BONEYARD 
-
 
 ```{r}
 write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
