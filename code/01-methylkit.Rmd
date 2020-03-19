@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Load libraries 
 
-```{r setup, message=FALSE, warning=FALSE, results=FALSE}
+```{r message=FALSE, warning=FALSE, results=FALSE}
 list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -114,7 +114,7 @@ load("../analyses/myobj_18")
 
 ```{r}
 getMethylationStats(myobj_18[[2]],plot=F,both.strands=FALSE)
-myobj_18[[5]]
+head(myobj_18[[5]])
 ```
 
 ```{r}
@@ -209,11 +209,11 @@ library(readr)
 ### Check out differentially methylated dataframe, and count number of DMLs 
 
 ```{r}
-myDiff25p
+head(myDiff25p)
 nrow(myDiff25p)
 ```
 
-Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
+Old version saved at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 ```{r}
 # Write out bedfile for DMLs 
@@ -438,7 +438,7 @@ DML.calcs <- meth_filter_reshaped %>%
            start %in% c(DML.ratios$start))
 ```
 
-### Heatmaps 
+### Heatmap
 
 ```{r}
 test <- meth_filter_reshaped %>%
@@ -463,7 +463,9 @@ ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile(na.r
 ```{r}
 # First look at coverage for each DML, by population 
 
-for (i in 1:nrow(dml25_counts_unique)) {
+# There are >400 DMLs, so I only plot the first 3 here. 
+
+for (i in 1:3) {
   temp <-  meth_filter_reshaped %>% 
   filter(chr == dml25_counts_unique[i,"chr"] & 
            start == dml25_counts_unique[i,"start"]) %>%
@@ -474,25 +476,6 @@ for (i in 1:nrow(dml25_counts_unique)) {
     theme_light() + ggtitle(paste("Locus = ", dml25_counts_unique[i, "chr"], "_", dml25_counts_unique[i, "start"], sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
 }
-
-# Barplots of all hypomethylated loci in South Sound population 
-DML_plots <- list()
-for (i in 1:nrow(DML.ratios)) {
-  test <- DML.calcs %>% 
-    filter(chr==DML.ratios$chr[i] &
-             start==DML.ratios$start[i])
-  hypo_SS_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
-                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
-      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
-      geom_pointrange(aes(ymin=mean_percMeth, 
-                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
-      geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle(paste("Contig = ", DML.ratios[i, "chr"], ", Locus = ", 
-                                    DML.ratios[i, "start"], sep="")) +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
-}
-do.call("grid.arrange", DML_plots)
-
 
 # use this to call specific contigs 
 DML.calcs %>% 
@@ -510,7 +493,29 @@ ggplot(aes(x = population, y = mean_percMeth, fill = population,
 
 # BONEYARD 
 
-# Tiling window analysis 
+### Barplots of all hypomethylated loci in South Sound population 
+
+```{r, eval = FALSE}
+DML_plots <- list()
+for (i in 1:nrow(DML.ratios)) {
+  test <- DML.calcs %>% 
+    filter(chr==DML.ratios$chr[i] &
+             start==DML.ratios$start[i])
+  hypo_SS_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle(paste("Contig = ", DML.ratios[i, "chr"], ", Locus = ", 
+                                    DML.ratios[i, "start"], sep="")) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+}
+do.call("grid.arrange", DML_plots)
+```
+
+
+### Tiling window analysis 
 
 Summarize methylation information over tiling windows, to then assess differentially methylated regions (DMRs). The function below tiles the genome with windows 1000bp length and 1000bp step-size and summarizes the methylation information on those tiles. In this case, it returns a methylRawList object which can be fed into unite and calculateDiffMeth functions consecutively to get differentially methylated regions. The tilling function adds up C and T counts from each covered cytosine and returns a total C and T count for each tile.
 
@@ -530,13 +535,13 @@ clusterSamples(meth_tile_filter, dist="correlation", method="ward", plot=TRUE)
 PCASamples(meth_tile_filter)
 ```
 
-## Test for differentially methylated regions 
+### Test for differentially methylated regions 
 
 ```{r, eval = FALSE}
 myDiff_tiled=calculateDiffMeth(meth_tile_filter,mc.cores=4)
 ```
 
-## Test for differentially methylated regions 
+### Test for differentially methylated regions 
 
 ```{r, eval = FALSE}
 # get hyper methylated regions 
