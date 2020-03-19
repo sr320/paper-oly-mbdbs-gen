@@ -11,3 +11,5 @@ analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
 analyses/myobj_18
 data/uniprot_sprot.fasta
+analyses/meth_filter_gene.tab
+analyses/meth_filter_gene.2kbslop.tab
