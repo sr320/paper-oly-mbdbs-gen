@@ -513,10 +513,12 @@ head(perc_meth_genes_2kbslop_wide[1:4]) #confirm correct format
 
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_2kbslop_Pst <- Pst(perc_meth_genes_2kbslop_wide)
-head(genes_2kbslop_Pst)
+
+# Check out the 
+head(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE))
 
 # Write out Pst results 
-write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene_2kbslop.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene_2kbslop.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 ```
 
 #### Second, calculate Pst of average % methylation only within genes. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
@@ -562,7 +564,7 @@ head(genes_Pst)
 hist(genes_Pst$Pst_Values)
 
 # Write out Pst results 
-write.table(genes_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+write.table(genes_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 ```
 
 
