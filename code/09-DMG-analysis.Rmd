@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car", "Pstat") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car", "Pstat") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -446,7 +446,6 @@ DMLs.in.DMGs_2kbslop <-
   #mutate(gene=paste(contig_gene, start_gene, sep="_")) 
 write.csv(DMLs.in.DMGs_2kbslop, file = "../analyses/DMLS.in.DMGs_2kbslop.csv")
 
-
 # Barplots of all DMLs also located in DMGs_2kbslop 
 
 DMLs.in.DMGs_2kbslop.calcs <- meth_filter_reshaped %>% 
@@ -460,22 +459,25 @@ DMLs.in.DMGs_2kbslop.calcs <- meth_filter_reshaped %>%
     n()) 
 
 DMLs.in.DMGs_2kbslop.calcs %>% ungroup() %>% select(chr, start) %>% distinct()
-DMLs_in_DMGs_2kbslop_plots <- list()
-for (i in 1:nrow(DMLs.in.DMGs_2kbslop)) {
-  test <- DMLs.in.DMGs_2kbslop.calcs %>% 
-    filter(chr==DMLs.in.DMGs_2kbslop$contig_gene[i] &
-             start==DMLs.in.DMGs_2kbslop$start_gene[i]+1)
-  DMLs_in_DMGs_2kbslop_plots[[i]] <- ggplot(test, aes(x = population, y = mean_percMeth, fill = population, 
-                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
-      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
-      geom_pointrange(aes(ymin=mean_percMeth, 
-                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
-      geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle(paste("Contig = ", DMLs.in.DMGs_2kbslop[i, "contig_gene"], ", Locus = ", 
-                                    DMLs.in.DMGs_2kbslop[i+1, "start_gene"], sep="")) +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
-}
-DMLs_in_DMGs_2kbslop_plots[1:6]
+
+#Plots don't work when knitted
+# DMLs_in_DMGs_2kbslop_plots <- list()
+# for (i in 1:nrow(DMLs.in.DMGs_2kbslop)) {
+#   DMLs_in_DMGs_2kbslop_plots[[i]] <-
+#     DMLs.in.DMGs_2kbslop.calcs %>%
+#     filter(chr==DMLs.in.DMGs_2kbslop$contig_gene[i] &
+#              start==DMLs.in.DMGs_2kbslop$start_gene[i]+1) %>%
+#     ggplot(aes(x = population, y = mean_percMeth, fill = population,
+#                          label=paste0(round(mean_percMeth, digits = 2), "%"))) +
+#       geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+#       geom_pointrange(aes(ymin=mean_percMeth,
+#                         ymax=mean_percMeth+sd_percMeth)) +
+#       geom_text(size=3, vjust=-0.5, hjust=1.25) +
+#       theme_light() + ggtitle(paste("Contig = ", DMLs.in.DMGs_2kbslop[i, "contig_gene"], ", Locus = ",
+#                                    DMLs.in.DMGs_2kbslop[i+1, "start_gene"], sep="")) +
+#     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+# }
+# DMLs_in_DMGs_2kbslop_plots[1:6]
 ```
 
 ### Calculate Pst for each gene 
@@ -500,17 +502,14 @@ perc_meth_genes_2kbslop %>% filter(contig_gene=="Contig0", start_gene==10497, en
   ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
 
 # Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
-head(perc_meth_genes_2kbslop) #current format 
-head(perc.meth.Pst2) #desired format for Pst calculations
-
 perc_meth_genes_2kbslop_wide <- perc_meth_genes_2kbslop %>% 
   ungroup() %>%
   unite("gene_region", c("contig_gene", "start_gene", "end_gene"), sep = "_", remove = FALSE) %>%
   select(population, sample, gene_region, mean_percMeth) %>%
   spread(gene_region, mean_percMeth) %>%
-  column_to_rownames(var = "sample")
+  tibble::column_to_rownames(var = "sample")
 
-head(perc_meth_genes_2kbslop_wide) #confirm correct format 
+head(perc_meth_genes_2kbslop_wide[1:4]) #confirm correct format 
 
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_2kbslop_Pst <- Pst(perc_meth_genes_2kbslop_wide)
@@ -555,7 +554,7 @@ perc_meth_genes_wide <- perc_meth_genes %>%
   select(population, sample, gene_region, mean_percMeth) %>%
   spread(gene_region, mean_percMeth) %>%
   column_to_rownames(var = "sample")
-head(perc_meth_genes_wide) #confirm correct format 
+head(perc_meth_genes_wide[1:4]) #confirm correct format 
 
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_Pst <- Pst(perc_meth_genes_wide)

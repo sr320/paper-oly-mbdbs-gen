@@ -1,5 +1,5 @@
 ---
-title: "06-Analyzing MACAU results-rev2"
+title: "06-Analyzing MACAU results"
 author: "Laura H Spencer"
 date: "1/29/2020"
 output: html_document
@@ -81,7 +81,7 @@ max(MACAU.results.length$qvalues[MACAU.results.length$pvalues <= 0.01])
 plot(MACAU.results.length)
 
 # Given our FDR=10% level, how many are significant? 
-summary(MACAU.results.length$significant) #15 sign. (# TRUE)
+summary(MACAU.results.length$significant) #20 sign. (# TRUE)
 
 # Add qvalue results to macau df 
 macau.FDR.length <- cbind(MACAU.results.length.c, do.call(cbind.data.frame, MACAU.results.length[c("qvalues", "pvalues", "significant")]))
@@ -94,7 +94,7 @@ plot(macau.FDR.length$pvalue, macau.FDR.length$pvalues) # looks good!
 
 ```{r}
 head(macau.sign.length <- subset(macau.FDR.length, significant=="TRUE"))
-nrow(macau.sign.length) #number of significant loci = 4
+nrow(macau.sign.length) #number of significant loci = 20
 ```
 
 ### Merge MACAU + FDR results with raw count data 
