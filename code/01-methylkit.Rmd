@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Load libraries 
 
-```{r setup, message=FALSE, warning=FALSE, results=FALSE}
+```{r message=FALSE, warning=FALSE, results=FALSE}
 list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -86,8 +86,6 @@ file.list_18=list("/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394
 ## The following command reads sorted BAM files and calls methylation percentage per base, and creates a methylRaw object for CpG methylation.
 It also assigns minimum coverage of 2x and the treatments (in this case, the Olympia oyster population)
 
-NOTE: according to the below code, an outdated Oly genome version was used in Bismark (most current version is v081). 
-
 ```{r, eval = FALSE}
 myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18"), assembly = "v071", read.context="CpG", mincov=2, treatment = c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1))
 ```
@@ -116,7 +114,7 @@ load("../analyses/myobj_18")
 
 ```{r}
 getMethylationStats(myobj_18[[2]],plot=F,both.strands=FALSE)
-myobj_18[[5]]
+head(myobj_18[[5]])
 ```
 
 ```{r}
@@ -139,7 +137,6 @@ filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
 
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
 save(meth_filter, file = "../analyses/meth_filter") #save object to file 
-clusterSamples(meth_filter)
 ```
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
@@ -212,11 +209,11 @@ library(readr)
 ### Check out differentially methylated dataframe, and count number of DMLs 
 
 ```{r}
-myDiff25p
+head(myDiff25p)
 nrow(myDiff25p)
 ```
 
-Also at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
+Old version saved at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
 ```{r}
 # Write out bedfile for DMLs 
@@ -441,7 +438,7 @@ DML.calcs <- meth_filter_reshaped %>%
            start %in% c(DML.ratios$start))
 ```
 
-### Heatmaps 
+### Heatmap
 
 ```{r}
 test <- meth_filter_reshaped %>%
@@ -466,7 +463,9 @@ ggplot(test, aes(sample, chr, fill= percMeth)) + xlab("Sample") + geom_tile(na.r
 ```{r}
 # First look at coverage for each DML, by population 
 
-for (i in 1:nrow(dml25_counts_unique)) {
+# There are >400 DMLs, so I only plot the first 3 here. 
+
+for (i in 1:3) {
   temp <-  meth_filter_reshaped %>% 
   filter(chr == dml25_counts_unique[i,"chr"] & 
            start == dml25_counts_unique[i,"start"]) %>%
@@ -478,7 +477,25 @@ for (i in 1:nrow(dml25_counts_unique)) {
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
 }
 
-# Barplots of all hypomethylated loci in South Sound population 
+# use this to call specific contigs 
+DML.calcs %>% 
+    filter(chr=="Contig26041") %>%
+ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle("Tonsoku-like protein, DNA repair") +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+```
+
+
+# BONEYARD 
+
+### Barplots of all hypomethylated loci in South Sound population 
+
+```{r, eval = FALSE}
 DML_plots <- list()
 for (i in 1:nrow(DML.ratios)) {
   test <- DML.calcs %>% 
@@ -495,27 +512,14 @@ for (i in 1:nrow(DML.ratios)) {
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 }
 do.call("grid.arrange", DML_plots)
-
-
-# use this to call specific contigs 
-DML.calcs %>% 
-    filter(chr=="Contig26041") %>%
-ggplot(aes(x = population, y = mean_percMeth, fill = population, 
-                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
-      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
-      geom_pointrange(aes(ymin=mean_percMeth, 
-                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
-      geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle("Tonsoku-like protein, DNA repair") +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
 ```
 
 
-# Tiling window analysis 
+### Tiling window analysis 
 
 Summarize methylation information over tiling windows, to then assess differentially methylated regions (DMRs). The function below tiles the genome with windows 1000bp length and 1000bp step-size and summarizes the methylation information on those tiles. In this case, it returns a methylRawList object which can be fed into unite and calculateDiffMeth functions consecutively to get differentially methylated regions. The tilling function adds up C and T counts from each covered cytosine and returns a total C and T count for each tile.
 
-```{r}
+```{r, eval = FALSE}
 #tiles_1000=tileMethylCounts(filtered.myobj,win.size=1000,step.size=1000, mc.cores=4)
 head(tiles_1000[[1]],3)
 
@@ -523,7 +527,7 @@ head(tiles_1000[[1]],3)
 #head(tiles_200)
 ```
 
-```{r}
+```{r, eval = FALSE}
 meth_tile_filter=methylKit::unite(tiles_1000, destrand=TRUE)
 meth_tile_filter 
 
@@ -531,15 +535,15 @@ clusterSamples(meth_tile_filter, dist="correlation", method="ward", plot=TRUE)
 PCASamples(meth_tile_filter)
 ```
 
-## Test for differentially methylated regions 
+### Test for differentially methylated regions 
 
-```{r}
+```{r, eval = FALSE}
 myDiff_tiled=calculateDiffMeth(meth_tile_filter,mc.cores=4)
 ```
 
-## Test for differentially methylated regions 
+### Test for differentially methylated regions 
 
-```{r}
+```{r, eval = FALSE}
 # get hyper methylated regions 
 myDiff_tiled_25p.hyper=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01,type="hyper")
 #
@@ -551,9 +555,8 @@ myDiff_tiled_25p=getMethylDiff(myDiff_tiled,difference=25,qvalue=0.01) #only 2 r
 ```
 
 
-# BONEYARD 
 
-```{r}
+```{r, eval = FALSE}
 write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 
 require(matrixStats)

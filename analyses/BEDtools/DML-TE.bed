@@ -1,5 +1,9 @@
 Contig102998	2220	2222	26	Contig102998	RepeatMasker	similarity	2149	2517	34.4	+	.	Target "Motif:Gypsy-59_CGi-I" 3294 3662
+Contig115664	766	768	-36	Contig115664	RepeatMasker	similarity	760	823	23.1	+	.	Target "Motif:(TGTC)n" 1 66
 Contig1297	49910	49912	25	Contig1297	RepeatMasker	similarity	49866	50028	24.8	-	.	Target "Motif:Helitron-N4_CGi" 232 471
 Contig1336	10966	10968	27	Contig1336	RepeatMasker	similarity	10934	11011	17.9	-	.	Target "Motif:Penelope-2_CGi" 1707 1792
+Contig20782	5066	5068	33	Contig20782	RepeatMasker	similarity	4613	5882	31.7	+	.	Target "Motif:BEL-8_CGi-I" 4595 5857
 Contig32939	16456	16458	26	Contig32939	RepeatMasker	similarity	16382	16879	17.7	-	.	Target "Motif:Helitron-N3_CGi" 2121 2475
 Contig5136	1245	1247	31	Contig5136	RepeatMasker	similarity	838	1329	32.4	+	.	Target "Motif:Gypsy-20_CGi-I" 679 1166
+Contig58	14999	15001	27	Contig58	RepeatMasker	similarity	14984	15084	24.0	-	.	Target "Motif:LSU-rRNA_Hsa" 2848 2948
+Contig58	15001	15003	35	Contig58	RepeatMasker	similarity	14984	15084	24.0	-	.	Target "Motif:LSU-rRNA_Hsa" 2848 2948
