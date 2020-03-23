@@ -7,10 +7,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-### Load libraries 
+### Load libraries
 
 ```{r message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly", "readr") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -187,23 +187,17 @@ myDiff25p.hypo=getMethylDiff(myDiff,difference=25,qvalue=0.01,type="hypo")
 myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
 ```
 
-
 ```{r}
 write.table(myDiff25p, file = "../analyses/myDiff25p.tab", sep = "\t")
 ```
 
-
-```{r}
-#write.table(myDiff50p, file = "../analyses/myDiff50p.tab", sep = "\t")
-```
-
 ---
-# Taking the DMLs to a bed
+## Taking the DMLs to a bed
+
+### Read in differentially methylated bases, if needed
 
 ```{r}
-library(readr)
-#myDiff25p <- read_csv("../analyses/myDiff25p.csv")
-
+#myDiff25p <- read_csv("../analyses/myDiff25p.csv") 
 ```
 
 ### Check out differentially methylated dataframe, and count number of DMLs 
@@ -321,6 +315,10 @@ require(Pstat)
 
 #Now run the following line and it will provide Pst estimates for every gene.
 perc.meth.Pst.done <- Pst(perc.meth.Pst2)
+
+hist(perc.meth.Pst.done$Pst_Values)
+summary(perc.meth.Pst.done$Pst_Values)
+nrow(perc.meth.Pst.done)
 
 # Write out Pst results 
 write.table(perc.meth.Pst.done, file = here::here("analyses", "Pst_locus.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
