@@ -33,7 +33,7 @@ head(meth_filter_reshaped) #check to see if it's
 
 ### Use bedtools `slop` to inclue 2kb regions on either side of gene regions 
 
-I want to identify methylated loci that are within genes but also 2kb upstream and downstream of gene regions. Therefore, before intersecting methylated loci with genes, I need to create a gene region +/- 2kb file. I will do this using `slopBed`. 
+I want to identify methylated loci that are within genes but also 2kb upstream and downstream of gene regions. Therefore, before intersecting methylated loci with genes, I need to create a gene region +/- 2kb file. I will do this using `slopBed`.
 
 First, generate a "genome file", which defines size of each chromosome. This is so the `slop` function restricts results to within a contig. I can use the indexed FASTA file that I created for a blast. 
 
@@ -99,12 +99,7 @@ intersectBed \
 wc -l "../analyses/meth_filter_gene.tab"
 ```
 
-### Binomial GLMs to test for differentially methylated genes
-
-#### Add columns for organization / filtering: 
--- gene = contig number + start/end locus 
--- group = sample number + gene 
--- population = HC for Hood Canal, or SS for South Sound 
+### Check out resulting files which contail methylated loci that are within gene regions (+/- 2kb), and gene bodies: 
 
 ```{bash}
 head -n 3 "../analyses/meth_filter_gene.2kbslop.tab"
@@ -114,12 +109,19 @@ head -n 3 "../analyses/meth_filter_gene.2kbslop.tab"
 head -n 1 "../analyses/meth_filter_gene.tab"
 ```
 
+### Binomial GLMs to test for differentially methylated genes regions. 
+
+#### Add columns for organization / filtering: 
+-- gene = contig number + start/end locus 
+-- group = sample number + gene 
+-- population = HC for Hood Canal, or SS for South Sound 
 
 ```{r}
 meth_filter_genes_2kbslop <- 
-  read_delim(file = here::here("analyses", "meth_filter_gene.2kbslop.tab"), delim = "\t", col_names = c(colnames(meth_filter_reshaped[-10]), "population", "contig_gene", "source_gene", "feature_gene", "start_gene", "end_gene", "unknown1_gene", "strand_gene", "unknown2_gene", "notes_gene")) %>%
-  mutate(gene=paste(contig_gene, start_gene, end_gene, sep="_")) %>%
+  read_delim(file = here::here("analyses", "meth_filter_gene.2kbslop.tab"), delim = "\t", col_names = c(colnames(meth_filter_reshaped[-10]), "population", "contig_gene", "source_gene", "feature_gene", "start_gene_2kb", "end_gene_2kb", "unknown1_gene", "strand_gene", "unknown2_gene", "notes_gene")) %>%
+  mutate(gene=paste(contig_gene, start_gene_2kb, end_gene_2kb, sep="_")) %>%
   mutate(group=paste(sample, gene, sep="_")) #%>%
+
 #  mutate(population=as.character(sample))
 #meth_filter_genes_2kbslop$population <- car::recode(meth_filter_genes_2kbslop$population, "c('1', '2', '3', '4', '5', '6', '7', '8', '9')='HC'") 
 #meth_filter_genes_2kbslop$population <- car::recode(meth_filter_genes_2kbslop$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
@@ -140,7 +142,7 @@ sub_meth_table_2kbslop <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$gr
 ```
 
 ```{r}
-meth_filter_genes_2kbslop
+head(sub_meth_table_2kbslop)
 ```
 
 
@@ -171,7 +173,7 @@ for(i in 1:length(gs)){
   a <- anova(fit, test="Chisq")
   
   # capture summary stats to data frame
-  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene", "end_gene", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
+  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene_2kb", "end_gene_2kb", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
                    pval.treatment = a$`Pr(>Chi)`[2],
                    #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
                    #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
@@ -191,7 +193,7 @@ results_2kbslop$adj.pval.pop <- p.adjust(results_2kbslop$pval.treatment, method=
 
 ```{r}
 DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #safe df with differentially methylated genes 
-DMGs_2kbslop.genes <- DMGs_2kbslop[!duplicated(DMGs_2kbslop$gene), c("contig_gene", "start_gene", "end_gene", "notes_gene", "pval.treatment", "adj.pval.pop")]
+DMGs_2kbslop.genes <- DMGs_2kbslop[!duplicated(DMGs_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
 ```
 
 ### Here is the number of differentially methylated genes: 
@@ -235,35 +237,54 @@ write_delim(DMGs_2kbslop.genes.GO[,c("GO_term","adj.pval.pop")], path = here::he
 
 term_ID | description | frequency | plot_X | plot_Y | plot_size | log10 p-value | uniqueness | dispensability | representative | eliminated
 -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
-GO:0006030 | chitin metabolic process | 0.08% | 0.696 | -7.104 | 3.994 | -4.6619 | 0.855 | 0 | 6030 | 0
-GO:0006886 | intracellular protein transport | 1.20% | -4.704 | 2.551 | 5.187 | -3.1954 | 0.746 | 0 | 6886 | 0
-GO:0030154 | cell differentiation | 1.13% | -2.491 | 7.082 | 5.162 | -2.9446 | 0.833 | 0 | 30154 | 0
-GO:0006457 | protein folding | 0.90% | -1.784 | -5.793 | 5.064 | -2.1316 | 0.877 | 0.035 | 6457 | 0
-GO:0007154 | cell communication | 7.22% | -3.262 | -6.728 | 5.967 | -1.5876 | 0.869 | 0.046 | 7154 | 0
-GO:0007264 | small GTPase mediated signal transduction | 0.49% | 4.131 | 4.923 | 4.794 | -2.4209 | 0.662 | 0.083 | 7264 | 0
-GO:0006468 | protein phosphorylation | 4.14% | 5.057 | -3.162 | 5.725 | -4.4125 | 0.687 | 0.109 | 6468 | 0
-GO:0006265 | DNA topological change | 0.27% | 2.434 | 0.023 | 4.536 | -2.7509 | 0.675 | 0.155 | 6265 | 0
-GO:0007018 | microtubule-based movement | 0.29% | -4.924 | -3.858 | 4.567 | -2.0562 | 0.842 | 0.181 | 7018 | 0
-GO:0070588 | calcium ion transmembrane transport | 0.16% | -5.477 | 0.479 | 4.305 | -2.2996 | 0.782 | 0.263 | 70588 | 0
-GO:0009408 | response to heat | 0.17% | 3.756 | 6.187 | 4.328 | -2.1316 | 0.754 | 0.315 | 9408 | 0
-GO:0006355 | regulation of transcription, DNA-templated | 9.92% | 4.396 | 0.755 | 6.105 | -2.195 | 0.621 | 0.355 | 6355 | 0
-GO:0006511 | ubiquitin-dependent protein catabolic process | 0.58% | 4.409 | -4.118 | 4.874 | -2.028 | 0.737 | 0.4 | 6511 | 0
-GO:0055085 | transmembrane transport | 8.92% | -5.486 | 1.791 | 6.058 | -2.2996 | 0.781 | 0.418 | 55085 | 0
-GO:0016579 | protein deubiquitination | 0.20% | 4.663 | -4.631 | 4.398 | -2.028 | 0.699 | 0.501 | 16579 | 0
-GO:0016567 | protein ubiquitination | 0.52% | null | null | 4.827 | -1.4114 | 0.697 | 0.829 | 16579 | 1
-GO:0007186 | G-protein coupled receptor signaling pathway | 0.88% | 3.658 | 4.986 | 5.054 | -1.6563 | 0.648 | 0.504 | 7186 | 0
-GO:0006811 | ion transport | 5.34% | -5.591 | 2.311 | 5.836 | -2.2996 | 0.785 | 0.535 | 6811 | 0
-GO:0006470 | protein dephosphorylation | 0.59% | 5.422 | -3.791 | 4.875 | -1.7904 | 0.722 | 0.568 | 6470 | 0
-GO:0006281 | DNA repair | 2.23% | 4.71 | 2.153 | 5.457 | -1.3059 | 0.524 | 0.577 | 6281 | 0
-GO:0007016 | cytoskeletal anchoring at plasma membrane | 0.01% | -2.131 | 2.783 | 2.867 | -2.9056 | 0.674 | 0.579 | 7016 | 0
-GO:0016560 | protein import into peroxisome matrix, docking | 0.02% | -3.674 | 1.871 | 3.287 | -2.2544 | 0.697 | 0.621 | 16560 | 0
-GO:0051103 | DNA ligation involved in DNA repair | 0.04% | 4.836 | 3.18 | 3.703 | -1.3059 | 0.631 | 0.628 | 51103 | 0
-GO:0035556 | intracellular signal transduction | 4.00% | 3.322 | 4.935 | 5.71 | -1.4274 | 0.607 | 0.638 | 35556 | 0
-GO:0007165 | signal transduction | 6.62% | null | null | 5.929 | -1.4769 | 0.594 | 0.847 | 35556 | 1
-GO:0006814 | sodium ion transport | 0.31% | -5.839 | 0.651 | 4.592 | -2.0455 | 0.784 | 0.656 | 6814 | 0
-GO:0006310 | DNA recombination | 1.64% | 5.722 | -0.412 | 5.323 | -1.3059 | 0.697 | 0.688 | 6310 | 0
+GO:0006260 | DNA replication | 1.58% | 5.949 | 2.822 | 5.306 | -6.1605 | 0.719 | 0 | 6260 | 0
+GO:0007155 | cell adhesion | 0.54% | -6.544 | 1.248 | 4.844 | -6.4135 | 0.914 | 0 | 7155 | 0
+GO:0007156 | homophilic cell adhesion via plasma membrane adhesion molecules | 0.10% | null | null | 4.087 | -6.4135 | 0.914 | 0.85 | 7155 | 1
+GO:0023052 | signaling | 6.77% | -3.032 | -0.496 | 5.939 | -7.3332 | 0.956 | 0 | 23052 | 0
+GO:0070588 | calcium ion transmembrane transport | 0.16% | -3.153 | -4.713 | 4.305 | -2.1079 | 0.868 | 0 | 70588 | 0
+GO:0009058 | biosynthetic process | 31.61% | -1.225 | -0.762 | 6.608 | -2.4968 | 0.943 | 0.026 | 9058 | 0
+GO:0006334 | nucleosome assembly | 0.09% | -4.686 | 5.561 | 4.057 | -3.6686 | 0.881 | 0.029 | 6334 | 0
+GO:0007264 | small GTPase mediated signal transduction | 0.49% | 1.48 | 6.771 | 4.794 | -2.1354 | 0.743 | 0.034 | 7264 | 0
+GO:0006457 | protein folding | 0.90% | -4.69 | 1.661 | 5.064 | -1.7376 | 0.912 | 0.037 | 6457 | 0
+GO:0007154 | cell communication | 7.22% | -6.016 | 3.233 | 5.967 | -4.0935 | 0.904 | 0.048 | 7154 | 0
+GO:0005975 | carbohydrate metabolic process | 5.26% | -3.347 | 3.585 | 5.829 | -3.2718 | 0.888 | 0.081 | 5975 | 0
+GO:0006030 | chitin metabolic process | 0.08% | 2.981 | -3.369 | 3.994 | -3.9452 | 0.855 | 0.103 | 6030 | 0
+GO:0032958 | inositol phosphate biosynthetic process | 0.01% | 4.623 | -5.39 | 2.943 | -6.0631 | 0.827 | 0.121 | 32958 | 0
+GO:0030154 | cell differentiation | 1.13% | 1.041 | -6.177 | 5.162 | -5.21 | 0.858 | 0.133 | 30154 | 0
+GO:0016567 | protein ubiquitination | 0.52% | 7.405 | 0.126 | 4.827 | -2.6487 | 0.717 | 0.15 | 16567 | 0
+GO:0016579 | protein deubiquitination | 0.20% | null | null | 4.398 | -1.8804 | 0.726 | 0.829 | 16567 | 1
+GO:0006006 | glucose metabolic process | 0.43% | 2.958 | -6.194 | 4.741 | -3.4042 | 0.835 | 0.213 | 6006 | 0
+GO:0055114 | oxidation-reduction process | 15.06% | 1.16 | -1.152 | 6.286 | -6.1605 | 0.859 | 0.214 | 55114 | 0
+GO:0019427 | acetyl-CoA biosynthetic process from acetate | 0.03% | 4.516 | -4.71 | 3.604 | -2.0321 | 0.81 | 0.237 | 19427 | 0
+GO:0006886 | intracellular protein transport | 1.20% | -4.141 | -3.625 | 5.187 | -1.5764 | 0.862 | 0.263 | 6886 | 0
+GO:0009408 | response to heat | 0.17% | 0.479 | 7.378 | 4.328 | -1.7376 | 0.834 | 0.315 | 9408 | 0
+GO:0006396 | RNA processing | 3.21% | 6.772 | 2.794 | 5.615 | -2.1891 | 0.746 | 0.319 | 6396 | 0
+GO:0006511 | ubiquitin-dependent protein catabolic process | 0.58% | 7.678 | -0.832 | 4.874 | -1.8804 | 0.781 | 0.321 | 6511 | 0
+GO:0006541 | glutamine metabolic process | 0.47% | 3.071 | -4.558 | 4.782 | -1.9271 | 0.785 | 0.33 | 6541 | 0
+GO:0001522 | pseudouridine synthesis | 0.35% | 6.93 | 1.68 | 4.652 | -2.1891 | 0.709 | 0.384 | 1522 | 0
+GO:0000154 | rRNA modification | 0.35% | null | null | 4.658 | -1.3136 | 0.678 | 0.701 | 1522 | 1
+GO:0006811 | ion transport | 5.34% | -3.91 | -4.255 | 5.836 | -2.1079 | 0.866 | 0.389 | 6811 | 0
+GO:0046600 | negative regulation of centriole replication | 0.00% | -2.59 | 5.971 | 2.477 | -2.1569 | 0.824 | 0.407 | 46600 | 0
+GO:0006486 | protein glycosylation | 0.32% | 5.491 | -1.021 | 4.61 | -2.0586 | 0.675 | 0.429 | 6486 | 0
+GO:0051103 | DNA ligation involved in DNA repair | 0.04% | 3.562 | 5.637 | 3.703 | -2.8009 | 0.703 | 0.454 | 51103 | 0
+GO:0035023 | regulation of Rho protein signal transduction | 0.13% | 1.394 | 7.1 | 4.206 | -1.5602 | 0.764 | 0.515 | 35023 | 0
+GO:0055085 | transmembrane transport | 8.92% | -4.515 | -3.723 | 6.058 | -1.5468 | 0.863 | 0.535 | 55085 | 0
+GO:0006355 | regulation of transcription, DNA-templated | 9.92% | 4.282 | 3.292 | 6.105 | -1.7475 | 0.633 | 0.537 | 6355 | 0
+GO:0006468 | protein phosphorylation | 4.14% | 6.56 | -0.302 | 5.725 | -2.3389 | 0.67 | 0.56 | 6468 | 0
+GO:0034220 | ion transmembrane transport | 3.53% | -3.536 | -4.332 | 5.656 | -1.6655 | 0.846 | 0.566 | 34220 | 0
+GO:0006470 | protein dephosphorylation | 0.59% | 6.774 | -1.091 | 4.875 | -1.5439 | 0.715 | 0.568 | 6470 | 0
+GO:0009451 | RNA modification | 1.78% | 6.493 | 1.45 | 5.358 | -2.1891 | 0.686 | 0.581 | 9451 | 0
+GO:0015914 | phospholipid transport | 0.08% | -4.251 | -3.327 | 3.987 | -1.3062 | 0.821 | 0.584 | 15914 | 0
+GO:0035556 | intracellular signal transduction | 4.00% | 1.211 | 6.286 | 5.71 | -1.705 | 0.704 | 0.593 | 35556 | 0
+GO:0007186 | G-protein coupled receptor signaling pathway | 0.88% | 0.818 | 6.368 | 5.054 | -1.6167 | 0.736 | 0.638 | 7186 | 0
+GO:0007166 | cell surface receptor signaling pathway | 0.92% | 0.957 | 6.609 | 5.072 | -1.4923 | 0.735 | 0.641 | 7166 | 0
+GO:0006281 | DNA repair | 2.23% | 3.916 | 4.695 | 5.457 | -2.8009 | 0.608 | 0.684 | 6281 | 0
+GO:0006310 | DNA recombination | 1.64% | 6.285 | 3.557 | 5.323 | -2.8009 | 0.732 | 0.688 | 6310 | 0
+
 
 ### Here is the REVIGO plot showing GO terms associated with DMGs_2kbslop 
+
+![DMG_REVIGO_biological-functions.png](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG_REVIGO_biological-functions.png?raw=true)
 
 ```{r, message=FALSE, warning=FALSE}
 # A plotting R script produced by the REVIGO server at http://revigo.irb.hr/
@@ -286,31 +307,46 @@ library( scales );
 # Here is your data from REVIGO. Scroll down for plot configuration options.
 
 revigo.names <- c("term_ID","description","frequency_%","plot_X","plot_Y","plot_size","log10_p_value","uniqueness","dispensability");
-revigo.data <- rbind(c("GO:0006030","chitin metabolic process", 0.077,-0.750,-7.043, 3.994,-4.6619,0.855,0.000),
-c("GO:0006886","intracellular protein transport", 1.199, 4.707, 2.562, 5.187,-3.1954,0.746,0.000),
-c("GO:0030154","cell differentiation", 1.133, 2.462, 7.088, 5.162,-2.9446,0.833,0.000),
-c("GO:0006457","protein folding", 0.903, 1.598,-6.661, 5.064,-2.1316,0.877,0.035),
-c("GO:0007154","cell communication", 7.219, 3.773,-6.108, 5.967,-1.5876,0.869,0.046),
-c("GO:0007264","small GTPase mediated signal transduction", 0.485,-4.128, 4.889, 4.794,-2.4209,0.662,0.083),
-c("GO:0006468","protein phosphorylation", 4.137,-5.013,-3.169, 5.725,-4.4125,0.687,0.109),
-c("GO:0006265","DNA topological change", 0.268,-2.351,-0.007, 4.536,-2.7509,0.675,0.155),
-c("GO:0007018","microtubule-based movement", 0.287, 4.753,-3.755, 4.567,-2.0562,0.842,0.181),
-c("GO:0070588","calcium ion transmembrane transport", 0.157, 5.497, 0.499, 4.305,-2.2996,0.782,0.263),
-c("GO:0009408","response to heat", 0.166,-3.802, 6.157, 4.328,-2.1316,0.754,0.315),
-c("GO:0006355","regulation of transcription, DNA-templated", 9.917,-4.355, 0.735, 6.105,-2.1950,0.621,0.355),
-c("GO:0006511","ubiquitin-dependent protein catabolic process", 0.584,-4.345,-4.128, 4.874,-2.0280,0.737,0.400),
-c("GO:0055085","transmembrane transport", 8.916, 5.501, 1.819, 6.058,-2.2996,0.781,0.418),
-c("GO:0016579","protein deubiquitination", 0.195,-4.691,-4.605, 4.398,-2.0280,0.699,0.501),
-c("GO:0007186","G-protein coupled receptor signaling pathway", 0.882,-3.647, 4.983, 5.054,-1.6563,0.648,0.504),
-c("GO:0006811","ion transport", 5.344, 5.596, 2.340, 5.836,-2.2996,0.785,0.535),
-c("GO:0006470","protein dephosphorylation", 0.585,-5.408,-3.778, 4.875,-1.7904,0.722,0.568),
-c("GO:0006281","DNA repair", 2.234,-4.690, 2.130, 5.457,-1.3059,0.524,0.577),
-c("GO:0007016","cytoskeletal anchoring at plasma membrane", 0.006, 2.140, 2.772, 2.867,-2.9056,0.674,0.579),
-c("GO:0016560","protein import into peroxisome matrix, docking", 0.015, 3.678, 1.849, 3.287,-2.2544,0.697,0.621),
-c("GO:0051103","DNA ligation involved in DNA repair", 0.039,-4.819, 3.156, 3.703,-1.3059,0.631,0.628),
-c("GO:0035556","intracellular signal transduction", 4.000,-3.323, 4.909, 5.710,-1.4274,0.607,0.638),
-c("GO:0006814","sodium ion transport", 0.305, 5.860, 0.675, 4.592,-2.0455,0.784,0.656),
-c("GO:0006310","DNA recombination", 1.641,-5.673,-0.433, 5.323,-1.3059,0.697,0.688));
+revigo.data <- rbind(c("GO:0006260","DNA replication", 1.577, 5.949, 2.822, 5.306,-6.1605,0.719,0.000),
+c("GO:0007155","cell adhesion", 0.544,-6.544, 1.248, 4.844,-6.4135,0.914,0.000),
+c("GO:0023052","signaling", 6.765,-3.032,-0.496, 5.939,-7.3332,0.956,0.000),
+c("GO:0070588","calcium ion transmembrane transport", 0.157,-3.153,-4.713, 4.305,-2.1079,0.868,0.000),
+c("GO:0009058","biosynthetic process",31.611,-1.225,-0.762, 6.608,-2.4968,0.943,0.026),
+c("GO:0006334","nucleosome assembly", 0.089,-4.686, 5.561, 4.057,-3.6686,0.881,0.029),
+c("GO:0007264","small GTPase mediated signal transduction", 0.485, 1.480, 6.771, 4.794,-2.1354,0.743,0.034),
+c("GO:0006457","protein folding", 0.903,-4.690, 1.661, 5.064,-1.7376,0.912,0.037),
+c("GO:0007154","cell communication", 7.219,-6.016, 3.233, 5.967,-4.0935,0.904,0.048),
+c("GO:0005975","carbohydrate metabolic process", 5.260,-3.347, 3.585, 5.829,-3.2718,0.888,0.081),
+c("GO:0006030","chitin metabolic process", 0.077, 2.981,-3.369, 3.994,-3.9452,0.855,0.103),
+c("GO:0032958","inositol phosphate biosynthetic process", 0.007, 4.623,-5.390, 2.943,-6.0631,0.827,0.121),
+c("GO:0030154","cell differentiation", 1.133, 1.041,-6.177, 5.162,-5.2100,0.858,0.133),
+c("GO:0016567","protein ubiquitination", 0.523, 7.405, 0.126, 4.827,-2.6487,0.717,0.150),
+c("GO:0006006","glucose metabolic process", 0.430, 2.958,-6.194, 4.741,-3.4042,0.835,0.213),
+c("GO:0055114","oxidation-reduction process",15.060, 1.160,-1.152, 6.286,-6.1605,0.859,0.214),
+c("GO:0019427","acetyl-CoA biosynthetic process from acetate", 0.031, 4.516,-4.710, 3.604,-2.0321,0.810,0.237),
+c("GO:0006886","intracellular protein transport", 1.199,-4.141,-3.625, 5.187,-1.5764,0.862,0.263),
+c("GO:0009408","response to heat", 0.166, 0.479, 7.378, 4.328,-1.7376,0.834,0.315),
+c("GO:0006396","RNA processing", 3.210, 6.772, 2.794, 5.615,-2.1891,0.746,0.319),
+c("GO:0006511","ubiquitin-dependent protein catabolic process", 0.584, 7.678,-0.832, 4.874,-1.8804,0.781,0.321),
+c("GO:0006541","glutamine metabolic process", 0.472, 3.071,-4.558, 4.782,-1.9271,0.785,0.330),
+c("GO:0001522","pseudouridine synthesis", 0.350, 6.930, 1.680, 4.652,-2.1891,0.709,0.384),
+c("GO:0006811","ion transport", 5.344,-3.910,-4.255, 5.836,-2.1079,0.866,0.389),
+c("GO:0046600","negative regulation of centriole replication", 0.002,-2.590, 5.971, 2.477,-2.1569,0.824,0.407),
+c("GO:0006486","protein glycosylation", 0.317, 5.491,-1.021, 4.610,-2.0586,0.675,0.429),
+c("GO:0051103","DNA ligation involved in DNA repair", 0.039, 3.562, 5.637, 3.703,-2.8009,0.703,0.454),
+c("GO:0035023","regulation of Rho protein signal transduction", 0.125, 1.394, 7.100, 4.206,-1.5602,0.764,0.515),
+c("GO:0055085","transmembrane transport", 8.916,-4.515,-3.723, 6.058,-1.5468,0.863,0.535),
+c("GO:0006355","regulation of transcription, DNA-templated", 9.917, 4.282, 3.292, 6.105,-1.7475,0.633,0.537),
+c("GO:0006468","protein phosphorylation", 4.137, 6.560,-0.302, 5.725,-2.3389,0.670,0.560),
+c("GO:0034220","ion transmembrane transport", 3.528,-3.536,-4.332, 5.656,-1.6655,0.846,0.566),
+c("GO:0006470","protein dephosphorylation", 0.585, 6.774,-1.091, 4.875,-1.5439,0.715,0.568),
+c("GO:0009451","RNA modification", 1.778, 6.493, 1.450, 5.358,-2.1891,0.686,0.581),
+c("GO:0015914","phospholipid transport", 0.076,-4.251,-3.327, 3.987,-1.3062,0.821,0.584),
+c("GO:0035556","intracellular signal transduction", 4.000, 1.211, 6.286, 5.710,-1.7050,0.704,0.593),
+c("GO:0007186","G-protein coupled receptor signaling pathway", 0.882, 0.818, 6.368, 5.054,-1.6167,0.736,0.638),
+c("GO:0007166","cell surface receptor signaling pathway", 0.920, 0.957, 6.609, 5.072,-1.4923,0.735,0.641),
+c("GO:0006281","DNA repair", 2.234, 3.916, 4.695, 5.457,-2.8009,0.608,0.684),
+c("GO:0006310","DNA recombination", 1.641, 6.285, 3.557, 5.323,-2.8009,0.732,0.688));
 
 one.data <- data.frame(revigo.data);
 names(one.data) <- revigo.names;
@@ -335,7 +371,7 @@ p1 <- p1 + scale_colour_gradientn( colours = c("blue", "green", "yellow", "red")
 p1 <- p1 + geom_point( aes(plot_X, plot_Y, size = plot_size), shape = 21, fill = "transparent", colour = I (alpha ("black", 0.6) )) + scale_size_area();
 p1 <- p1 + scale_size( range=c(5, 30)) + theme_bw(); # + scale_fill_gradientn(colours = heat_hcl(7), limits = c(-300, 0) );
 #ex <- one.data [ one.data$dispensability < 0.15, ]; 
-p1 <- p1 + geom_text( data = one.data, aes(plot_X, plot_Y, label = description), colour = I(alpha("black", 0.85)), size = 3 ); #changed data from "ex" to "one.data"
+p1 <- p1 + geom_text( data = one.data, aes(plot_X, plot_Y, label = description), colour = I(alpha("black", 0.85)), size = 3 );
 p1 <- p1 + labs (y = "semantic space x", x = "semantic space y");
 p1 <- p1 + theme(legend.key = element_blank()) ;
 one.x_range = max(one.data$plot_X) - min(one.data$plot_X);
@@ -343,18 +379,10 @@ one.y_range = max(one.data$plot_Y) - min(one.data$plot_Y);
 p1 <- p1 + xlim(min(one.data$plot_X)-one.x_range/10,max(one.data$plot_X)+one.x_range/10);
 p1 <- p1 + ylim(min(one.data$plot_Y)-one.y_range/10,max(one.data$plot_Y)+one.y_range/10);
 
-
-
 # --------------------------------------------------------------------------
 # Output the plot to screen
 
 p1;
-
-# Uncomment the line below to also save the plot to a file.
-# The file type depends on the extension (default=pdf).
-
-# ggsave("C:/Users/path_to_your_file/revigo-plot.pdf");
-
 ```
 
 ### IGV 
@@ -364,11 +392,11 @@ Create bed files to visualze as a track of DMGs_2kbslop in IGV
 ```{r}
 DMGs_2kbslop.bed <- meth_filter_genes_2kbslop %>%
   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
-           start_gene %in% DMGs_2kbslop.genes$start_gene & 
-           end_gene %in% DMGs_2kbslop.genes$end_gene) %>%
-  dplyr::select(contig_gene, start_gene, end_gene, 
+           start_gene_2kb %in% DMGs_2kbslop.genes$start_gene & 
+           end_gene_2kb %in% DMGs_2kbslop.genes$end_gene) %>%
+  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb, 
                 unknown1_gene, strand_gene, unknown2_gene, notes_gene) %>%
-  distinct(contig_gene, start_gene, end_gene)
+  distinct(contig_gene, start_gene_2kb, end_gene_2kb)
 #DMGs_2kbslop.bed <- DMGs_2kbslop.bed[!duplicated(test$contig_gene),]
 readr::write_delim(DMGs_2kbslop.bed, "../analyses/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
 ```
@@ -485,41 +513,65 @@ DMLs.in.DMGs_2kbslop.calcs %>% ungroup() %>% select(chr, start) %>% distinct()
 #### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
 
 ```{r}
-head(sub_meth_table_2kbslop)
-head(meth_filter_reshaped)
+# How many gene regions are there after filtering for those with 5 methylated loci? 
+sub_meth_table_2kbslop %>% 
+       distinct(gene) %>%
+  nrow()
 
+head(sub_meth_table_2kbslop)
+head(meth_filter_reshaped) #data frame that contains coverage and % methylation info 
+
+# I think this filtering step doesn't account for the 2kb +/- start and stop 
 perc_meth_genes_2kbslop <- sub_meth_table_2kbslop %>% 
-  filter(chr %in% meth_filter_reshaped$chr & 
-           start %in% meth_filter_reshaped$start) %>% 
-   group_by(population, sample, contig_gene, start_gene, end_gene) %>%
+   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
    dplyr::summarise(
     mean_percMeth = mean(percMeth, na.rm=TRUE),
     sd_percMeth=sd(percMeth, na.rm=TRUE),
     n())  
 
 # check to make sure % methylation is calculated separately for each sample and gene region 
-perc_meth_genes_2kbslop %>% filter(contig_gene=="Contig0", start_gene==10497, end_gene==95068) %>%
+perc_meth_genes_2kbslop %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
   ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# How many unique gene regions? 
+perc_meth_genes_2kbslop %>% 
+       ungroup() %>% 
+  select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  nrow()
 
 # Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
 perc_meth_genes_2kbslop_wide <- perc_meth_genes_2kbslop %>% 
   ungroup() %>%
-  unite("gene_region", c("contig_gene", "start_gene", "end_gene"), sep = "_", remove = FALSE) %>%
+  unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   select(population, sample, gene_region, mean_percMeth) %>%
   spread(gene_region, mean_percMeth) %>%
   tibble::column_to_rownames(var = "sample")
 
 head(perc_meth_genes_2kbslop_wide[1:4]) #confirm correct format 
+ncol(perc_meth_genes_2kbslop_wide) #1394 gene regions 
+```
 
+#### Run Pst 
+
+ci=1 the confidence intervals are added to Pst values
+
+```{r}
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_2kbslop_Pst <- Pst(perc_meth_genes_2kbslop_wide)
 
-# Check out the 
-head(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE))
+# Check out Pst distribution 
+hist(genes_2kbslop_Pst$Pst_Values)
+summary(genes_2kbslop_Pst$Pst_Values)
+nrow(genes_2kbslop_Pst)
+
+# format of dataframe that I will save 
+head(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
 
 # Write out Pst results 
-write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene_2kbslop.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene_2kbslop.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 ```
+
 
 #### Second, calculate Pst of average % methylation only within genes. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
 
@@ -537,8 +589,6 @@ sub_meth_table <- meth_filter_genes[meth_filter_genes$group %in% newdata$vars,]
 
 # Calculate average % methylation within gene bodies by sample 
 perc_meth_genes <- sub_meth_table %>% 
-  filter(chr %in% meth_filter_reshaped$chr & 
-           start %in% meth_filter_reshaped$start) %>% 
    group_by(population, sample, contig_gene, start_gene, end_gene) %>%
    dplyr::summarise(
     mean_percMeth = mean(percMeth, na.rm=TRUE),
@@ -560,8 +610,10 @@ head(perc_meth_genes_wide[1:4]) #confirm correct format
 
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_Pst <- Pst(perc_meth_genes_wide)
-head(genes_Pst)
+
 hist(genes_Pst$Pst_Values)
+summary(genes_Pst$Pst_Values)
+nrow(genes_Pst)
 
 # Write out Pst results 
 write.table(genes_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene", "end_gene"), sep = "_", remove = FALSE), file = here::here("analyses", "Pst_gene.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
