@@ -134,7 +134,7 @@ filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
 
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
-save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file 
+save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
 ```
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
@@ -331,6 +331,8 @@ clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 Customized `methylKit` biplots from Yaamini Venkataraman's code,  [https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270](https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270)
 
 ```{r, fig.show='hide'}
+load("../analyses/methylation-filtered/R-objects/meth_filter") #save object to file 
+
 #Create dataframe with sample treatment information, color & symbol scheme 
 plotCustomization <- data.frame(sample = 1:18, population=c(
                                 rep("HC", times=9), 
@@ -379,7 +381,7 @@ NOTE: this PCA was run with _all_ methylated loci data after filtering for 10-10
 
 ```{r}
 save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered")
-write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/R-objects/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
+write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
 ```
 
 ### Principal Component Analyses, DMLs only 
