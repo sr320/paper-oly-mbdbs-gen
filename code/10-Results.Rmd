@@ -1,0 +1,218 @@
+---
+title: "10-Results"
+author: "Laura H Spencer"
+date: "3/23/2020"
+output: html_document
+---
+
+```{r, load packages, message=FALSE, warning=FALSE, results=FALSE, include=FALSE}
+list.of.packages <- c("readr", "scales", "ggplot2", "methylKit", "vegan", "tidyverse", "reshape2") #add new libraries here 
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
+```{r, data import, message=FALSE, warning=FALSE, results=FALSE, include=FALSE}
+load("../analyses/methylation-filtered/R-objects/meth_filter")
+load("../analyses/myobj_18")
+load("../analyses/methylation-filtered/R-objects/perc.meth")
+load("../analyses/DMLs/R-objects/allLociDML.summary")
+load("../analyses/DMLs/R-objects/DML.summary")
+load("../analyses/DMLs/R-objects/mydiff.all")
+load("../analyses/DMLs/R-objects/dml25")
+load("../analyses/meth_united_alldf")
+load("../analyses/methylation-filtered/R-objects/loci.locations.long")
+load("../analyses/methylation-filtered/R-objects/loci.locations")
+load("../analyses/DMGs/R-objects/sub_meth_table_2kbslop")
+load("../analyses/DMGs/R-objects/DMGs_2kbslop")
+load("../analyses/DMGs/R-objects/DMLs.in.DMGs_2kbslop")
+load("../analyses/DMLS/R-objects/DML.ratios")
+load("../analyses/DMLs/R-objects/DMLs_heatmap")
+load("../analyses/macau/R-objects/macau.FDR.length")
+load("../analyses/DMLs/myDiff25p")
+load("../analyses/macau/R-objects/macau.sign.length.perc.meth")
+load("../analyses/macau/R-objects/size.macau")
+load("../analyses/macau/R-objects/size.order")
+```
+
+In this notebook I will compile results that I will include in the manuscript. 
+
+### Description of methylation data  
+
+In total, `r prettyNum(nrow(meth_filter), big.mark = ",")` loci were analyzed. `r prettyNum(nrow(meth_united_alldf)-nrow(meth_filter), big.mark = ",")` loci were discarded because they did not pass the filtering requirements of 10-100 reads across 7 of the 9 samples per population.  
+
+Overall, loci were highly methylated. Across all samples, loci were on average `r percent(mean(perc.meth, na.rm=TRUE)/100, accuracy = .1)` methylated. 
+
+```{r, echo=FALSE, warning=FALSE}
+hist(perc.meth, col="gray50", 
+     xlab="Percent methylated",
+     ylab="Frequency",
+     main="Percent methylation, all evaluated loci across all samples")
+```
+
+Of all `r prettyNum(nrow(meth_filter), big.mark = ",")` evaluated loci, `r prettyNum(allLociDML.summary["gene"], big.mark = ",")` were located within known genes (`r percent(loci.locations[loci.locations$feature=="gene", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["exon"], big.mark = ",")` of which were located within exons (`r percent(loci.locations[loci.locations$feature=="exon", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["gene2kb"]-allLociDML.summary["gene"], big.mark = ",")` flanked known genes (within 2kb, `r percent(loci.locations[loci.locations$feature=="geneflank2kb", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["similarity"], big.mark = ",")` were found within transposable elements (`r percent(loci.locations[loci.locations$feature=="similarity", "AllDMLperc"], accuracy=0.1)`), and `r prettyNum(allLociDML.summary["unknown"], big.mark = ",")` were not found in any known feature (`r percent(loci.locations[loci.locations$feature=="unknown", "AllDMLperc"], accuracy=0.1)`). 
+
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="geneflank2kb" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+#  geom_bar(stat="identity", width = .5) +
+  geom_bar(position="fill", stat="identity", width=0.5) +
+  labs(y="No. of Loci", x=NULL) + 
+  scale_fill_manual(name = "Loci Location", labels = c("Exon", "Gene Body", "Gene Flanking Regions (+/-2kb)", "Transposable Elements", "Unknown Regions"), 
+                    values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c", "#fb9a99")) + 
+  ggtitle("Locations of DML and size-associated (MACAU) loci in genome\n with background loci locations") +
+  theme_minimal() + geom_text(size = 3, position = position_fill(vjust = 0.5)) + 
+  scale_x_discrete(labels=c("DML" = "DMLs",
+                            "allLociDML" = "DML Background\nLoci",
+                            "macau" = "Size-Associated\nLoci (MACAU)",
+                            "allLociMACAU" = "MACAU Background\nLoci"))
+```
+
+### Differential methylation 
+
+There were `r nrow(myDiff25p)` loci that were differentially methylated (DMLs) among populations. `r DML.summary["gene"]` loci were located within known genes (`r percent(loci.locations[loci.locations$feature=="gene", "DMLperc"], accuracy=0.1)`), `r DML.summary["exon"]` of which were within exons (`r percent(loci.locations[loci.locations$feature=="exon", "DMLperc"], accuracy=0.1)`), `r DML.summary["gene2kb"]-DML.summary["gene"]` DMLs flanked known genes (within 2kb, `r percent(loci.locations[loci.locations$feature=="geneflank2kb", "DMLperc"], accuracy=0.1)`), `r DML.summary["similarity"]` were located within transposable elements (`r percent(loci.locations[loci.locations$feature=="similarity", "DMLperc"], accuracy=0.1)`), and `r prettyNum(DML.summary["unknown"], big.mark = ",")` were not found in any known feature (`r percent(loci.locations[loci.locations$feature=="unknown", "DMLperc"], accuracy=0.1)`).  
+
+```{r, results=FALSE, echo=FALSE, warning=FALSE, message=FALSE, fig.show='hide'}
+PCA.filtered <- PCASamples(meth_filter, obj.return = T) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+summary(PCA.filtered) #Look at summary statistics. The first PC explains 21.9% of variation, the second PC explains 18.3% of variation
+```
+
+```{r, echo=FALSE, warning=FALSE}
+#Create dataframe with sample treatment information, color & symbol scheme 
+plotCustomization <- data.frame(sample = 1:18, population=c(
+                                rep("HC", times=9), 
+                                rep("SS", times=9)),
+                                color=c(rep("firebrick3", times=9),
+                                rep("dodgerblue3", times=9)),
+                                symbol=c(rep(16, times=9),
+                                rep(17, times=9))) 
+
+#pdf("../analyses/2018-10-25-MethylKit/2019-11-19-All-Data-PCA.pdf", width = 11, height = 8.5)
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+PCA.figure <- ordiplot(PCA.filtered, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
+points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 3) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
+#Add multiple white boxes on top of the default black box to manually change the color
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
+ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (21.9%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (18.3%)", line = 3, cex = 1.5) #Add y-axis label
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
+#dev.off()
+```
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T) +
+  scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr_start)) + 
+  theme(axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+    ggtitle("Heatmap of Differentially Methylated Loci") +
+  ylab("Loci") +
+  scale_fill_distiller(name = "% Methylation", palette = "YlGnBu", direction = 1) #)
+  #scale_fill_gradient(name = "% Methylation", low="gray5", high="white") black & white option 
+```
+
+#### Enriched Biological functions, DMLs 
+
+The GO MWU analysis did not identify any enriched biological functions. Enrichment analysis using the DAVID tool identified 7 enriched biological processes (Table 1). 
+
+#### Table 1: Enriched biological functions of genes that contain differentially methylated loci 
+
+GO Term | Biological Process | PValue | Fold Enrichment | Count
+-- | -- | -- | -- | --
+GO:0006513 | protein monoubiquitination | 0.010 | 8.0 | 4
+GO:0006284 | base-excision repair | 0.015 | 7.1 | 4
+GO:0048565 | digestive tract development | 0.033 | 9.6 | 3
+GO:0006974 | cellular response to DNA damage stimulus | 0.059 | 2.4 | 7
+GO:0042127 | regulation of cell proliferation | 0.071 | 4.0 | 4
+GO:0000902 | cell morphogenesis | 0.083 | 6.0 | 3
+GO:0055085 | transmembrane transport | 0.099 | 2.8 | 5
+
+![DML_REVIGO_BP.png](../analyses/DMLs/DML_REVIGO_BP.png)
+
+#### Location of loci with high and low Pst values 
+
+- What constitutes high and low? 
+
+### Methylated gene regions 
+
+Of the `r prettyNum(length(unique(sub_meth_table_2kbslop$gene)), big.mark = ",")` gene regions (genes +/- 2kb) assessed, `r length(unique(DMGs_2kbslop$gene))` were differentially methylated. Of these, there were `r nrow(DMLs.in.DMGs_2kbslop)` differentially methylated gene regions that contained DMLs (determined via a separate analysis). 
+
+- DMG functions & enriched functions.  TO DO. 
+- DMGs - what are the Pst and Fst values?  
+- Location of genes with high and low Pst values. Do they overlap with DMGs? 
+
+#### Ideas for DMG plots - any of interest?  
+
+### Methylated loci associated with size (MACAU) 
+
+To examine whether methylation plays a role in population-specific growth traits, we modeled methylation level for each loci using MACAU, while controlling for relatedness. Of the `r prettyNum(nrow(macau.FDR.length),, big.mark = ",")` loci assessed, `r nrow(subset(macau.FDR.length, significant=="TRUE"))` loci were associated with oyster size (shell length, whole wet weight as covariate). Of the 20 loci, `r loci.locations[loci.locations$feature=="gene","macau"]` were located within known gene bodies (`r loci.locations[loci.locations$feature=="exon","macau"]` in exons),  and `r loci.locations[loci.locations$feature=="geneflank2kb","macau"]` locus flanked genes (+/- 2kb). The number of size-associated loci that were also differentially methylated among populations was `r nrow(subset(macau.FDR.length, significant=="TRUE") %>% mutate_at(vars(locus), funs(as.integer)) %>% dplyr::filter(contig %in% dml25$chr, locus %in% c(dml25$start+1)))`, which indicates that the associations were not primarily due to population structure. 
+
+```{r, echo=FALSE, warning=FALSE}
+as.matrix(macau.sign.length.perc.meth[, grep(c("numCs"), colnames(macau.sign.length.perc.meth))][size.order]) %>% 
+  melt(value.name = "perc.meth", varnames = c("locus", "sample")) %>%
+ggplot(aes(sample, locus, fill= perc.meth)) + xlab("Sample") + geom_tile(na.rm = T) +
+  scale_x_discrete(breaks=colnames(as.matrix(macau.sign.length.perc.meth[, grep(c("numCs"), colnames(macau.sign.length.perc.meth))][size.order])), labels=c("10","1","7","4","6","8","2","9","11","13","14","3","15","5","17","18","12","16")) + 
+  #scale_fill_viridis(discrete=FALSE) 
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  ggtitle("Heatmap of Methylated Loci Associated with Oyster Size") + 
+  ylab("Loci") +
+  scale_fill_distiller(name = "% Methylation", palette = "YlGnBu", direction = 1, na.value="white")
+  #scale_fill_gradient(low="gray5", high="white") 
+```
+
+```{r, echo=FALSE, warning=FALSE}
+mycols <- c("firebrick3", "dodgerblue3")
+par(oma=c(0,0,5,0))
+barplot(size.macau[order(size.macau$y.Length),]$y.Length,  names.arg = size.macau[order(size.macau$y.Length),]$y.MBD.FILENAME, col = mycols[size.macau[order(size.macau$y.Length),]$pop], cex.names =  0.8, main = "Shell Length (mm)", las=2, space=1) #could add this to cut yaxis off at 10mm: (ylim=c(10,40), xpd = FALSE)
+abline(h = 0, col = "black", lwd = 1)
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.2, bty = "n") #Add a legend with information about ambient and elevated samples
+mtext(side = 1, text = "Sample", line = 2.25, cex = 1) #Add x-axis label
+```
+
+#### Enriched Biological functions, size-associated loci 
+
+The GO MWU analysis did not identify any enriched biological functions. Enrichment analysis using the DAVID tool identified 4 enriched biological processes (Table 1). 
+
+#### Table 2: Enriched biological functions of genes that contain loci which are associated with oyster size 
+
+GO Term | Biologica Function | PValue | Fold Enrichment | Count
+-- | -- | -- | -- | --
+GO:0006607 | NLS-bearing protein import into nucleus | 5.85E-04 | 68.4 | 3
+GO:0006610 | ribosomal protein import into nucleus | 0.02238718 | 79.8 | 2
+GO:0000059 | protein import into nucleus, docking | 0.02791389 | 63.84 | 2
+GO:0000060 | protein import into nucleus, translocation | 0.04432776 | 39.9 | 2
+
+![MACAU_REVIGO_BP.png](../analyses/macau/MACAU_REVIGO_BP.png)
+
+### Methylation and genetic data integration 
+
+- Fst vs. Pst 
+- Other correlations between genetic & epigenetic data? 
+
