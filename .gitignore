@@ -2,14 +2,11 @@
 .Rhistory
 .RData
 .Ruserdata
-resources/
 .DS_Store
 *.DS_Store
 data/uniprot-SP-GO-sorted.tab
 data/uniprot_sprot.fasta
-analyses/BEDtools/AllLoci-ASV.bed
-analyses/AllLoci.features.txt
 analyses/myobj_18
-data/uniprot_sprot.fasta
-analyses/meth_filter_gene.tab
-analyses/meth_filter_gene.2kbslop.tab
+analyses/methylation-filtered/meth_filter_gene.2kbslop.tab
+analyses/methylation-filtered/meth_filter_gene.tab
+resources/
