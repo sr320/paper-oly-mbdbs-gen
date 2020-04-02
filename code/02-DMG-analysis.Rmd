@@ -601,22 +601,22 @@ hist(genes_2kbslop_Pst_DMGpvalue$adj.pval.pop)
 summary(lm(Pst_Values^.5 ~ adj.pval.pop, data=genes_2kbslop_Pst_DMGpvalue))
 
 library(ggpmisc)
-formula <- genes_2kbslop_Pst_DMGpvalue$Pst_Values ~ genes_2kbslop_Pst_DMGpvalue$adj.pval.pop
+formula <- genes_2kbslop_Pst_DMGpvalue$adj.pval.pop ~ genes_2kbslop_Pst_DMGpvalue$Pst_Values
 
-ggplot(genes_2kbslop_Pst_DMGpvalue, aes(x=adj.pval.pop, y=Pst_Values)) +
+ggplot(genes_2kbslop_Pst_DMGpvalue, aes(x=Pst_Values, y=adj.pval.pop)) +
   geom_point(aes(colour = cut(adj.pval.pop, c(-Inf, 0.05, Inf)))) + 
   scale_color_manual(name = "DMG region significance",
                      values = c("(-Inf,0.05]" = "red",
                                   "(0.05, Inf]" = "black"),
                      labels = c("significant", "non-significant")) +
-  xlab("P-Adjusted from diff. methylated gene region analysis") +
-  ylab("Pst values, gene regions") + 
-  ggtitle("Gene Region Pst ~ P-Adjusted") +
+  ylab("P-Adjusted from diff. methylated gene region analysis") +
+  xlab("Pst values, gene regions") + 
+  ggtitle("Gene Region P-Adjusted ~ Pst") +
   geom_smooth(method = "lm", se = F) +
   stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
                label.x.npc = "right", label.y.npc = 0.85,
-               formula = formula, parse = TRUE, size = 3, col="blue")
-
+               formula = formula, parse = TRUE, size = 3, col="blue") +
+  ylim(c(0,1))
 ```
 
 
