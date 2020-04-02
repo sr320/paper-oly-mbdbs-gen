@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r, load packages, message=FALSE, warning=FALSE, results=FALSE, include=FALSE}
-list.of.packages <- c("readr", "scales", "ggplot2", "methylKit", "vegan", "tidyverse", "reshape2") #add new libraries here 
+list.of.packages <- c("readr", "scales", "ggplot2", "methylKit", "vegan", "tidyverse", "reshape2", "ggpmisc") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -38,6 +38,7 @@ load("../analyses/DMLs/myDiff25p")
 load("../analyses/macau/R-objects/macau.sign.length.perc.meth")
 load("../analyses/macau/R-objects/size.macau")
 load("../analyses/macau/R-objects/size.order")
+load("../analyses/DMGs/R-objects/genes_2kbslop_Pst_DMGpvalue")
 ```
 
 In this notebook I will compile results that I will include in the manuscript. 
@@ -158,11 +159,96 @@ GO:0055085 | transmembrane transport | 0.099 | 2.8 | 5
 
 Of the `r prettyNum(length(unique(sub_meth_table_2kbslop$gene)), big.mark = ",")` gene regions (genes +/- 2kb) assessed, `r length(unique(DMGs_2kbslop$gene))` were differentially methylated. Of these, there were `r nrow(DMLs.in.DMGs_2kbslop)` differentially methylated gene regions that contained DMLs (determined via a separate analysis). 
 
-- DMG functions & enriched functions.  TO DO. 
-- DMGs - what are the Pst and Fst values?  
-- Location of genes with high and low Pst values. Do they overlap with DMGs? 
+#### Enriched DMG functions 
 
-#### Ideas for DMG plots - any of interest?  
+**Biological Processes: regulation of protein kinase   activity (P-Value=0.072)**
+
+| GCN1, eIF2 alpha kinase activator homolog(GCN1)  	| Q92616 	| Homo sapiens 	|
+|--------------------------------------------------	|--------	|--------------	|
+| kinase D-interacting substrate 220kDa(KIDINS220) 	| Q9ULH0 	| Homo sapiens 	|
+| titin(TTN)                                       	| Q8WZ42 	| Homo sapiens 	|
+| titin(Ttn)                                       	| A2ASS6 	| Mus musculus 	|
+
+**Molecular   Functions: ligase activity (P-Value=0.087)**
+
+| HECT domain containing 1(Hectd1)                                          	| Q69ZR2 	| Mus musculus           	|
+|---------------------------------------------------------------------------	|--------	|------------------------	|
+| HECT, UBA and WWE domain containing 1, E3 ubiquitin protein ligase(HUWE1) 	| Q7Z6Z7 	| Homo sapiens           	|
+| PYruvate Carboxylase(pyc-1)                                               	| O17732 	| Caenorhabditis elegans 	|
+| nuclear transcription factor, X-box binding 1(NFX1)                       	| Q12986 	| Homo sapiens           	|
+| ring finger protein 103(Rnf103)                                           	| Q9R1W3 	| Mus musculus           	|
+| ring finger protein 168(rnf168)                                           	| Q7T308 	| Danio rerio            	|
+| ring finger protein 38(RNF38)                                             	| Q9H0F5 	| Homo sapiens           	|
+| succinate-CoA ligase, alpha subunit(Suclg1)                               	| P13086 	| Rattus norvegicus      	|
+| tripartite motif containing 2(TRIM2)                                      	| A4IF63 	| Bos taurus             	|
+| tripartite motif-containing 2(Trim2)                                      	| D3ZQG6 	| Rattus norvegicus      	|
+| ubiquitin protein ligase E3 component n-recognin 5(Ubr5)                  	| Q80TP3 	| Mus musculus           	|
+
+**Molecular   Functions: DNA binding (P-Value=0.091)**
+
+| AE binding protein 2(aebp2)                                               	| Q7SXV2 	| Danio rerio                   	|
+|---------------------------------------------------------------------------	|--------	|-------------------------------	|
+| AT-hook containing transcription factor 1 L homeolog(ahctf1.L)            	| Q5U249 	| Xenopus laevis                	|
+| AT-rich interaction domain 2(ARID2)                                       	| Q68CP9 	| Homo sapiens                  	|
+| E1A binding protein p400(Ep400)                                           	| Q8CHI8 	| Mus musculus                  	|
+| GLIS family zinc finger 3(Glis3)                                          	| Q6XP49 	| Mus musculus                  	|
+| HECT, UBA and WWE domain containing 1, E3 ubiquitin protein ligase(HUWE1) 	| Q7Z6Z7 	| Homo sapiens                  	|
+| JRK-like(JRKL)                                                            	| Q9Y4A0 	| Homo sapiens                  	|
+| Nuclear Hormone Receptor family(nhr-41)                                   	| Q9N4B8 	| Caenorhabditis elegans        	|
+| PR domain containing 1, with ZNF domain(Prdm1)                            	| Q60636 	| Mus musculus                  	|
+| PYruvate Carboxylase(pyc-1)                                               	| O17732 	| Caenorhabditis elegans        	|
+| Putative histone H1.6(hil-6)                                              	| O16277 	| Caenorhabditis elegans        	|
+| RAB guanine nucleotide exchange factor (GEF) 1(Rabgef1)                   	| Q9JM13 	| Mus musculus                  	|
+| SET domain, bifurcated 1 L homeolog(setdb1.L)                             	| Q6INA9 	| Xenopus laevis                	|
+| Zn finger homeodomain 1(zfh1)                                             	| P28166 	| Drosophila melanogaster       	|
+| chromodomain helicase DNA binding protein 8(chd8)                         	| B0R0I6 	| Danio rerio                   	|
+| conserved Plasmodium protein, unknown function(PF14_0175)                 	| Q8ILR9 	| Plasmodium falciparum 3D7     	|
+| ligase I, DNA, ATP-dependent S homeolog(lig1.S)                           	| P51892 	| Xenopus laevis                	|
+| methyl-CpG binding domain protein 6(Mbd6)                                 	| Q3TY92 	| Mus musculus                  	|
+| orphan steroid hormone receptor 2(shr2)                                   	| Q26622 	| Strongylocentrotus purpuratus 	|
+| regulatory factor X7(RFX7)                                                	| Q2KHR2 	| Homo sapiens                  	|
+| transcription factor B1, mitochondrial(tfb1m)                             	| Q28HM1 	| Xenopus tropicalis            	|
+| zinc finger and BTB domain containing 24(zbtb24)                          	| Q52KB5 	| Danio rerio                   	|
+| zinc finger protein 236(ZNF236)                                           	| Q9UL36 	| Homo sapiens                  	|
+| zinc finger protein 471(ZNF471)                                           	| Q9BX82 	| Homo sapiens                  	|
+| zinc finger protein 525(ZNF525)                                           	| Q8N782 	| Homo sapiens                  	|
+| zinc finger protein interacting with K protein 1(Zik1)                    	| Q80YP6 	| Mus musculus                  	|
+| zinc finger, MYM-type 4(Zmym4)                                            	| A2A791 	| Mus musculus                  	|
+
+**Cellular   Compoent: midbody (P-value=0.069)**
+
+| CTD phosphatase subunit 1(CTDP1)                                      	| Q9Y5B0 	| Homo sapiens      	|
+|-----------------------------------------------------------------------	|--------	|-------------------	|
+| phosphatidylinositol transfer protein, membrane-associated 1(Pitpnm1) 	| Q5U2N3 	| Rattus norvegicus 	|
+| septin 7(SEPT7)                                                       	| Q5R1W1 	| Pan troglodytes   	|
+| supervillin(SVIL)                                                     	| O95425 	| Homo sapiens      	|
+| supervillin(SVIL)                                                     	| O46385 	| Bos taurus        	|
+| tetratricopeptide repeat domain 28(TTC28)                             	| Q96AY4 	| Homo sapiens      	|
+
+#### Relationship between Pst values and DMG P-adjusted values 
+
+```{r, echo=FALSE, warning=FALSE}
+formula <- genes_2kbslop_Pst_DMGpvalue$Pst_Values ~ genes_2kbslop_Pst_DMGpvalue$adj.pval.pop
+ggplot(genes_2kbslop_Pst_DMGpvalue, aes(x=adj.pval.pop, y=Pst_Values)) +
+  geom_point(aes(colour = cut(adj.pval.pop, c(-Inf, 0.05, Inf)))) + 
+  scale_color_manual(name = "DMG region significance",
+                     values = c("(-Inf,0.05]" = "red",
+                                  "(0.05, Inf]" = "black"),
+                     labels = c("significant", "non-significant")) +
+  xlab("P-Adjusted from diff. methylated gene region analysis") +
+  ylab("Pst values, gene regions") + 
+  ggtitle("Gene Region Pst ~ P-Adjusted") +
+  geom_smooth(method = "lm", se = F) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               label.x.npc = "right", label.y.npc = 0.85,
+               formula = formula, parse = TRUE, size = 3, col="blue")
+```
+
+#### Other ideas for DMGs  
+
+- DMGs - what are the Fst values?  
+- Which genes have low Pst values but are differentially methylated?  
+
 
 ### Methylated loci associated with size (MACAU) 
 

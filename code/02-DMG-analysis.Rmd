@@ -191,9 +191,16 @@ results_2kbslop$adj.pval.pop <- p.adjust(results_2kbslop$pval.treatment, method=
 #save df with differentially methylated genes 
 DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #%>%
 #  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
+save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
+
 
 DMGs_2kbslop.genes <- DMGs_2kbslop[!duplicated(DMGs_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
-save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
+
+# Save .bed file for gene enrichment and visualization 
+write_delim(DMGs_2kbslop.genes[,c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
+
+# Save .bed file for all genes included in DMG analysis 
+write_delim(results_2kbslop[!duplicated(results_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/AllGenes-DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
 ```
 
 ### Here is the number of differentially methylated genes (5 loci per gene): 
@@ -282,7 +289,7 @@ GO:0006310 | DNA recombination | 1.64% | 6.285 | 3.557 | 5.323 | -2.8009 | 0.732
 
 ### Here is a screen shot of the REVIGO plot showing GO terms associated with DMGs_2kbslop (5 methylated loci per gene) 
 
-![DMG_REVIGO_biological-functions.png](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMGs/DMG_REVIGO_biological-functions.png?raw=true)
+![DMG_REVIGO_biological-functions.png](../analyses/DMGs/DMG_REVIGO_biological-functions.png) 
 
 ### Here is a script to re-create that REVIGO plot  
 
@@ -575,6 +582,44 @@ head(genes_2kbslop_Pst %>%
   separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   filter(Pst_Values>0.5))
 ```
+
+#### Merge DMG list with Pst values 
+
+```{r}
+
+#Merge # (gene region list+Pst values) with (gene region list + adjusted p-values (<0.05 indicates significant)) 
+
+genes_2kbslop_Pst_DMGpvalue <- merge(x=genes_2kbslop_Pst,  
+      y=results_2kbslop[!duplicated(results_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "gene", "adj.pval.pop")],
+      by.x="Quant_Varia", 
+      by.y="gene")
+save(genes_2kbslop_Pst_DMGpvalue, file = "../analyses/DMGs/R-objects/genes_2kbslop_Pst_DMGpvalue")
+
+# Assess relationship between Pst values and P-adjusted for DMG regions 
+hist(genes_2kbslop_Pst_DMGpvalue$Pst_Values^0.5)
+hist(genes_2kbslop_Pst_DMGpvalue$adj.pval.pop)
+summary(lm(Pst_Values^.5 ~ adj.pval.pop, data=genes_2kbslop_Pst_DMGpvalue))
+
+library(ggpmisc)
+formula <- genes_2kbslop_Pst_DMGpvalue$Pst_Values ~ genes_2kbslop_Pst_DMGpvalue$adj.pval.pop
+
+ggplot(genes_2kbslop_Pst_DMGpvalue, aes(x=adj.pval.pop, y=Pst_Values)) +
+  geom_point(aes(colour = cut(adj.pval.pop, c(-Inf, 0.05, Inf)))) + 
+  scale_color_manual(name = "DMG region significance",
+                     values = c("(-Inf,0.05]" = "red",
+                                  "(0.05, Inf]" = "black"),
+                     labels = c("significant", "non-significant")) +
+  xlab("P-Adjusted from diff. methylated gene region analysis") +
+  ylab("Pst values, gene regions") + 
+  ggtitle("Gene Region Pst ~ P-Adjusted") +
+  geom_smooth(method = "lm", se = F) +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               label.x.npc = "right", label.y.npc = 0.85,
+               formula = formula, parse = TRUE, size = 3, col="blue")
+
+```
+
+
 
 ##### Second, calculate Pst of average % methylation only within genes. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
 
