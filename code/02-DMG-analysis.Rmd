@@ -688,7 +688,7 @@ ggplot(DMGs_2kbslop, aes(sample, gene, fill= percMeth)) + xlab("Sample") + geom_
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-# ----------------------------------------------------------------------
+----------------------------------------------------------------------
 
 ### DMG analysis with relaxed loci settings 
 
@@ -790,7 +790,70 @@ DMGs_2kbslop_4loci.genes.GO <- DMGs_2kbslop_4loci.genes %>%
 write_delim(DMGs_2kbslop_4loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_4loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
 ```
 
-# ----------------------------------------------------------------------
+### Calculate Pst for each gene (min 4 loci per gene)
+
+##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 4 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+# How many gene regions are there after filtering for those with 4 methylated loci? 
+sub_meth_table_2kbslop_4loci %>% 
+       distinct(gene) %>%
+  nrow()
+
+# I think this filtering step doesn't account for the 2kb +/- start and stop 
+perc_meth_genes_2kbslop_4loci <- sub_meth_table_2kbslop_4loci %>% 
+   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes_2kbslop_4loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# How many unique gene regions? 
+perc_meth_genes_2kbslop_4loci %>% 
+       ungroup() %>% 
+  select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  nrow()
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+perc_meth_genes_2kbslop_4loci_wide <- perc_meth_genes_2kbslop_4loci %>% 
+  ungroup() %>%
+  unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  tibble::column_to_rownames(var = "sample")
+
+head(perc_meth_genes_2kbslop_4loci_wide[1:4]) #confirm correct format 
+ncol(perc_meth_genes_2kbslop_4loci_wide) #1724 gene regions 
+```
+
+### Run Pst 
+
+```{r}
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_2kbslop_4loci_Pst <- Pst(perc_meth_genes_2kbslop_4loci_wide)
+
+# Check out Pst distribution 
+hist(genes_2kbslop_4loci_Pst$Pst_Values)
+summary(genes_2kbslop_4loci_Pst$Pst_Values)
+nrow(genes_2kbslop_4loci_Pst)
+
+# format of dataframe that I will save 
+head(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
+
+# Write out Pst results 
+write.table(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_4loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+head(genes_2kbslop_4loci_Pst %>% 
+  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  filter(Pst_Values>0.5))
+```
+
+----------------------------------------------------------------------
 
 ### DMG analysis with relaxed loci settings 
 
@@ -846,7 +909,7 @@ results_2kbslop_3loci$adj.pval.pop <- p.adjust(results_2kbslop_3loci$pval.treatm
 #results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
 ```
 
-### Extract only genes that were differentially methylated (4 loci min) (p-adj < 0.05):
+### Extract only genes that were differentially methylated (3 loci min) (p-adj < 0.05):
 
 ```{r}
 #save df with differentially methylated genes 
@@ -890,4 +953,67 @@ DMGs_2kbslop_3loci.genes.GO <- DMGs_2kbslop_3loci.genes %>%
   filter(!is.na(Note) & !is.na(GO_term))
 
 write_delim(DMGs_2kbslop_3loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_3loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
+```
+
+### Calculate Pst for each gene (min 3 loci per gene)
+
+##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 3 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+# How many gene regions are there after filtering for those with 3 methylated loci? 
+sub_meth_table_2kbslop_3loci %>% 
+       distinct(gene) %>%
+  nrow()
+
+# I think this filtering step doesn't account for the 2kb +/- start and stop 
+perc_meth_genes_2kbslop_3loci <- sub_meth_table_2kbslop_3loci %>% 
+   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes_2kbslop_3loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# How many unique gene regions? 
+perc_meth_genes_2kbslop_3loci %>% 
+       ungroup() %>% 
+  select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  nrow()
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+perc_meth_genes_2kbslop_3loci_wide <- perc_meth_genes_2kbslop_3loci %>% 
+  ungroup() %>%
+  unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  tibble::column_to_rownames(var = "sample")
+
+head(perc_meth_genes_2kbslop_3loci_wide[1:4]) #confirm correct format 
+ncol(perc_meth_genes_2kbslop_3loci_wide) #1724 gene regions 
+```
+
+### Run Pst 
+
+```{r}
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_2kbslop_3loci_Pst <- Pst(perc_meth_genes_2kbslop_3loci_wide)
+
+# Check out Pst distribution 
+hist(genes_2kbslop_3loci_Pst$Pst_Values)
+summary(genes_2kbslop_3loci_Pst$Pst_Values)
+nrow(genes_2kbslop_3loci_Pst)
+
+# format of dataframe that I will save 
+head(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
+
+# Write out Pst results 
+write.table(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_3loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+head(genes_2kbslop_3loci_Pst %>% 
+  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  filter(Pst_Values>0.5))
 ```
