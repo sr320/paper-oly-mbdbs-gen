@@ -111,20 +111,20 @@ load("../analyses/myobj_18")
 ### Check the basic stats about the methylation data - coverage and percent methylation. Index the object to look through each sample
 
 ```{r}
-getMethylationStats(myobj_18[[2]],plot=F,both.strands=FALSE)
+getMethylationStats(myobj_18[[2]],plot=F,both.strands=TRUE)
 head(myobj_18[[5]])
 ```
 
 ```{r}
-getMethylationStats(myobj_18[[13]],plot=T,both.strands=FALSE)
+getMethylationStats(myobj_18[[13]],plot=T,both.strands=TRUE)
 ```
 
 ```{r}
-getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=FALSE)
+getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=TRUE)
 ```
 
 ```{r}
-getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=FALSE)
+getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=TRUE)
 ```
 
 ### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
@@ -201,7 +201,8 @@ save(myDiff25p, file="../analyses/DMLs/myDiff25p")
 dml25 <- myDiff25p %>% 
   mutate(start = start-1, end = end+1) %>% 
   dplyr::select(chr, start, end, meth.diff)
-write_delim(dml25, "../analyses/DMLs/dml25.bed",  delim = '\t', col_names = TRUE)
+write_delim(dml25, "../analyses/DMLs/dml25.bed",  delim = '\t', col_names = TRUE) 
+write_delim(dml25, "../analyses/DMLs/dml25_forIGV.bed",  delim = '\t', col_names = FALSE) #no column names for IGV
 save(dml25, file="../analyses/DMLs/R-objects/dml25")
 
 # Write out bedfile for all loci fed into DML analysis, to use as background for enrichment 

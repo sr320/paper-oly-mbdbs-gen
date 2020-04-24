@@ -60,7 +60,7 @@ Create dataframe with total counts (aka coverage), and location info (chromosome
 IMPORTANT NOTE: MACAU does not work if there are any missing (NA) or 0 values in the total count file.  Because I still want to analyze the loci where one sample per population was filtered out due to <10x or >100x coverage, I need to do some merging. 
 
 ```{r}
-# Create a low threshold object, needed to merge with the filtered dataframe so I can replace NA values with actual values 
+# Load the low threshold object, needed to merge with the filtered dataframe so I can replace NA values with actual values 
 
 load("../analyses/myobj_18") #load original count object if needed 
 

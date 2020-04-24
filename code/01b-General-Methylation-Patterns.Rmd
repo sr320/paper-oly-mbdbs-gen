@@ -1,0 +1,352 @@
+---
+title: "01b-General-Methylation-Patterns"
+author: "Laura H Spencer"
+date: "4/22/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load libraries
+
+```{r message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "scales") #add new libraries here 
+
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
+### Merge all .bam files into one, called "all.merged.bam", saved in the same directory (my external hard drive)
+
+```{bash, eval = FALSE}
+samtools merge /Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/all.merged.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_2_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_3_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_4_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_5_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_6_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_7_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_8_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_9_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_10_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_11_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_12_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_13_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_14_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_15_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_16_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_18_s456_trimmed_bismark_bt2.deduplicated.sorted.bam
+```
+
+### Create methylKit object the merged .bam file 
+
+```{r, eval = FALSE}
+myobj_merged = processBismarkAln(location = "/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/all.merged.bam", 
+                                 assembly = "v081", read.context="CpG", mincov=2, sample.id="all_merged")
+```
+
+### Save methylRaw object to file
+
+```{r, eval = FALSE}
+save(myobj_merged, file = "../analyses/methylation-characteristics/R-objects/myobj_merged") 
+```
+
+### Read in methylRaw object, if neede 
+```{r}
+load("../analyses/methylation-characteristics/R-objects/myobj_merged") 
+```
+
+
+### Check out format of methylRaw object 
+
+```{r}
+head(myobj_merged)
+```
+
+
+```{r}
+getMethylationStats(myobj_merged,plot=T,both.strands=TRUE)
+```
+
+```{r}
+getCoverageStats(myobj_merged,plot=TRUE,both.strands=TRUE)
+```
+
+Create R dataframe object from methylRaw object 
+
+```{r}
+methdf_merged=getData(myobj_merged)
+```
+
+### Call methylation status based on % methylation 
+
+A locus is methylated if 50% or greater reads are methylated, that is they were unconverted after bisulfite treatment (in this dataset they are "C's") (Gavery and Roberts 2013; Olson and Roberts 2013). I will therefore determine methylation status using the numCs/coverage, where methylated = any greater or equal to 50%. 
+
+```{r}
+methdf_merged <- methdf_merged %>% 
+  mutate(meth.percent=numCs/coverage, 
+         methyl.status=factor(ifelse(meth.percent >= 0.5, 'methylated', "unmethylated")))
+```
+
+#### How many methylated & unmethylated sites are there with various coverage thresholds? 
+
+```{r}
+hist(methdf_merged$meth.percent, col="gray85", 
+     xlab="% methylation per base", 
+     main="% methylation, 2x minimum coverage (all samples)") #note: this dataset is already filtered for 2x coverage 
+```
+
+
+```{r}
+hist(subset(methdf_merged, coverage >= 5)$meth.percent, col="gray50", 
+     xlab="% methylation per base", 
+     main="% methylation, 5x minimum coverage (all samples)")
+```
+
+```{r}
+hist(subset(methdf_merged, coverage >= 10)$meth.percent, col="gray25",
+     xlab="% methylation per base", 
+     main="% methylation, 10x minimum coverage (all samples)")
+```
+
+#### Filter for only loci with 5x coverage or greater, and  write out bedfiles for methylated loci, and unmethylated loci 
+
+```{r}
+# Extract and write out methylated loci 
+merged_methylated_5x <- methdf_merged %>% 
+  mutate(start = start-1, end = end+1) %>% 
+  filter(coverage >=5) %>%
+  filter(methyl.status=="methylated")
+write_delim(merged_methylated_5x %>% dplyr::select(chr, start, end, meth.percent), "../analyses/methylation-characteristics/merged_methylated_5x.bed",  delim = '\t', col_names = TRUE)
+save(merged_methylated_5x, file="../analyses/methylation-characteristics/R-objects/merged_methylated_5x")
+
+# Extract and write out unmethylated loci 
+merged_unmethylated_5x <- methdf_merged %>% 
+  mutate(start = start-1, end = end+1) %>% 
+  filter(coverage >=5) %>%
+  filter(methyl.status=="unmethylated")
+write_delim(merged_unmethylated_5x %>% dplyr::select(chr, start, end, meth.percent), "../analyses/methylation-characteristics/merged_unmethylated_5x.bed",  delim = '\t', col_names = TRUE)
+
+# Extract and write out all loci 
+merged_all_5x <- methdf_merged %>% 
+  mutate(start = start-1, end = end+1) %>% 
+  filter(coverage >=5)
+write_delim(merged_all_5x %>% dplyr::select(chr, start, end, meth.percent), "../analyses/methylation-characteristics/merged_all_5x.bed",  delim = '\t', col_names = TRUE)
+save(merged_all_5x, file="../analyses/methylation-characteristics/R-objects/merged_all_5x")
+```
+
+#### How many unmethylated loci are there? 
+
+```{r}
+nrow(merged_unmethylated_5x)
+```
+
+#### How many methylated loci are there? 
+
+```{r}
+nrow(merged_methylated_5x)
+```
+
+#### Identify locations of methylated loci 
+
+```{bash}
+echo "No. of methylated loci located in genes:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in genes +/- 2kb flanks:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in exons:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in coding sequences:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in mRNA:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in transposable elements:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081_TE-Cg.gff" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci located in alternative splice variants:"
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" | wc -l 
+```
+
+```{bash}
+echo "No. of methylated loci not located in any known feature:"
+bedtools intersect -v -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" | wc -l 
+```
+
+#### Save all of the above intersected to file 
+
+```{bash}
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-characteristics/methylated-gene.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylated-gene2kb.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/methylation-characteristics/methylated-exon.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/methylation-characteristics/methylated-CDS.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/methylation-characteristics/methylated-mRNA.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081_TE-Cg.gff" >  ../analyses/methylation-characteristics/methylated-TE.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/methylated-ASV.bed
+bedtools intersect -v -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/methylated-unknown.bed
+```
+
+### Summarizing Methylation Annotations 
+
+#### Where are methylated loci located? 
+
+```{r, message=FALSE, warning=FALSE}
+methfiles <- c("methylated-CDS.bed", "methylated-exon.bed", "methylated-gene.bed", "methylated-gene2kb.bed", "methylated-mRNA.bed", "methylated-TE.bed", "methylated-ASV.bed", "methylated-unknown.bed")
+methylated.features <- list()
+for (i in c(1:8)) {
+  methylated.features[[i]] <- read_delim(here::here("analyses", "methylation-characteristics", methfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+for (i in 1:7) {
+  methylated.features[[i]] <- methylated.features[[i]] %>%
+    setNames(c("contig.meth","start.meth","end.meth","score.meth","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);")
+       ) %>%
+mutate_at("feature", as.factor)
+}
+names(methylated.features) <- c("methylated.CDS", "methylated.exon", "methylated.gene","methylated.gene2kb", "methylated.mRNA", "methylated.TE", "methylated.ASV", "methylated.unknown")
+methylated.features[["methylated.unknown"]] <- 
+  methylated.features[["methylated.unknown"]] %>% 
+  setNames(c("contig.meth", "start.meth", "end.meth", "score.meth"))
+
+methylated.features[["methylated.CDS"]] <- methylated.features[["methylated.CDS"]] %>% mutate_at("unknown2", as.character)
+methylated.features[["methylated.TE"]] <- methylated.features[["methylated.TE"]] %>% mutate_at("unknown1", as.character)
+methylated.features[["methylated.ASV"]] <- methylated.features[["methylated.ASV"]] %>% mutate_at("unknown1", as.character) %>% filter(feature=="transcript") #filter out the duplicate "exon" entry in ASV feature list
+methylated.features[["methylated.gene2kb"]]$feature <- "gene2kb"
+methylated.features[["methylated.unknown"]]$feature <- "unknown"
+methylated.features.df <- bind_rows(methylated.features)
+print(methylated.summary <- table(methylated.features.df[c("feature")]))
+names(methylated.summary) <- c("CDS","exon","gene","gene2kb","mRNA","TE", "ASV", "unknown") #rename columns 
+
+#save methylated loci feature df object to file, to use in notebook #12 
+save(methylated.features.df, file="../analyses/methylation-characteristics/R-objects/methylated.features.df")
+save(methylated.summary, file="../analyses/methylation-characteristics/R-objects/methylated.summary")
+```
+
+#### Where are ALL loci located that we have data for? (this is methylated + unmethylated combined after filtering for 5x coverage) 
+
+#### Use bedtools to find overlaps between all loci and gene features 
+
+```{bash}
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-characteristics/all-gene.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/all-gene2kb.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/methylation-characteristics/all-exon.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/methylation-characteristics/all-CDS.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/methylation-characteristics/all-mRNA.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081_TE-Cg.gff" >  ../analyses/methylation-characteristics/all-TE.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/all-ASV.bed
+bedtools intersect -v -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/all-unknown.bed
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+methfiles <- c("all-CDS.bed", "all-exon.bed", "all-gene.bed", "all-gene2kb.bed", "all-mRNA.bed", "all-TE.bed", "all-ASV.bed", "all-unknown.bed")
+all.features <- list()
+for (i in c(1:8)) {
+  all.features[[i]] <- read_delim(here::here("analyses", "methylation-characteristics", methfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
+for (i in 1:7) {
+  all.features[[i]] <- all.features[[i]] %>%
+    setNames(c("contig.meth","start.meth","end.meth","score.meth","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
+mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);")
+       ) %>%
+mutate_at("feature", as.factor)
+}
+names(all.features) <- c("all.CDS", "all.exon", "all.gene","all.gene2kb", "all.mRNA", "all.TE", "all.ASV", "all.unknown")
+all.features[["all.unknown"]] <- 
+  all.features[["all.unknown"]] %>% 
+  setNames(c("contig.meth", "start.meth", "end.meth", "score.meth"))
+
+all.features[["all.CDS"]] <- all.features[["all.CDS"]] %>% mutate_at("unknown2", as.character)
+all.features[["all.TE"]] <- all.features[["all.TE"]] %>% mutate_at("unknown1", as.character)
+all.features[["all.ASV"]] <- all.features[["all.ASV"]] %>% mutate_at("unknown1", as.character) %>% filter(feature=="transcript") #filter out the duplicate "exon" entry in ASV feature list
+all.features[["all.gene2kb"]]$feature <- "gene2kb"
+all.features[["all.unknown"]]$feature <- "unknown"
+all.features.df <- bind_rows(all.features)
+print(all.summary <- table(all.features.df[c("feature")]))
+names(all.summary) <- c("CDS","exon","gene","gene2kb","mRNA","TE", "ASV", "unknown") #rename columns 
+
+#save all loci feature df object to file, to use in notebook #12 
+save(all.features.df, file="../analyses/methylation-characteristics/R-objects/all.features.df")
+save(all.summary, file="../analyses/methylation-characteristics/R-objects/all.summary")
+```
+
+### Prep summary df that contains locations of methylated loci & all loci, and % of those loci that are located within known features 
+
+```{r}
+methylation.overlap <-  merge(x=melt(methylated.summary, varnames = "feature", value.name = "methylated"),
+                              y=melt(all.summary, varnames = "feature", value.name = "all")) #convert to long format 
+
+methylation.overlap <- methylation.overlap %>% mutate(feature = as.character(feature)) %>% #make feature character class 
+  mutate(methylated=as.numeric(methylated)) %>%  #make # methylated loci numeric class 
+  rbind(c("geneflank2kb",methylation.overlap[methylation.overlap$feature=="gene2kb","methylated"]-methylation.overlap[methylation.overlap$feature=="gene","methylated"],
+          methylation.overlap[methylation.overlap$feature=="gene2kb","all"]-methylation.overlap[methylation.overlap$feature=="gene","all"])) %>% #add row with # loci that flannk genes (up & down)
+  rbind(c("intron",methylation.overlap[methylation.overlap$feature=="gene","methylated"]-methylation.overlap[methylation.overlap$feature=="exon","methylated"],
+          methylation.overlap[methylation.overlap$feature=="gene","all"]-methylation.overlap[methylation.overlap$feature=="exon","all"])) %>% #add row with # loci in introns (# in genes minus # in exons)
+  rbind(c("all", as.numeric(nrow(merged_methylated_5x)), as.numeric(nrow(merged_all_5x)))) %>% #add row with total # methylated loci 
+  mutate_at(vars(-feature), funs(as.numeric)) %>% #convert all columns to numeric (except feature column)
+  mutate(methperc=methylated/nrow(merged_methylated_5x), allperc=all/nrow(merged_all_5x)) #calculate % of loci that overlap with known features 
+save(methylation.overlap, file="../analyses/methylation-characteristics/R-objects/methylation.overlap")
+
+methylation.overlap.long <- cbind(melt(methylation.overlap[,c("feature", "methylated", "all")], 
+                                  variable.name = "analysis", value.name = "count"),
+                             melt(methylation.overlap[,c("feature", "methperc","allperc")], 
+                                  variable.name = "analysis", value.name = "percent"))[,c(1,2,3,6)] %>%
+  mutate(feature=fct_relevel(as.factor(feature), c("gene", "gene2kb", "exon", "intron", "geneflank2kb", "CDS", "mRNA", "TE", "ASV", "unknown", "all")),
+         analysis=fct_relevel(as.factor(analysis), c("all", "methylated")))
+```
+### Summary barplot showing where methylated loci and all loci overlap with known gene features (and unknown)
+
+NOTE: Summary barplot should also include all CpG loci in Oly genome. Need to add. 
+
+```{r}
+ggplot(data=subset(methylation.overlap.long, feature=="geneflank2kb" | feature=="exon" | feature=="intron" |feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", width = .5) +
+#  geom_bar(stat="identity", position="fill", width=0.5) + #use this instead for stacked bp to total 100% 
+  scale_fill_manual(name = "Loci Location", labels = c("Exon", "Intron", "Gene Flanking Regions (+/-2kb)", "Transposable Elements", "Unknown Regions"), 
+                    values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c", "#fb9a99")) + 
+  ggtitle("% of loci that overlap with genome features") +
+  labs(y="% Overlap", x=NULL) +
+  theme_minimal() + geom_text(size = 3, position = position_fill(vjust = 0.1)) + 
+  scale_x_discrete(labels=c(all="All Loci with\n5x Coverage", "methylated" = "Methylated Loci"))
+```
+
+

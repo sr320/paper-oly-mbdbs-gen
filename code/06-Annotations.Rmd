@@ -351,6 +351,7 @@ loci.locations <-  merge(x=merge(x=merge(x=melt(DML.summary, varnames = "feature
   mutate(DML=as.numeric(DML), allLociDML=as.numeric(allLociDML))
 #    DML=as.numeric(DML), allLociDML=as.numeric(allLociDML)) %>%
 
+# First add a row with the # loci that flank genes both (upstream/downstream)", then add a row with the total # methylated loci, then calculate percentages 
 loci.locations <- loci.locations  %>%
   rbind(c("geneflank2kb",
           loci.locations[loci.locations$feature=="gene2kb","DML"]-loci.locations[loci.locations$feature=="gene","DML"],

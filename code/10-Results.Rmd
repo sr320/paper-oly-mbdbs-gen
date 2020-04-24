@@ -39,11 +39,19 @@ load("../analyses/macau/R-objects/macau.sign.length.perc.meth")
 load("../analyses/macau/R-objects/size.macau")
 load("../analyses/macau/R-objects/size.order")
 load("../analyses/DMGs/R-objects/genes_2kbslop_Pst_DMGpvalue")
+load("../analyses/methylation-characteristics/R-objects/merged_all_5x")
+load("../analyses/methylation-characteristics/R-objects/merged_methylated_5x")
+load("../analyses/methylation-characteristics/R-objects/methylated.summary")
+load("../analyses/methylation-characteristics/R-objects/methylation.overlap")
 ```
 
 In this notebook I will compile results that I will include in the manuscript. 
 
-### Description of methylation data  
+### Description of general methylation patterns 
+
+The MBD-Seq methylation data was examined to characterize general methylation patterns in _Ostrea lurida_. Reads were summed across all samples, and all cytosine loci that contained at minimum 5 reads (5x coverage) were used to characterize methylation. A cytosine locus was deemed methylated if 50% or more of the reads remained cytosines after bisulfite conversion (Gavery and Roberts 2013; Olson and Roberts 2013; Venkataraman et al. 2020). Of the `r prettyNum(nrow(merged_all_5x), big.mark = ",")` characterized loci, `r prettyNum(nrow(merged_methylated_5x), big.mark = ",")` were methylated (`r percent(nrow(merged_methylated_5x)/nrow(merged_all_5x), accuracy = .1)`). Of the methylated loci, `r prettyNum(methylated.summary["gene"], big.mark = ",")` were within known genes (`r percent(subset(methylation.overlap, feature=="gene")$methperc, accuracy = .1)`, `r percent(subset(methylation.overlap, feature=="exon")$methperc, accuracy = .1)` in exons, `r percent(subset(methylation.overlap, feature=="intron")$methperc, accuracy = .1)` in introns), `r prettyNum(methylated.summary["gene2kb"]-methylated.summary["gene"], big.mark = ",")` were 2kb upstream or downstream of known genes (`r percent(subset(methylation.overlap, feature=="geneflank2kb")$methperc, accuracy = .1)`), `r prettyNum(methylated.summary["TE"], big.mark = ",")` were within transposable elements (`r percent(subset(methylation.overlap, feature=="TE")$methperc, accuracy = .1)`), and there were `r prettyNum(methylated.summary["ASV"], big.mark = ",")` instances of overlap between methylated loci and alternative splice variants. `r prettyNum(methylated.summary["unknown"], big.mark = ",")` of the methylated loci were intergenic. 
+
+### Description of methylation data used for DML and SAL analysis 
 
 In total, `r prettyNum(nrow(meth_filter), big.mark = ",")` loci were analyzed. `r prettyNum(nrow(meth_united_alldf)-nrow(meth_filter), big.mark = ",")` loci were discarded because they did not pass the filtering requirements of 10-100 reads across 7 of the 9 samples per population.  
 
@@ -57,7 +65,6 @@ hist(perc.meth, col="gray50",
 ```
 
 Of all `r prettyNum(nrow(meth_filter), big.mark = ",")` evaluated loci, `r prettyNum(allLociDML.summary["gene"], big.mark = ",")` were located within known genes (`r percent(loci.locations[loci.locations$feature=="gene", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["exon"], big.mark = ",")` of which were located within exons (`r percent(loci.locations[loci.locations$feature=="exon", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["gene2kb"]-allLociDML.summary["gene"], big.mark = ",")` flanked known genes (within 2kb, `r percent(loci.locations[loci.locations$feature=="geneflank2kb", "AllDMLperc"], accuracy=0.1)`), `r prettyNum(allLociDML.summary["similarity"], big.mark = ",")` were found within transposable elements (`r percent(loci.locations[loci.locations$feature=="similarity", "AllDMLperc"], accuracy=0.1)`), and `r prettyNum(allLociDML.summary["unknown"], big.mark = ",")` were not found in any known feature (`r percent(loci.locations[loci.locations$feature=="unknown", "AllDMLperc"], accuracy=0.1)`). 
-
 
 ```{r, echo=FALSE, warning=FALSE}
 ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="geneflank2kb" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
