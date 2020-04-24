@@ -10,3 +10,4 @@ analyses/myobj_18
 analyses/methylation-filtered/meth_filter_gene.2kbslop.tab
 analyses/methylation-filtered/meth_filter_gene.tab
 resources/
+analyses/methylation-characteristics/
