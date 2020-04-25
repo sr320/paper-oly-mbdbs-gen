@@ -41,8 +41,8 @@ load("../analyses/macau/R-objects/size.order")
 load("../analyses/DMGs/R-objects/genes_2kbslop_Pst_DMGpvalue")
 load("../analyses/methylation-characteristics/R-objects/merged_all_5x")
 load("../analyses/methylation-characteristics/R-objects/merged_methylated_5x")
-load("../analyses/methylation-characteristics/R-objects/methylated.summary")
-load("../analyses/methylation-characteristics/R-objects/methylation.overlap")
+load("../analyses/methylation-characteristics/R-objects/methylated.summary") # doesn't exist anymore, update  
+load("../analyses/methylation-characteristics/R-objects/methylation.overlap")  # doesn't exist anymore, update  
 ```
 
 In this notebook I will compile results that I will include in the manuscript. 
