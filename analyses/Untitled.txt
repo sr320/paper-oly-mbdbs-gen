@@ -1,0 +1,51 @@
+TO DO 
+
+Email authors for OA/Reproduction 
+
+X Barros 2013 - emailed patricia.a.barros@gmail.com
+c. gigas
+https://doi.org/10.1016/j.jembe.2012.12.014
+Need error rate and type of error. 
+
+X Bechman 2011 
+M. edulis
+https://doi.org/10.1080/15287394.2011.550460
+Need error rate and type of error. 
+
+X Bylenga 2015 
+L. elliptica 
+https://doi.org/10.3354/meps11436
+Need # trials at each pH (only -1.6C) 
+
+X White 2014 
+A. irradians 
+https://doi.org/10.3354/meps10621
+Need error rate and type of error # individuals per trial (i.e. eggs counted)
+
+X Havenhand 2008
+H. erythrogrammus
+https://doi.org/10.1016/j.cub.2008.06.015
+Need # trials & # individuals per trial (i.e. eggs counted)
+
+X Martin 2011
+P. lividus
+http://doi.org/10.1242/jeb.051169
+Need average fertilization (study says all were >97%) error rate and type of error. 
+# individuals per trial (6 trials per pH) 
+
+X Sung 2014 
+S. nudus & H. pulcherrimus 
+https://doi.org/10.1016/j.jmarsys.2014.04.013
+Need type of error rate reported. 
+
+X Striewski 2011
+Multiple coral species  
+https://d-nb.info/109588414X/34
+Need average % fert (they reported median), % error and type of error statistic. 
+
+X Gravinese 2018 
+M. mercenaria 
+https://doi.org/10.1016/j.jembe.2017.09.001
+Need average % fert (they reported median), % error and type of error statistic. 
+
+206-598-7895
