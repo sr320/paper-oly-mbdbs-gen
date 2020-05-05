@@ -120,8 +120,7 @@ ncol(perc_meth_bins_1kb_wide)-1 # 71 bins
 
 ```{r}
 #Now run the following line and it will provide Pst estimates for every gene.
-perc_meth_bins_1kb_Pst <- Pst(perc_meth_bins_1kb_wide)
-#Pst(perc_meth_bins_1kb_wide, ci=1)
+perc_meth_bins_1kb_Pst <- Pst(perc_meth_bins_1kb_wide, ci=1) #ci=1 to include 95% confidence interval calc 
 
 # Check out Pst distribution 
 hist(perc_meth_bins_1kb_Pst$Pst_Values)
@@ -178,7 +177,7 @@ perc_meth_bins_10kb_wide <- perc_meth_bins_10kb %>%
   tibble::column_to_rownames(var = "sample")
 
 #Now run the following line and it will provide Pst estimates for every gene.
-perc_meth_bins_10kb_Pst <- Pst(perc_meth_bins_10kb_wide)
+perc_meth_bins_10kb_Pst <- Pst(perc_meth_bins_10kb_wide, ci=1) #ci=1 to include 95% confidence interval calc 
 #Pst(perc_meth_bins_10kb_wide, ci=1)
 
 # Check out Pst distribution 
