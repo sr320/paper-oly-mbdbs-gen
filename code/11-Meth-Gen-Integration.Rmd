@@ -128,10 +128,13 @@ summary(perc_meth_bins_1kb_Pst$Pst_Values)
 nrow(perc_meth_bins_1kb_Pst)
 
 # format of dataframe that I will save 
-head(perc_meth_bins_1kb_Pst %>% separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE))
+perc_meth_bins_1kb_Pst %>% separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE) %>% noquote() %>% View()
 
 # Write out Pst results 
-write.table(perc_meth_bins_1kb_Pst %>% separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), file = here::here("analyses", "methylation-filtered", "Pst_bins_1kb.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+write.table(perc_meth_bins_1kb_Pst %>% 
+              separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), 
+            file = here::here("analyses", "methylation-filtered", "Pst_bins_1kb.tab"), 
+            sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE, quote=FALSE)
 ```
 
 
@@ -185,5 +188,9 @@ hist(perc_meth_bins_10kb_Pst$Pst_Values)
 summary(perc_meth_bins_10kb_Pst$Pst_Values)
 
 # Write out Pst results 
-write.table(perc_meth_bins_10kb_Pst %>% separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), file = here::here("analyses", "methylation-filtered", "Pst_bins_10kb.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+write.table(
+  perc_meth_bins_10kb_Pst %>% 
+    separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), 
+  file = here::here("analyses", "methylation-filtered", "Pst_bins_10kb.tab"), 
+  sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE, quote=FALSE)
 ```
