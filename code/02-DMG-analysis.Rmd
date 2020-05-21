@@ -109,6 +109,31 @@ head -n 3 "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
 head -n 1 "../analyses/methylation-filtered/meth_filter_gene.tab"
 ```
 
+### For the fun of it, re-run slopBed with gene feature file to create 1) genes+2kb (downstream, 3'), and 2) genes-kb (upstream, 5')
+
+Genes plus 2kb downstream (3') (using the `-r` option to indicate "add") 
+```{bash}
+slopBed \
+-i "../genome-features/Olurida_v081-20190709.gene.gff" \
+-g "../resources/Olurida_chrom.sizes" \
+-r 2000 \
+-l 0 \
+> "../genome-features/Olurida_v081-20190709.gene.2kb-down.gff"
+head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kb-down.gff"
+```
+
+Genes plus 2kb upstream (5') (using the `-l` option to indicate "subract") 
+```{bash}
+slopBed \
+-i "../genome-features/Olurida_v081-20190709.gene.gff" \
+-g "../resources/Olurida_chrom.sizes" \
+-l 2000 \
+-r 0 \
+> "../genome-features/Olurida_v081-20190709.gene.2kb-up.gff"
+head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kb-up.gff"
+```
+
+
 ### Binomial GLMs to test for differentially methylated genes regions. 
 
 #### Add columns for organization / filtering: 
@@ -468,7 +493,7 @@ intersectBed \
   > "../analyses/DMGs/DMGs_2kbslop-with-DMLs.tab"
 ```
 
-### Here is the number of loci associated with gene regions: 
+### Here is the number of DML loci associated with DM gene regions: 
 
 ```{bash}
 wc -l "../analyses/DMGs/DMGs_2kbslop-with-DMLs.tab"
@@ -1018,7 +1043,7 @@ head(genes_2kbslop_3loci_Pst %>%
   filter(Pst_Values>0.5))
 ```
 
-### Calculate Pst for all genes represented in our methylation data 
+## Calculate Pst for all genes represented in our methylation data 
 
 #### First, how many gene regions are there? 
 
@@ -1062,12 +1087,15 @@ ncol(perc_meth_genes_2kbslop_wide) # 3754 gene regions
 ```{r}
 #Now run the following line and it will provide Pst estimates for every gene.
 genes_2kbslop_Pst <- Pst(perc_meth_genes_2kbslop_wide)
-Pst(perc_meth_genes_2kbslop_wide, ci=1)
 
-# Check out Pst distribution 
+# This object contains Pst values for all genes that contain methylation data.  
+save(genes_2kbslop_Pst, file = "../analyses/methylation-filtered/R-objects/genes_2kbslop_Pst") #save object to file
+
+# Check out Pst distribution & summary statistics 
 hist(genes_2kbslop_Pst$Pst_Values)
-summary(genes_2kbslop_Pst$Pst_Values)
-nrow(genes_2kbslop_Pst)
+mean(genes_2kbslop_Pst$Pst_Values) 
+min(genes_2kbslop_Pst$Pst_Values) 
+nrow(genes_2kbslop_Pst) #
 
 # format of dataframe that I will save 
 head(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
@@ -1079,3 +1107,113 @@ head(genes_2kbslop_Pst %>%
   separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   filter(Pst_Values>0.5))
 ```
+
+## Examine methylation patters by gene location 
+
+```{r}
+# Methylation data within genes 
+meth_filter_genes 
+
+# Methylation data within genes +/- 2kb 
+meth_filter_genes_2kbslop 
+```
+
+## Calculate the relative location of methylation sites across a gene 
+
+(distance from start of gene / length of gene) 
+= (Methylated locus - start_gene) / (end_gene - start_gene)
+
+```{r}
+meth_filter_genes <- meth_filter_genes %>% 
+  mutate(gen_location = ((start-start_gene)/(end_gene-start_gene)))
+
+# Histogram showing frequency of methylation data across gene (relative location)
+meth_filter_genes %>% 
+  group_by(gene, gen_location, population) %>% 
+  summarise(mean_meth=mean(percMeth)) %>%
+  ggplot(., aes(x=gen_location)) +
+  stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
+  xlab("Relative location along gene") + 
+  ylab("Frequency of methylation data") + 
+  ggtitle("Methylation frequency relative to gene location") +
+  theme_minimal()
+
+# Percent methylation across gene 
+meth_filter_genes$gen_location_round <- round(meth_filter_genes$gen_location, digits=2)
+
+meth_filter_genes %>% 
+  ungroup() %>%
+  group_by(gen_location_round) %>% 
+  summarise(mean_meth=mean(percMeth, na.rm=TRUE), sd_meth=sd(percMeth, na.rm=TRUE)) %>%
+  ggplot(., aes(x=gen_location_round, y=mean_meth)) +
+  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+  # geom_errorbar(aes(ymin=mean_meth-sd_meth, ymax=mean_meth+sd_meth), width=.02,
+  #                position=position_dodge(.9), ) +
+  scale_y_continuous(limits = c(0, 100)) +
+  xlab("Relative location along gene") +
+  ylab("Mean % methylation") +
+  ggtitle("% methylation by relative gene location") +
+  theme_minimal()
+
+# Plot methylation variance by gene location  
+meth_filter_genes %>% 
+  ungroup() %>%
+  group_by(gen_location_round) %>% 
+  summarise(var_meth=var(percMeth, na.rm=TRUE)) %>%
+  ggplot(., aes(x=gen_location_round, y=var_meth)) +
+  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+  xlab("Relative location along gene") +
+  ylab("Variance in % methylation") +
+  ggtitle("Variance in % methylation by relative gene location") +
+  theme_minimal()
+```
+
+```{r}
+meth_filter_genes_2kbslop <- meth_filter_genes_2kbslop %>% 
+  mutate(gen_location = ((start-start_gene_2kb)/(end_gene_2kb-start_gene_2kb)))
+
+hist(meth_filter_genes_2kbslop$gen_location, breaks = 100, main= "Frequency of methylation data by relative genome location")
+
+# Histogram showing frequency of methylation data across genes with 2kb flanking regions (relative location)
+meth_filter_genes_2kbslop %>% 
+  group_by(gene, gen_location, population) %>% 
+  summarise(mean_meth=mean(percMeth)) %>%
+  ggplot(., aes(x=gen_location)) +
+  stat_bin(bins=200, col="gray30", fill="lavenderblush3") +
+  xlab("Relative location along gene") + 
+  ylab("Frequency of methylation data") + 
+  ggtitle("Methylation frequency along genes +/- 2kb flanks") +
+  theme_minimal()
+
+```
+
+Plot methylation Pst values (mean) calculated at the loci level across a gene 
+
+```{r}
+load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
+
+# split loci location info (contig, start, end) into three columns, merge with methylation by gene object, drop loci w/o Pst values, and plot 
+
+perc.meth.Pst.done %>% 
+  separate(Quant_Varia, c("chr", "start", "end"), "\\.") %>%
+  mutate(start=as.numeric(start), end=as.numeric(end)) %>%
+  right_join(., 
+            meth_filter_genes %>% 
+              dplyr::select(chr, start, end, start_gene, end_gene, 
+                     gen_location, gen_location_round)) %>%
+  drop_na(Pst_Values) %>% 
+  #mutate(gen_location_round=as.factor(gen_location_round)) %>%
+  ungroup() %>%
+  group_by(gen_location_round) %>% 
+  summarise(mean_Pst=mean(Pst_Values, na.rm=TRUE), sd_Pst=sd(Pst_Values, na.rm=TRUE)) %>%
+  ggplot(., aes(x=gen_location_round, y=mean_Pst)) +
+  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+  # geom_errorbar(aes(ymin=mean_Pst, ymax=mean_Pst+sd_Pst), width=.01,
+  #               position=position_dodge(.9), ) +
+  xlab("Relative location along gene") +
+  ylab("Methylation Pst") +
+  ggtitle("Mean Methylation Pst (comparing population) by relative gene location") +
+  theme_minimal() #+
+#  theme(axis.text.x=element_blank())
+```
+

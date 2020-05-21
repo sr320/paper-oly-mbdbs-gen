@@ -41,8 +41,9 @@ load("../analyses/macau/R-objects/size.order")
 load("../analyses/DMGs/R-objects/genes_2kbslop_Pst_DMGpvalue")
 load("../analyses/methylation-characteristics/R-objects/merged_all_5x")
 load("../analyses/methylation-characteristics/R-objects/merged_methylated_5x")
-load("../analyses/methylation-characteristics/R-objects/methylated.summary") # doesn't exist anymore, update  
-load("../analyses/methylation-characteristics/R-objects/methylation.overlap")  # doesn't exist anymore, update  
+# load("../analyses/methylation-characteristics/R-objects/methylated.summary") # doesn't exist anymore, update  
+# load("../analyses/methylation-characteristics/R-objects/methylation.overlap")  # doesn't exist anymore, update  
+load("../analyses/methylation-filtered/R-objects/genes_2kbslop_Pst")
 ```
 
 In this notebook I will compile results that I will include in the manuscript. 
@@ -307,6 +308,11 @@ GO:0000060 | protein import into nucleus, translocation | 0.04432776 | 39.9 | 2
 
 ### Methylation and genetic data integration 
 
-- Fst vs. Pst 
-- Other correlations between genetic & epigenetic data? 
+Across all genes that contain methylation data (n=`r nrow(genes_2kbslop_Pst)`), mean Pst was `r percent(mean(genes_2kbslop_Pst$Pst_Values), accuracy = .1)` +/- `r percent(sd(genes_2kbslop_Pst$Pst_Values), accuracy = .1)` (SD).  
+
+```{r}
+nrow(genes_2kbslop_Pst)
+percent(mean(genes_2kbslop_Pst$Pst_Values), accuracy = .1)
+percent(sd(genes_2kbslop_Pst$Pst_Values), accuracy = .1) 
+```
 

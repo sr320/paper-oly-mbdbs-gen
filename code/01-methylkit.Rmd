@@ -308,7 +308,7 @@ perc.meth.Pst.done <- Pst(perc.meth.Pst2)
 save(perc.meth.Pst.done, file="../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
 
 # Load Pst dataframe if needed. 
-#load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
+load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
 hist(perc.meth.Pst.done$Pst_Values, col = "gray50")
 summary(perc.meth.Pst.done$Pst_Values)
 nrow(perc.meth.Pst.done)

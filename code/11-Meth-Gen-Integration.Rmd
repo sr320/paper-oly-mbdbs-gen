@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries
 
 ```{r message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "Pstat") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -114,6 +114,8 @@ perc_meth_bins_1kb_wide <- perc_meth_bins_1kb %>%
 
 head(perc_meth_bins_1kb_wide[1:4]) #confirm correct format 
 ncol(perc_meth_bins_1kb_wide)-1 # 71 bins
+perc_meth_bins_1kb$`n()` %>% hist()
+perc_meth_bins_1kb$`n()` %>% summary()
 ```
 
 ### Run Pst 
@@ -122,9 +124,14 @@ ncol(perc_meth_bins_1kb_wide)-1 # 71 bins
 #Now run the following line and it will provide Pst estimates for every gene.
 perc_meth_bins_1kb_Pst <- Pst(perc_meth_bins_1kb_wide, ci=1) #ci=1 to include 95% confidence interval calc 
 
+# Save 1kb Pst object to file for 
+save(perc_meth_bins_1kb_Pst, file="../analyses/methylation-filtered/R-objects/perc_meth_bins_1kb_Pst")
+
 # Check out Pst distribution 
 hist(perc_meth_bins_1kb_Pst$Pst_Values)
 summary(perc_meth_bins_1kb_Pst$Pst_Values)
+mean(perc_meth_bins_1kb_Pst$Pst_Values)
+sd(perc_meth_bins_1kb_Pst$Pst_Values)
 nrow(perc_meth_bins_1kb_Pst)
 
 # format of dataframe that I will save 
@@ -181,11 +188,12 @@ perc_meth_bins_10kb_wide <- perc_meth_bins_10kb %>%
 
 #Now run the following line and it will provide Pst estimates for every gene.
 perc_meth_bins_10kb_Pst <- Pst(perc_meth_bins_10kb_wide, ci=1) #ci=1 to include 95% confidence interval calc 
-#Pst(perc_meth_bins_10kb_wide, ci=1)
 
 # Check out Pst distribution 
 hist(perc_meth_bins_10kb_Pst$Pst_Values)
 summary(perc_meth_bins_10kb_Pst$Pst_Values)
+mean(perc_meth_bins_10kb_Pst$Pst_Values)
+sd(perc_meth_bins_10kb_Pst$Pst_Values)
 
 # Write out Pst results 
 write.table(
