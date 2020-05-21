@@ -27,7 +27,9 @@ MACAU was used to identify loci at which methylation is associated with a phenot
 ### Locations of feature files 
 
 [Olurida_v081-20190709.gene.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.gene.gff) - genes, gene = "../genome-features/Olurida_v081-20190709.gene.gff"   
-[Olurida_v081-20190709.gene.2kbslop.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.gene.2kbslop.gff) - genes +/- 2kb, gene2kb = "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff"       
+[Olurida_v081-20190709.gene.2kbslop.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.gene.2kbslop.gff) - genes +/- 2kb, gene2kb = "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff"    
+[Olurida_v081-20190709.2kbflank-up.gff](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.2kbflank-up.gff?raw=true) - genes-2kb (aka upstream / 5' end) 
+[Olurida_v081-20190709.2kbflank-down.gff](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.2kbflank-down.gff?raw=true) - genes+2kb (aka 2kb downtream, 3' end)
 [Olurida_v081-20190709.CDS.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.CDS.gff) - Coding regions of genes, CDS = "../genome-features/Olurida_v081-20190709.CDS.gff"      
 [Olurida_v081-20190709.exon.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.exon.gff) - Exons, exon = "../genome-features/Olurida_v081-20190709.exon.gff"     
 [Olurida_v081-20190709.mRNA.gff](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/Olurida_v081-20190709.mRNA.gff) - mRNA, mRNA = "../genome-features/Olurida_v081-20190709.mRNA.gff"      
@@ -56,10 +58,13 @@ I will use `bedtools` to identify where DML and MACAU loci intersect with known 
 `-b` - File B  
 
 ## 1. DMLs 
-
+Olurida_v081-20190709.2kbflank-up.gff
+Olurida_v081-20190709.2kbflank-down.gff
 ```{bash}
 bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/DMLs/DML-gene.bed
 bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/DMLs/DML-gene2kb.bed
+bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/DMLs/DML-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/DMLs/DML-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/DMLs/DML-exon.bed
 bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/DMLs/DML-CDS.bed
 bedtools intersect -wb -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/DMLs/DML-mRNA.bed
@@ -73,6 +78,8 @@ bedtools intersect -v -a "../analyses/DMLs/dml25.bed" -b "../genome-features/Olu
 ```{bash}
 bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/DMLs/AllLociDMLs-gene.bed
 bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/DMLs/AllLociDMLs-gene2kb.bed
+bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/DMLs/AllLociDMLs-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/DMLs/AllLociDMLs-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/DMLs/AllLociDMLs-exon.bed
 bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/DMLs/AllLociDMLs-CDS.bed
 bedtools intersect -wb -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/DMLs/AllLociDMLs-mRNA.bed
@@ -86,6 +93,8 @@ bedtools intersect -v -a "../analyses/DMLs/mydiff-all.bed" -b "../genome-feature
 ```{bash}
 bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/macau/macau-gene.bed
 bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/macau/macau-gene2kb.bed
+bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/macau/macau-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/macau/macau-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/macau/macau-exon.bed
 bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/macau/macau-CDS.bed
 bedtools intersect -wb -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/macau/macau-mRNA.bed
@@ -99,6 +108,8 @@ bedtools intersect -v -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b 
 ```{bash}
 bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/macau/AllLociMACAU-gene.bed
 bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/macau/AllLociMACAU-gene2kb.bed
+bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/macau/AllLociMACAU-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/macau/AllLociMACAU-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/macau/AllLociMACAU-exon.bed
 bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/macau/AllLociMACAU-CDS.bed
 bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/macau/AllLociMACAU-mRNA.bed
@@ -153,11 +164,11 @@ uniprot <- read_delim(here::here("data", "Olgene_blastx_uniprot.05-20191122-sort
 ## 1. DMLs - where are differentially methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-DMLfiles <- c("DML-CDS.bed", "DML-exon.bed", "DML-gene.bed", "DML-gene2kb.bed", "DML-mRNA.bed", "DML-TE.bed", "DML-ASV.bed", "DML-unknown.bed")
+DMLfiles <- c("DML-CDS.bed", "DML-exon.bed", "DML-gene.bed", "DML-gene2kb.bed", "DML-2kbflank-up.bed", "DML-2kbflank-down.bed", "DML-mRNA.bed", "DML-TE.bed", "DML-ASV.bed", "DML-unknown.bed")
 DML.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:10)) {
   DML.features[[i]] <- read_delim(here::here("analyses", "DMLs", DMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-for (i in 1:7) {
+for (i in 1:9) {
   DML.features[[i]] <- DML.features[[i]] %>%
     setNames(c("contig.dml","start.dml","end.dml","score.dml","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -172,7 +183,7 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(DML.features) <- c("DML.CDS", "DML.exon", "DML.gene","DML.gene2kb", "DML.mRNA", "DML.TE", "DML.ASV", "DML.unknown")
+names(DML.features) <- c("DML.CDS", "DML.exon", "DML.gene","DML.gene2kb", "DML.flank-up", "DML.flank-down","DML.mRNA", "DML.TE", "DML.ASV", "DML.unknown")
 DML.features[["DML.unknown"]] <- 
   DML.features[["DML.unknown"]] %>% 
   setNames(c("contig.DML", "start.dml", "end.dml", "score.dml"))
@@ -181,6 +192,8 @@ DML.features[["DML.CDS"]] <- DML.features[["DML.CDS"]] %>% mutate_at("unknown2",
 DML.features[["DML.TE"]] <- DML.features[["DML.TE"]] %>% mutate_at("unknown1", as.character)
 DML.features[["DML.ASV"]] <- DML.features[["DML.ASV"]] %>% mutate_at("unknown1", as.character)
 DML.features[["DML.gene2kb"]]$feature <- "gene2kb"
+DML.features[["DML.flank-up"]]$feature <- "flank-up"
+DML.features[["DML.flank-down"]]$feature <- "flank-down"
 DML.features[["DML.unknown"]]$feature <- "unknown"
 DML.features.df <- bind_rows(DML.features[-7])
 print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" refers to transposable elements; also NO alternative splice variants are included. 
@@ -196,11 +209,11 @@ save(DML.summary, file="../analyses/DMLs/R-objects/DML.summary")
 ## 2. MACAU - where are size-associated methylated loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-macau.files <- c("macau-CDS.bed", "macau-exon.bed", "macau-gene.bed", "macau-gene2kb.bed", "macau-mRNA.bed", "macau-ASV.bed", "macau-TE.bed", "macau-unknown.bed")
+macau.files <- c("macau-CDS.bed", "macau-exon.bed", "macau-gene.bed", "macau-gene2kb.bed", "macau-2kbflank-up.bed", "macau-2kbflank-down.bed", "macau-mRNA.bed", "macau-ASV.bed", "macau-TE.bed", "macau-unknown.bed")
 macau.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:10)) {
   macau.features[[i]] <- read_delim(here::here("analyses", "macau", macau.files[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-for (i in 1:6) {
+for (i in c(1:4, 6:8)) {
   macau.features[[i]] <- macau.features[[i]] %>%
     setNames(c("contig.macau","start.macau","end.macau","contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -215,12 +228,14 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(macau.features) <- c("macau.CDS", "macau.exon","macau.gene", "macau.gene2kb","macau.mRNA", "macau.ASV", "macau.TE", "macau.unknown")
+names(macau.features) <- c("macau.CDS", "macau.exon","macau.gene", "macau.gene2kb","macau.flank-up","macau.flank-down","macau.mRNA", "macau.ASV", "macau.TE", "macau.unknown")
 macau.features[["macau.CDS"]] <- macau.features[["macau.CDS"]] %>% mutate_at("unknown2", as.character)
 macau.features[["macau.ASV"]] <- macau.features[["macau.ASV"]] %>% mutate_at("unknown1", as.character)
 macau.features[["macau.gene2kb"]]$feature <- "gene2kb"
+macau.features[["macau.flank-up"]]$feature <- "flank-up"
+macau.features[["macau.flank-down"]]$feature <- "flank-down"
 #macau.features[["macau.unknown"]]$feature <- "unknown"
-macau.features.df <- bind_rows(macau.features[-6:-7])
+macau.features.df <- bind_rows(macau.features[-8])
 print(macau.summary <- table(macau.features.df[c("feature")])) #NOTE this does not contain alternative splice variants. There are zero transposable elements and unknown loci.  
 
 save(macau.features.df, file="../analyses/macau/R-objects/macau.features.df")
@@ -228,6 +243,7 @@ save(macau.summary, file="../analyses/macau/R-objects/macau.summary")
 
 #macau.features[["macau.gene"]] %>% inner_join(uniprot, by=c("contig.feat","start.feat", "end.feat"))  #not sure if this is working?
 ```
+
 ### Barplots of mean % methylation by population, MACAU loci in known features  
 
 ```{r}
@@ -258,11 +274,11 @@ meth_filter_calcs %>%
 ### Where are DML background loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-allLociDMLfiles <- c("AllLociDMLs-CDS.bed", "AllLociDMLs-exon.bed", "AllLociDMLs-gene.bed",  "AllLociDMLs-gene2kb.bed", "AllLociDMLs-mRNA.bed", "AllLociDMLs-TE.bed", "AllLociDMLs-ASV.bed", "AllLociDMLs-unknown.bed")
+allLociDMLfiles <- c("AllLociDMLs-CDS.bed", "AllLociDMLs-exon.bed", "AllLociDMLs-gene.bed",  "AllLociDMLs-gene2kb.bed", "AllLociDMLs-2kbflank-up.bed", "AllLociDMLs-2kbflank-down.bed", "AllLociDMLs-mRNA.bed", "AllLociDMLs-TE.bed", "AllLociDMLs-ASV.bed", "AllLociDMLs-unknown.bed")
 allLociDML.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:10)) {
   allLociDML.features[[i]] <- read_delim(here::here("analyses","DMLs", allLociDMLfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-for (i in 1:7) {
+for (i in 1:9) {
   allLociDML.features[[i]] <- allLociDML.features[[i]] %>%
     setNames(c("contig.allLoci","start.allLoci","end.allLoci", "unknown", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -279,16 +295,18 @@ mutate_at("feature", as.factor)
 }
 #allLociDML.features[[8]] <- allLociDML.features[[8]] %>%
 #    setNames(c("contig.feat", "start.feat","end.feat","unknown"))
-names(allLociDML.features) <- c("allLociDML.CDS","allLociDML.exon","allLociDML.gene","allLociDML.gene2kb","allLociDML.mRNA","allLociDML.TE","allLociDML.ASV","allLociDML.unknown")
+names(allLociDML.features) <- c("allLociDML.CDS","allLociDML.exon","allLociDML.gene","allLociDML.gene2kb","allLociDML.flank-up","allLociDML.flank-down","allLociDML.mRNA","allLociDML.TE","allLociDML.ASV","allLociDML.unknown")
 allLociDML.features[["allLociDML.unknown"]] <- 
   allLociDML.features[["allLociDML.unknown"]] %>% 
   setNames(c("contig.allLoci", "start.allLoci", "end.allLoci", "unkown"))
 allLociDML.features[["allLociDML.CDS"]] <- allLociDML.features[["allLociDML.CDS"]] %>% mutate_at("unknown2", as.character)
 allLociDML.features[["allLociDML.ASV"]] <- allLociDML.features[["allLociDML.ASV"]] %>% mutate_at("unknown1", as.character)
 allLociDML.features[["allLociDML.gene2kb"]]$feature <- "gene2kb"
+allLociDML.features[["allLociDML.flank-up"]]$feature <- "flank-up"
+allLociDML.features[["allLociDML.flank-down"]]$feature <- "flank-down"
 allLociDML.features[["allLociDML.unknown"]]$feature <- "unknown"
 
-allLociDML.features.df <- bind_rows(allLociDML.features[-7]) #don't include alternative splice variants or unknown 
+allLociDML.features.df <- bind_rows(allLociDML.features[-9]) #don't include alternative splice variants  
 print(allLociDML.summary <- table(allLociDML.features.df[c("feature")])) #Note, "similarity"= transposable elements 
 
 save(allLociDML.summary, file="../analyses/DMLs/R-objects/allLociDML.summary") 
@@ -297,11 +315,11 @@ save(allLociDML.summary, file="../analyses/DMLs/R-objects/allLociDML.summary")
 ### Where are MACAU background loci located? 
 
 ```{r, message=FALSE, warning=FALSE}
-allLociMACAUfiles <- c("AllLociMACAU-CDS.bed", "AllLociMACAU-exon.bed", "AllLociMACAU-gene.bed",  "AllLociMACAU-gene2kb.bed", "AllLociMACAU-mRNA.bed", "AllLociMACAU-TE.bed", "AllLociMACAU-ASV.bed", "AllLociMACAU-unknown.bed")
+allLociMACAUfiles <- c("AllLociMACAU-CDS.bed", "AllLociMACAU-exon.bed", "AllLociMACAU-gene.bed",  "AllLociMACAU-gene2kb.bed", "AllLociMACAU-2kbflank-up.bed", "AllLociMACAU-2kbflank-down.bed", "AllLociMACAU-mRNA.bed", "AllLociMACAU-TE.bed", "AllLociMACAU-ASV.bed", "AllLociMACAU-unknown.bed")
 allLociMACAU.features <- list()
-for (i in c(1:8)) {
+for (i in c(1:10)) {
   allLociMACAU.features[[i]] <- read_delim(here::here("analyses","macau", allLociMACAUfiles[i]), delim = '\t', col_names = FALSE) %>% as_tibble()}
-for (i in 1:7) {
+for (i in 1:9) {
   allLociMACAU.features[[i]] <- allLociMACAU.features[[i]] %>%
     setNames(c("contig.allLoci","start.allLoci","end.allLoci", "contig.feat", "source.feat","feature","start.feat","end.feat","unknown1","strand","unknown2","attribute")) %>%
 mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -316,15 +334,17 @@ mutate(ID=str_extract(attribute, "ID=(.*?);"),
        ) %>%
 mutate_at("feature", as.factor)
 }
-names(allLociMACAU.features) <- c("allLociMACAU.CDS","allLociMACAU.exon","allLociMACAU.gene","allLociMACAU.gene2kb","allLociMACAU.mRNA","allLociMACAU.TE","allLociMACAU.ASV","allLociMACAU.unknown")
+names(allLociMACAU.features) <- c("allLociMACAU.CDS","allLociMACAU.exon","allLociMACAU.gene","allLociMACAU.gene2kb","allLociMACAU.flank-up","allLociMACAU.flank-down","allLociMACAU.mRNA","allLociMACAU.TE","allLociMACAU.ASV","allLociMACAU.unknown")
 allLociMACAU.features[["allLociMACAU.unknown"]] <- 
   allLociMACAU.features[["allLociMACAU.unknown"]] %>% 
   setNames(c("contig.allLoci", "start.allLoci", "end.allLoci"))
 allLociMACAU.features[["allLociMACAU.CDS"]] <- allLociMACAU.features[["allLociMACAU.CDS"]] %>% mutate_at("unknown2", as.character)
 allLociMACAU.features[["allLociMACAU.ASV"]] <- allLociMACAU.features[["allLociMACAU.ASV"]] %>% mutate_at("unknown1", as.character)
 allLociMACAU.features[["allLociMACAU.gene2kb"]]$feature <- "gene2kb"
+allLociMACAU.features[["allLociMACAU.flank-up"]]$feature <- "flank-up"
+allLociMACAU.features[["allLociMACAU.flank-down"]]$feature <- "flank-down"
 allLociMACAU.features[["allLociMACAU.unknown"]]$feature <- "unknown"
-allLociMACAU.features.df <- bind_rows(allLociMACAU.features[-7]) #don't include alternative splice variants or unknown 
+allLociMACAU.features.df <- bind_rows(allLociMACAU.features[-9]) #don't include alternative splice variants or unknown 
 print(allLociMACAU.summary <- table(allLociMACAU.features.df[c("feature")])) #Note, "similartiy"= transposable elements 
 
 save(allLociMACAU.summary, file="../analyses/macau/R-objects/allLociMACAU.summary")
@@ -377,18 +397,21 @@ save(loci.locations.long, file="../analyses/methylation-filtered/R-objects/loci.
 
 
 ```{r}
-ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="geneflank2kb" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="flank-up"  | feature=="flank-down" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
 #  geom_bar(stat="identity", width = .5) +
   geom_bar(position="fill", stat="identity", width=0.5) +
   labs(y="% of Loci Assessed", x=NULL) + 
-  scale_fill_manual(name = "Loci Location", labels = c("Exon", "Gene Body", "Gene Flanking Regions (+/-2kb)", "Transposable Elements", "Unknown Regions"), 
-                    values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c", "#fb9a99")) + 
+  scale_fill_manual(name = "Loci Location", labels = c("Exon", "Downtream Gene Flank (+2kb at 3')", "Upstream Gene Flank (-2kb at 5')", 
+                                                       "Gene Body", "Transposable Elements", "Unknown Regions"),
+                    values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c", "#fb9a99", "gray")) +
   ggtitle("Locations of DML and size-associated (MACAU) loci in genome\n with background loci locations") +
-  theme_minimal() + geom_text(size = 3, position = position_fill(vjust = 0.5)) + 
+  theme_minimal() + geom_text(size = 2, position = position_fill(vjust = 0.5)) #+ 
   scale_x_discrete(labels=c("DML" = "DMLs",
                             "allLociDML" = "DML Background\nLoci",
                             "macau" = "Size-Associated\nLoci (MACAU)",
                             "allLociMACAU" = "MACAU\nBackground\nLoci"))
+
+ggsave(filename = "../analyses/barplot-DMLs-SALs.png", device = "png")
 ```
 
 ## Extract GO terms 
@@ -405,7 +428,7 @@ DML.GO <- DML.features.df[c("contig.dml", "start.dml", "end.dml", "feature", "st
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
-  select(-GO_number) %>%
+  dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
 
 write_csv(DML.features.df, path = here::here("analyses/", "DMLs", "DML.features.txt")) #write out df with all DML features 
@@ -423,7 +446,7 @@ macau.GO <- macau.features.df[c("contig.macau", "start.macau", "end.macau", "fea
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:6, sep="_")) %>%
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6"), names_to = "GO_number", values_to = "GO_term") %>%
-  select(-GO_number) %>%
+  dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term))
 
 write_csv(macau.features.df, path = here::here("analyses/", "macau/", "macau.features.csv")) #write out df with all MACAU features 
@@ -441,7 +464,7 @@ allLociDML.GO <- allLociDML.features.df[c("contig.allLoci", "start.allLoci", "en
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
-  select(-GO_number) %>%
+  dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(allLociDML.features.df, path = here::here("analyses/", "DMLs", "allLociDML.features.txt")) #write out df with all loci features 
 write(allLociDML.GO$GO_term, file = here::here("analyses/", "DMLs", "allLociDML.GO.txt"))
@@ -461,7 +484,7 @@ allLociMACAU.GO <- allLociMACAU.features.df[c("contig.allLoci", "start.allLoci",
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
   pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
-  select(-GO_number) %>%
+  dplyr::select(-GO_number) %>%
   filter(!is.na(Note) & !is.na(GO_term)) 
 write_csv(allLociMACAU.features.df, path = here::here("analyses/", "macau", "allLociMACAU.features.txt")) #write out df with all loci features 
 write(allLociMACAU.GO$GO_term, file = here::here("analyses/", "macau", "allLociMACAU.GO.txt"))
@@ -470,6 +493,8 @@ write.table(subset(allLociMACAU.features.df, feature=="gene"), here::here("analy
 #save all loci feature df object to file, to use in notebook #12 
 save(allLociMACAU.features.df, file=here::here("analyses", "macau", "R-objects", "allLociMACAU.features.df")) 
 ```
+
+
 
 
 # BONEYARD

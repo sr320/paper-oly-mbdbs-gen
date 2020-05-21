@@ -109,28 +109,28 @@ head -n 3 "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
 head -n 1 "../analyses/methylation-filtered/meth_filter_gene.tab"
 ```
 
-### For the fun of it, re-run slopBed with gene feature file to create 1) genes+2kb (downstream, 3'), and 2) genes-kb (upstream, 5')
+### For the fun of it, re-run slopBed with gene feature file to create 1) downtream flanking region (+2kb downstream, 3'), and 2) upstream flanking region (-2kb upstream, 5')
 
-Genes plus 2kb downstream (3') (using the `-r` option to indicate "add") 
+Downstream / 3' (using the `-r` option to indicate "add") 
 ```{bash}
-slopBed \
+bedtools flank \
 -i "../genome-features/Olurida_v081-20190709.gene.gff" \
 -g "../resources/Olurida_chrom.sizes" \
 -r 2000 \
 -l 0 \
-> "../genome-features/Olurida_v081-20190709.gene.2kb-down.gff"
-head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kb-down.gff"
+> "../genome-features/Olurida_v081-20190709.2kbflank-down.gff"
+head -n 3 "../genome-features/Olurida_v081-20190709.2kbflank-down.gff"
 ```
 
-Genes plus 2kb upstream (5') (using the `-l` option to indicate "subract") 
+Upstream / 5' (using the `-l` option to indicate "subract") 
 ```{bash}
-slopBed \
+bedtools flank \
 -i "../genome-features/Olurida_v081-20190709.gene.gff" \
 -g "../resources/Olurida_chrom.sizes" \
 -l 2000 \
 -r 0 \
-> "../genome-features/Olurida_v081-20190709.gene.2kb-up.gff"
-head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kb-up.gff"
+> "../genome-features/Olurida_v081-20190709.2kbflank-up.gff"
+head -n 3 "../genome-features/Olurida_v081-20190709.2kbflank-up.gff"
 ```
 
 

@@ -161,6 +161,8 @@ nrow(merged_methylated_5x)
 ```{bash}
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-characteristics/methylated-gene.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylated-gene2kb.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/methylation-characteristics/methylated-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/methylation-characteristics/methylated-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/methylation-characteristics/methylated-exon.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/methylation-characteristics/methylated-CDS.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/methylation-characteristics/methylated-mRNA.bed
@@ -179,6 +181,8 @@ cat ../analyses/methylation-characteristics/methylated-CDS.bed | wc -l  >> ../an
 cat ../analyses/methylation-characteristics/methylated-exon.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/methylated-gene.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/methylated-gene2kb.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-2kbflank-up.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-2kbflank-down.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/methylated-TE.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 grep exon ../analyses/methylation-characteristics/methylated-ASV.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/methylated-unknown.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
@@ -189,7 +193,7 @@ cat ../analyses/methylation-characteristics/merged_methylated_5x.bed | wc -l >> 
 
 ```{r}
 methdata.summary <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-features.tab"), delim="\t", col_names=FALSE) %>%
-  add_column(feature=c("mRNA", "CDS", "exon", "gene", "gene2kb", "TE", "ASV", "unknown", "all")) %>% 
+  add_column(feature=c("mRNA", "CDS", "exon", "gene", "gene2kb", "2kbflank-up", "2kbflank-down","TE", "ASV", "unknown", "all")) %>% 
   rename(X1 = "methylated") %>% 
   mutate_at(vars(methylated), as.numeric)
 ```
@@ -201,6 +205,8 @@ methdata.summary <- read_delim(here::here("analyses", "methylation-characteristi
 ```{bash}
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-characteristics/all-gene.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/all-gene2kb.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/methylation-characteristics/all-2kbflank-up.bed
+bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/methylation-characteristics/all-2kbflank-down.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/methylation-characteristics/all-exon.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/methylation-characteristics/all-CDS.bed
 bedtools intersect -wb -a "../analyses/methylation-characteristics/merged_all_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/methylation-characteristics/all-mRNA.bed
@@ -217,6 +223,8 @@ cat ../analyses/methylation-characteristics/all-CDS.bed | wc -l  >> ../analyses/
 cat ../analyses/methylation-characteristics/all-exon.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../analyses/methylation-characteristics/all-gene.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../analyses/methylation-characteristics/all-gene2kb.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-2kbflank-up.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-2kbflank-down.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../analyses/methylation-characteristics/all-TE.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 grep exon ../analyses/methylation-characteristics/all-ASV.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../analyses/methylation-characteristics/all-unknown.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
@@ -237,6 +245,8 @@ This file is available for download here: https://owl.fish.washington.edu/halfsh
 ```{bash}
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.gene.gff" > ../analyses/methylation-characteristics/CpGs-gene.bed
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/CpGs-gene2kb.bed
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/methylation-characteristics/CpGs-2kbflank-up.bed
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/methylation-characteristics/CpGs-2kbflank-down.bed
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.exon.gff" > ../analyses/methylation-characteristics/CpGs-exon.bed
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.CDS.gff" > ../analyses/methylation-characteristics/CpGs-CDS.bed
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" > ../analyses/methylation-characteristics/CpGs-mRNA.bed
