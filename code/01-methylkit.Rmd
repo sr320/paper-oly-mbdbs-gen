@@ -288,8 +288,8 @@ perc.meth.Pst2 <- perc.meth.Pst2[c(rowMeans(perc.meth.Pst2[-1] )>0),]
 
 #Now I modify the data a little bit, first setting contig as row name
 #perc.meth.Pst2 <- as.data.frame(perc.meth.Pst)
-row.names(perc.meth.Pst2) <- perc.meth.Pst2$contig
-perc.meth.Pst2$contig = NULL
+perc.meth.Pst2 <- perc.meth.Pst2 %>%
+  column_to_rownames(var = "contig")
 
 #Now I flip the data frame so that each column is a unique loci
 perc.meth.Pst2 <- as.data.frame(t(perc.meth.Pst2))
@@ -332,7 +332,7 @@ clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 Customized `methylKit` biplots from Yaamini Venkataraman's code,  [https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270](https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270)
 
 ```{r, fig.show='hide'}
-load("../analyses/methylation-filtered/R-objects/meth_filter") #save object to file 
+load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object 
 
 #Create dataframe with sample treatment information, color & symbol scheme 
 plotCustomization <- data.frame(sample = 1:18, population=c(
@@ -385,10 +385,49 @@ save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered
 write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
 ```
 
+### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
+
+```{r}
+library(factoextra)
+PCA.var.loadings <- get_pca_var(PCA.filtered)
+
+data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
+
+# Subset variable loadings for those that contribute >5% to PC axes 
+subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05) #axis 1 
+subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05) #axis 2 
+
+# Subset original list of loci for those that contribute >5% to PC axes 1 and 2 
+subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05))) #PC 1
+subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05))) #PC 2
+```
+
+### calculate Pst of loci that are top contributors to PCA (>5% PC loadings) 
+
+```{r}
+PCA.filtered.top <- subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05))) 
+
+# Calculate Pst Using the DF previously formated for Pst calcs 
+PCA.filtered.top.Pst <- Pst(
+  perc.meth.Pst2 %>% dplyr::select(
+  c("Population", (PCA.filtered.top %>% mutate(contig.start=paste(chr, start, end, sep=".")))$contig.start))
+  )
+
+hist(PCA.filtered.top.Pst$Pst_Values, col = "gray50")
+summary(PCA.filtered.top.Pst$Pst_Values)
+
+# Write out Pst results - reminder these are for the loci that contribute 5% or greater to PCA (which was run with all loci)
+write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+```
+
 ### Principal Component Analyses, DMLs only 
 
 ```{r, fig.show='hide'}
-PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+load("../analyses/DMLs/R-objects/dml25_counts")
+
+PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE, sd.filter = T) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+nrow(PCA.DMLs$rotation)
+
 summary(PCA.DMLs) #Look at summary statistics. The first PC explains 3.7% of variation, the second PC explains 1.9% of variation
 ```
 
@@ -429,6 +468,34 @@ NOTE: this PCA was run with DMLs only
 ```{r}
 save(PCA.DMLs, file="../analyses/DMLs/R-objects/PCA.DMLs")
 write_delim(data.frame(PCA.DMLs$x) %>% tibble::rownames_to_column("sample"), "../analyses/DMLs/PC-scores-DMLs.tab",  delim = '\t', col_names = TRUE)
+```
+
+### Extract variables (loci) that are top contributors to PC 1 (since axis #1 differentiates populations)
+
+```{r}
+PCA.DMLs.var.loadings <- get_pca_var(PCA.DMLs)
+
+# Subset variable loadings for those that contribute >5% to PC axes 
+subset(data.frame(PCA.DMLs.var.loadings$contrib), Dim.1>0.05) #axis 1 
+
+# Subset original list of loci for those that contribute >5% to PC axes 1
+PCA.DMLs.top <- subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.DMLs.var.loadings$contrib), Dim.1>0.05)))
+```
+
+### calculate Pst of loci that are top contributors to DML PCA (>5% PC loadings) 
+
+```{r}
+# Calculate Pst Using the DF previously formated for Pst calcs 
+PCA.DMLs.top.Pst <- Pst(
+  perc.meth.Pst2 %>% dplyr::select(
+  c("Population", (PCA.DMLs.top %>% mutate(contig.start=paste(chr, start, end, sep=".")))$contig.start))
+  )
+
+hist(PCA.DMLs.top.Pst$Pst_Values, col = "gray50")
+summary(PCA.DMLs.top.Pst$Pst_Values)
+
+# Write out Pst results - reminder these are for the loci that contribute >5% to PCA (which was run with DMLs only)
+write.table(PCA.DMLs.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "DMLs", "Pst_PCA-DMLs-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
 ```
 
 ### Principal Component Analyses, Loci with highest 100 Pst values 

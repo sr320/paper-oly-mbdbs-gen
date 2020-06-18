@@ -35,7 +35,7 @@ GO.MWU.GOterms.DML <- allLociDML.features.df %>% filter(feature == "gene2kb") %>
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
   mutate(Ontology_term = str_replace_all(Ontology_term, pattern=",",replacement = ";")) %>%
   mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
-  select(ID, Ontology_term) %>% drop_na(Ontology_term)
+  dplyr::select(ID, Ontology_term) %>% drop_na(Ontology_term)
 
 write.table(GO.MWU.GOterms.DML, here::here("analyses", "GO_MWU", "GO_MWU_GO-terms_DML"),sep="\t",quote = F,row.names = F, col.names=F)
 ```
@@ -48,11 +48,11 @@ load(here::here("analyses/", "DMLs", "R-objects", "DML.features.df"))
 
 GO.MWU.DML.loci <- DML.features.df %>% filter(feature == "gene2kb") %>%
   mutate(ID = paste(contig.dml, start.dml, sep="_")) %>% 
-  select(ID) 
+  dplyr::select(ID) 
 
 # Create a vector of "contig_locus" for all loci (aka the background list of loci), and add a column to indicate significance. Start by adding "1" to all "contig_locus" row. 
 GO.MWU.signif.DML <- GO.MWU.GOterms.DML %>%
-  select(ID) %>%
+  dplyr::select(ID) %>%
   add_column(sig = c(1))
 
 # Replace 0's in the significance column for any "contig_locus" that was a DML 
@@ -80,7 +80,7 @@ GO.MWU.GOterms.macau <- allLociMACAU.features.df %>% filter(feature == "gene2kb"
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
   mutate(Ontology_term = str_replace_all(Ontology_term, pattern=",",replacement = ";")) %>%
   mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
-  select(ID, Ontology_term) %>% drop_na(Ontology_term)
+  dplyr::select(ID, Ontology_term) %>% drop_na(Ontology_term)
 
 write.table(GO.MWU.GOterms.macau, here::here("analyses", "GO_MWU", "GO_MWU_GO-terms_macau"),sep="\t",quote = F,row.names = F, col.names=F)
 ```
@@ -93,11 +93,11 @@ load(here::here("analyses/", "macau", "R-objects", "macau.features.df"))
 
 GO.MWU.MACAU.loci <- macau.features.df %>% filter(feature == "gene2kb") %>%
   mutate(ID = paste(contig.macau, start.macau, sep="_")) %>% 
-  select(ID) 
+  dplyr::select(ID) 
 
 # Create a vector of "contig_locus" for all loci (aka the background list of loci), and add a column to indicate significance. Start by adding "1" to all "contig_locus" row. 
 GO.MWU.signif.macau <- GO.MWU.GOterms.macau %>%
-  select(ID) %>%
+  dplyr::select(ID) %>%
   add_column(sig = c(1))
 
 # Replace 0's in the significance column for any "contig_locus" that was a DML 
@@ -109,8 +109,6 @@ nrow(GO.MWU.signif.macau)
 # How many of those are significant (sig=0) and non-significant (sig=1)
 table(GO.MWU.signif.macau$sig) 
 nrow(GO.MWU.MACAU.loci) 
-
-# QUESTION - there are 219 DMLs located within genes, why do I only have 110 in this list? 
 
 write.table(GO.MWU.signif.macau, here::here("analyses", "GO_MWU", "GO_MWU_signif_macau"),sep="\t",quote = F,row.names = F, col.names=F)
 ```
@@ -199,3 +197,9 @@ getData(myDiff) %>%
 
 nrow(subset(GO.MWU.signif, sig==0))
 ```
+
+```{r}
+library(Pstat)
+citation(package="Pstat")
+```
+

@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r, load packages, message=FALSE, warning=FALSE, results=FALSE, include=FALSE}
-list.of.packages <- c("readr", "scales", "ggplot2", "methylKit", "vegan", "tidyverse", "reshape2", "ggpmisc") #add new libraries here 
+list.of.packages <- c("readr", "scales", "ggplot2", "vegan", "tidyverse", "reshape2", "ggpmisc") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -44,13 +44,36 @@ load("../analyses/methylation-characteristics/R-objects/merged_methylated_5x")
 # load("../analyses/methylation-characteristics/R-objects/methylated.summary") # doesn't exist anymore, update  
 # load("../analyses/methylation-characteristics/R-objects/methylation.overlap")  # doesn't exist anymore, update  
 load("../analyses/methylation-filtered/R-objects/genes_2kbslop_Pst")
+load("../analyses/methylation-characteristics/R-objects/loci.summary")
+
 ```
 
 In this notebook I will compile results that I will include in the manuscript. 
 
 ### Description of general methylation patterns 
 
-The MBD-Seq methylation data was examined to characterize general methylation patterns in _Ostrea lurida_. Reads were summed across all samples, and all cytosine loci that contained at minimum 5 reads (5x coverage) were used to characterize methylation. A cytosine locus was deemed methylated if 50% or more of the reads remained cytosines after bisulfite conversion (Gavery and Roberts 2013; Olson and Roberts 2013; Venkataraman et al. 2020). Of the `r prettyNum(nrow(merged_all_5x), big.mark = ",")` characterized loci, `r prettyNum(nrow(merged_methylated_5x), big.mark = ",")` were methylated (`r percent(nrow(merged_methylated_5x)/nrow(merged_all_5x), accuracy = .1)`). Of the methylated loci, `r prettyNum(methylated.summary["gene"], big.mark = ",")` were within known genes (`r percent(subset(methylation.overlap, feature=="gene")$methperc, accuracy = .1)`, `r percent(subset(methylation.overlap, feature=="exon")$methperc, accuracy = .1)` in exons, `r percent(subset(methylation.overlap, feature=="intron")$methperc, accuracy = .1)` in introns), `r prettyNum(methylated.summary["gene2kb"]-methylated.summary["gene"], big.mark = ",")` were 2kb upstream or downstream of known genes (`r percent(subset(methylation.overlap, feature=="geneflank2kb")$methperc, accuracy = .1)`), `r prettyNum(methylated.summary["TE"], big.mark = ",")` were within transposable elements (`r percent(subset(methylation.overlap, feature=="TE")$methperc, accuracy = .1)`), and there were `r prettyNum(methylated.summary["ASV"], big.mark = ",")` instances of overlap between methylated loci and alternative splice variants. `r prettyNum(methylated.summary["unknown"], big.mark = ",")` of the methylated loci were intergenic. 
+```{r}
+methdata.summary[methdata.summary$feature=="all", "all5x"] #all characterized loci 
+methdata.summary[methdata.summary$feature=="all", "methylated"] #all methylated loci 
+percent(methdata.summary[methdata.summary$feature=="all", "methylated"]/methdata.summary[methdata.summary$feature=="all", "all5x"], accuracy=0.1)
+
+# Where methylated loci are located 
+methdata.summary[methdata.summary$feature=="gene", "methylated"] # No. in genes 
+percent(methdata.summary[methdata.summary$feature=="gene", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) #% in genes 
+percent(methdata.summary[methdata.summary$feature=="exon", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) #% in exons 
+percent(methdata.summary[methdata.summary$feature=="intron", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) #% in introns 
+methdata.summary[methdata.summary$feature=="2kbflank-up", "methylated"] # No. upstream genes 
+percent(methdata.summary[methdata.summary$feature=="2kbflank-up", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) # % upstream genes 
+methdata.summary[methdata.summary$feature=="2kbflank-down", "methylated"] # No. downstream genes 
+percent(methdata.summary[methdata.summary$feature=="2kbflank-down", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) # % downtream genes 
+methdata.summary[methdata.summary$feature=="TE", "methylated"] # No. transposable elements 
+percent(methdata.summary[methdata.summary$feature=="TE", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) # % in transposable elements 
+methdata.summary[methdata.summary$feature=="ASV", "methylated"] # No. overlap w/ ASV
+methdata.summary[methdata.summary$feature=="unknown", "methylated"] # No. intergenic 
+percent(methdata.summary[methdata.summary$feature=="unknown", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1) # % intergenic 
+```
+
+Of the `r prettyNum(methdata.summary[methdata.summary$feature=="all", "all5x"], big.mark = ",")` characterized loci, `r prettyNum(methdata.summary[methdata.summary$feature=="all", "methylated"], big.mark = ",")` were methylated (`r percent(methdata.summary[methdata.summary$feature=="all", "methylated"]/methdata.summary[methdata.summary$feature=="all", "all5x"], accuracy=0.1)`). Of the methylated loci, `r prettyNum(methdata.summary[methdata.summary$feature=="gene", "methylated"], big.mark = ",")` were within known genes (`r percent(methdata.summary[methdata.summary$feature=="gene", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)`, `r percent(methdata.summary[methdata.summary$feature=="exon", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)` in exons, `r percent(methdata.summary[methdata.summary$feature=="intron", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)` in introns), `r prettyNum(methdata.summary[methdata.summary$feature=="2kbflank-up", "methylated"], big.mark = ",")` and `r prettyNum(methdata.summary[methdata.summary$feature=="2kbflank-down", "methylated"], big.mark = ",")` were 2kb upstream and downstream of known genes, respectively (`r percent(methdata.summary[methdata.summary$feature=="2kbflank-up", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)`) and `r percent(methdata.summary[methdata.summary$feature=="2kbflank-down", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)`), `r prettyNum(methdata.summary[methdata.summary$feature=="TE", "methylated"], big.mark = ",")` were within transposable elements (`r percent(methdata.summary[methdata.summary$feature=="TE", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)`), and there were `r prettyNum(methdata.summary[methdata.summary$feature=="ASV", "methylated"], big.mark = ",")` instances of overlap between methylated loci and alternative splice variants. `r prettyNum(methdata.summary[methdata.summary$feature=="unknown", "methylated"], big.mark = ",")` of the methylated loci were not associated with known regions (i.e. intergenic beyond 2kb gene flanking regions, `r percent(methdata.summary[methdata.summary$feature=="unknown", "methylated"]/methdata.summary[methdata.summary$feature=="all", "methylated"], accuracy=0.1)`).
 
 ### Description of methylation data used for DML and SAL analysis 
 
