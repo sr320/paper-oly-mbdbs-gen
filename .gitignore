@@ -10,3 +10,5 @@ analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
 data/uniprot_sprot.fasta
 .DS_Store
+.DS_Store
+genome-annot/Olurida_transcriptome_v3.fasta
