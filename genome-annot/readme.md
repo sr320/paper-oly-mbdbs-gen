@@ -5,3 +5,7 @@ genome-annot readme
 * `Olurida_transcriptome_v3.fasta` - transcriptome  
 
 * `GCF_002022765.2_C_virginica-3.0_protein.faa.gz` - _Crassostrea virginica_ proteome
+
+* `GCA_000297895.1_oyster_v9_protein.faa.gz` - _Crassostrea gigas_ proteome
+
+*
