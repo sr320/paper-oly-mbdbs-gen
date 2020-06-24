@@ -8,4 +8,4 @@ genome-annot readme
 
 * `GCA_000297895.1_oyster_v9_protein.faa.gz` - _Crassostrea gigas_ proteome
 
-*
+* `*.sh, *.ipynb` - code for genome annotation
