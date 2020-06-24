@@ -1,0 +1,205 @@
+---
+title: "08-Gene Enrichment with GO MWU"
+author: "Laura H Spencer"
+date: "1/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("reshape2","tidyverse", "ape") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
+### Make input files for GO_MWU 
+
+#### DMLs 
+
+Save loci IDS and GO TERMS for All LOCI that were identified in the list of methylated loci analyzed, in the GENE feature file
+
+```{r}
+load(here::here("analyses", "DMLs", "R-objects", "allLociDML.features.df"))
+
+GO.MWU.GOterms.DML <- allLociDML.features.df %>% filter(feature == "gene2kb") %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  mutate(Ontology_term = str_replace_all(Ontology_term, pattern=",",replacement = ";")) %>%
+  mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
+  dplyr::select(ID, Ontology_term) %>% drop_na(Ontology_term)
+
+write.table(GO.MWU.GOterms.DML, here::here("analyses", "GO_MWU", "GO_MWU_GO-terms_DML"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+### Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file
+
+```{r}
+# Creare a vector of "contig_locus"" for loci that are DMLs and located in gene bodies 
+load(here::here("analyses/", "DMLs", "R-objects", "DML.features.df"))
+
+GO.MWU.DML.loci <- DML.features.df %>% filter(feature == "gene2kb") %>%
+  mutate(ID = paste(contig.dml, start.dml, sep="_")) %>% 
+  dplyr::select(ID) 
+
+# Create a vector of "contig_locus" for all loci (aka the background list of loci), and add a column to indicate significance. Start by adding "1" to all "contig_locus" row. 
+GO.MWU.signif.DML <- GO.MWU.GOterms.DML %>%
+  dplyr::select(ID) %>%
+  add_column(sig = c(1))
+
+# Replace 0's in the significance column for any "contig_locus" that was a DML 
+GO.MWU.signif.DML[which(GO.MWU.signif.DML$ID %in% GO.MWU.DML.loci$ID),]$sig <- 0
+
+# How many total loci did we analyze? (aka background list of loci)
+nrow(GO.MWU.signif.DML)
+
+# How many of those are significant (sig=0) and non-significant (sig=1)
+table(GO.MWU.signif.DML$sig) 
+nrow(GO.MWU.DML.loci) 
+
+# QUESTION - there are 255 DMLs located within genes, why do I only have 110 in this list? 
+
+write.table(GO.MWU.signif.DML, here::here("analyses", "GO_MWU", "GO_MWU_signif_DML"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+#### Size-associated loci (MACAU)
+
+```{r}
+load(here::here("analyses", "macau", "R-objects", "allLociMACAU.features.df"))
+
+GO.MWU.GOterms.macau <- allLociMACAU.features.df %>% filter(feature == "gene2kb") %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>% 
+  mutate(Ontology_term = str_replace_all(Ontology_term, pattern=",",replacement = ";")) %>%
+  mutate(ID = paste(contig.allLoci, start.allLoci, sep="_")) %>%
+  dplyr::select(ID, Ontology_term) %>% drop_na(Ontology_term)
+
+write.table(GO.MWU.GOterms.macau, here::here("analyses", "GO_MWU", "GO_MWU_GO-terms_macau"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+### Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file
+
+```{r}
+# Creare a vector of "contig_locus"" for loci that are DMLs and located in gene bodies 
+load(here::here("analyses/", "macau", "R-objects", "macau.features.df"))
+
+GO.MWU.MACAU.loci <- macau.features.df %>% filter(feature == "gene2kb") %>%
+  mutate(ID = paste(contig.macau, start.macau, sep="_")) %>% 
+  dplyr::select(ID) 
+
+# Create a vector of "contig_locus" for all loci (aka the background list of loci), and add a column to indicate significance. Start by adding "1" to all "contig_locus" row. 
+GO.MWU.signif.macau <- GO.MWU.GOterms.macau %>%
+  dplyr::select(ID) %>%
+  add_column(sig = c(1))
+
+# Replace 0's in the significance column for any "contig_locus" that was a DML 
+GO.MWU.signif.macau[which(GO.MWU.signif.macau$ID %in% GO.MWU.MACAU.loci$ID),]$sig <- 0
+
+# How many total loci did we analyze? (aka background list of loci)
+nrow(GO.MWU.signif.macau)
+
+# How many of those are significant (sig=0) and non-significant (sig=1)
+table(GO.MWU.signif.macau$sig) 
+nrow(GO.MWU.MACAU.loci) 
+
+write.table(GO.MWU.signif.macau, here::here("analyses", "GO_MWU", "GO_MWU_signif_macau"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+### Run GO_MWU  
+
+GO_MWU needs to be run in the same directory as the associated files. 
+
+Therefore, next step is to **open the R script "analyses/GO_MWU/GO_MWU.R" and follow the instructions in that script.** 
+
+#### Input files that are used for GO_MWU 
+
+`input` = two columns of comma-separated values: gene id, continuous measure of significance. To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not). My file is located here: [/analyses/GO_MWU_signif](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/GO_MWU_signif?raw=true)
+
+`goAnnotations` =  two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. My file is located here: [/analyses/GO_MWU_GO-terms](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/GO_MWU_GO-terms?raw=true)
+
+`goDatabase` = downloaded from http://current.geneontology.org/ontology/go.obo, and saved to the data subdirectory in this repo, [data/go.obo](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/data/go.obo?raw=true) 
+
+`goDivision` = choose MF, or BP, or CC
+
+### GO_MWU results, DMLs 
+
+go.obo GO_MWU_GO-terms GO_MWU_signif BP largest=0.1 smallest=5 cutHeight=0.25
+
+Run parameters:
+
+largest GO category as fraction of all genes (largest)  : 0.1
+         smallest GO category as # of genes (smallest)  : 5
+                clustering threshold (clusterCutHeight) : 0.25
+
+-----------------
+retrieving GO hierarchy, reformatting data...
+
+-------------
+go_reformat:
+Genes with GO annotations, but not listed in measure table: 9309
+
+Terms without defined level (old ontology?..): 0
+-------------
+-------------
+go_nrify:
+0 categories, 0 genes; size range 5-0
+	0 too broad
+	0 too small
+	0 remaining
+
+### GO_MWU results, MACAU 
+
+go.obo GO_MWU_GO-terms_macau GO_MWU_signif_macau BP largest=0.1 smallest=5 cutHeight=0.25
+
+Run parameters:
+
+largest GO category as fraction of all genes (largest)  : 0.1
+         smallest GO category as # of genes (smallest)  : 5
+                clustering threshold (clusterCutHeight) : 0.25
+
+-----------------
+retrieving GO hierarchy, reformatting data...
+
+-------------
+go_reformat:
+Genes with GO annotations, but not listed in measure table: 9234
+
+Terms without defined level (old ontology?..): 0
+-------------
+-------------
+go_nrify:
+0 categories, 0 genes; size range 5-0
+	0 too broad
+	0 too small
+	0 remaining
+
+
+
+
+## BONEYARD 
+
+
+NOT SURE WHY THE NUMBER OF LOCI DIFFER SO MUCH HERE- aren't they the same? 
+
+```{r, eval = FALSE}
+getData(myDiff) %>% 
+  mutate(ID = paste(chr, start+1, sep="_")) %>% 
+  select(ID, qvalue) %>%
+  filter(ID %in% GO.MWU.signif$ID) %>% nrow()
+
+nrow(subset(GO.MWU.signif, sig==0))
+```
+
+```{r}
+library(Pstat)
+citation(package="Pstat")
+```
+

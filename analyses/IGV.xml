@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="http://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081.fa" hasGeneTrack="false" hasSequenceTrack="true" locus="Contig416279:1-1653" nextAutoscaleGroup="7" path="/Users/laura/Documents/roberts-lab/paper-oly-mbdbs-gen/analyses/IGV.xml" version="8">
+    <Resources>
+        <Resource path="http://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081_TE-Cg.gff"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_all_s456_10x.bedgraph"/>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/macau/macau.sign.length.perc.meth.bed"/>
+        <Resource path="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.mRNA.gff"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_16_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_17_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_18_s456_10x.bedgraph"/>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/20190709-Olurida_v081.stringtie.gtf"/>
+        <Resource path="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.gene.gff"/>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/DMGs/DMGs_2kbslop.bed"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_7_s456_10x.bedgraph"/>
+        <Resource path="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.exon.gff"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_11_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_10_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_12_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_5_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_13_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_4_s456_10x.bedgraph"/>
+        <Resource path="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.CDS.gff"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_6_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_8_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_9_s456_10x.bedgraph"/>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/DMLs/dml25_forIGV.bed"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_15_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_1_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_2_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_14_s456_10x.bedgraph"/>
+        <Resource path="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_3_s456_10x.bedgraph"/>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf"/>
+    </Resources>
+    <Panel height="380" name="DataPanel" width="1423">
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_1_s456_10x.bedgraph" name="zr1394_1_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_2_s456_10x.bedgraph" name="zr1394_2_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_3_s456_10x.bedgraph" name="zr1394_3_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_4_s456_10x.bedgraph" name="zr1394_4_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_5_s456_10x.bedgraph" name="zr1394_5_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_6_s456_10x.bedgraph" name="zr1394_6_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_7_s456_10x.bedgraph" name="zr1394_7_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_8_s456_10x.bedgraph" name="zr1394_8_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="0,0,178" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;0,0,178" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_9_s456_10x.bedgraph" name="zr1394_9_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_10_s456_10x.bedgraph" name="zr1394_10_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_11_s456_10x.bedgraph" name="zr1394_11_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_12_s456_10x.bedgraph" name="zr1394_12_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_13_s456_10x.bedgraph" name="zr1394_13_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_14_s456_10x.bedgraph" name="zr1394_14_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_15_s456_10x.bedgraph" name="zr1394_15_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_16_s456_10x.bedgraph" name="zr1394_16_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_17_s456_10x.bedgraph" name="zr1394_17_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="255,0,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;255,0,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_18_s456_10x.bedgraph" name="zr1394_18_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track altColor="0,0,178" autoScale="false" clazz="org.broad.igv.track.DataSourceTrack" color="102,255,51" colorScale="ContinuousColorScale;0.0;100.0;255,255,255;102,255,51" fontSize="10" height="20" id="https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_all_s456_10x.bedgraph" name="zr1394_all_s456_10x.bedgraph" renderer="BAR_CHART" visible="true" windowFunction="mean">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="100.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+    </Panel>
+    <Panel height="1735" name="Panel1581024100112" width="1423">
+        <Track altColor="0,0,178" clazz="org.broad.igv.variant.VariantTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf" name="HCSS_Afilt32m70_01_pp90_m75.recode.vcf" siteColorMode="ALLELE_FREQUENCY" squishedHeight="1" visible="true"/>
+    </Panel>
+    <Panel height="396" name="FeaturePanel" width="1423">
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.SequenceTrack" color="0,0,178" fontSize="10" id="Reference sequence" name="Reference sequence" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.gene.gff" name="Olurida_v081-20190709.gene.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="SQUISHED" fontSize="10" height="20" id="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.mRNA.gff" name="Olurida_v081-20190709.mRNA.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.exon.gff" name="Olurida_v081-20190709.exon.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081-20190709.CDS.gff" name="Olurida_v081-20190709.CDS.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="http://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081_TE-Cg.gff" name="Olurida_v081_TE-Cg.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/genome-features/20190709-Olurida_v081.stringtie.gtf" name="20190709-Olurida_v081.stringtie.gtf" visible="true"/>
+        <Track clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/DMGs/DMGs_2kbslop.bed" name="DMGs_2kbslop.bed" visible="true"/>
+        <Track clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/DMLs/dml25_forIGV.bed" name="dml25_forIGV.bed" visible="true"/>
+        <Track clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/macau/macau.sign.length.perc.meth.bed" name="macau.sign.length.perc.meth.bed" visible="true"/>
+    </Panel>
+    <PanelLayout dividerFractions="0.3323308270676692,0.5548872180451128"/>
+    <HiddenAttributes>
+        <Attribute name="DATA FILE"/>
+        <Attribute name="DATA TYPE"/>
+        <Attribute name="NAME"/>
+    </HiddenAttributes>
+</Session>

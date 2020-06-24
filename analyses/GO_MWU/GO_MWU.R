@@ -1,4 +1,5 @@
 
+################################################################ 
 # GO_MWU uses continuous measure of significance (such as fold-change or -log(p-value) ) to identify GO categories that are significantly enriches with either up- or down-regulated genes. The advantage - no need to impose arbitrary significance cutoff.
 
 # If the measure is binary (0 or 1) the script will perform a typical "GO enrichment" analysis based Fisher's exact test: it will show GO categories over-represented among the genes that have 1 as their measure. 
@@ -12,25 +13,33 @@
 # Stretch the plot manually to match tree to text
 
 # Mikhail V. Matz, UT Austin, February 2015; matz@utexas.edu
+################################################################ 
 
-################################################################
-# First, press command-D on mac or ctrl-shift-H in Rstudio and navigate to the directory containing scripts and input files. Then edit, mark and execute the following bits of code, one after another.
+# Script edited in March, 2020 by Laura Spencer to include project-specific file paths. 
+# This script does enrichment analysis on DMLs that are located within gene bodies. 
 
+# Description of files: 
+# input: two columns of comma-separated values: gene id, continuous measure of significance. To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not).
+# goAnnotations: two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. If you have multiple lines per gene, use nrify_GOtable.pl prior to running this script.
+# goDatabase: download from http://www.geneontology.org/GO.downloads.ontology.shtml
+# goDivision: what GO category would you like? 
 
+#### 
 
-# Edit these to match your data file names: 
+# IMPORTANT FIRST STEP: First, press command-D on mac or ctrl-shift-H in Rstudio and navigate to the directory containing scripts and input files. Then edit, mark and execute the following bits of code, one after another.
 
-# two columns of comma-separated values: gene id, continuous measure of significance. To perform standard GO enrichment analysis based on Fisher's exact test, use binary measure (0 or 1, i.e., either sgnificant or not).
-input="GO_MWU_signif" 
-
-# two-column, tab-delimited, one line per gene, multiple GO terms separated by semicolon. If you have multiple lines per gene, use nrify_GOtable.pl prior to running this script.
-
-goAnnotations="GO_MWU_GO-terms"
-
-# download from http://www.geneontology.org/GO.downloads.ontology.shtml
+# DMLS 
+input="GO_MWU_signif_DML"
+goAnnotations="GO_MWU_GO-terms_DML"
 goDatabase="go.obo"
-
 goDivision="BP" # either MF, or BP, or CC
+
+# Uncomment the next 4 lines to run MACAU 
+# input="GO_MWU_signif_macau"
+# goAnnotations="GO_MWU_GO-terms_macau"
+# goDatabase="go.obo"
+# goDivision="BP" # either MF, or BP, or CC
+
 
 source("gomwu.functions.R")
 
@@ -46,6 +55,7 @@ gomwuStats(input, goDatabase, goAnnotations, goDivision,
 )
 # do not continue if the printout shows that no GO terms pass 10% FDR.
 
+############################## NO SIGNIFICANT GO TERMS. STOP HERE. 
 
 # Plotting results
 quartz()
@@ -64,4 +74,5 @@ results=gomwuPlot(input,goAnnotations,goDivision,
 
 # text representation of results, with actual adjusted p-values
 results
+
 
