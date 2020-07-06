@@ -31,6 +31,13 @@ HCSSall
 save(HCSSall,file="../analyses/2bRAD/HCSS_Afilt32m70_01_pp90.genind")
 ```
 ```{r}
+geno <- tab(HCSSall)
+geno <- geno[,seq(1,ncol(geno)-1,2)]
+head(geno)[,c(1:10)]
+write.table(geno,file="../analyses/2bRAD/HCSS_Afilt32m70_01_pp90.geno",quote = F)
+```
+
+```{r}
 NA.afDraw<- function(ind){
   ind.mat <- ind@tab
   new.mat <- ind.mat
