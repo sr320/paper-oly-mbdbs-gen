@@ -1,5 +1,5 @@
 ---
-title: 'PCA of '
+title: 'PCA of 2b RAD data'
 output:
   html_document: default
   html_notebook: default
@@ -26,7 +26,9 @@ gen <- genomic_converter(data,strata = "../../SSHCfiltNreps.strata",output = "ge
 ```
 ##Run PCA
 ```{r}
-gen$genind
+HCSSall <- gen$genind
+HCSSall
+save(HCSSall,file="../analyses/2bRAD/HCSS_Afilt32m70_01_pp90.genind")
 ```
 ```{r}
 NA.afDraw<- function(ind){
