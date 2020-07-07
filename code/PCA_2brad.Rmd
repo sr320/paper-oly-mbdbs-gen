@@ -61,6 +61,7 @@ NA.afDraw<- function(ind){
   return(new.ind)
 }
 ```
+
 ```{r}
 u.na <- NA.afDraw(gen$genind)
 ```
@@ -181,6 +182,26 @@ genmdb <- u.na[i=mbd,drop=TRUE]
 genmdb <- genmdb[loc=isPoly(genmdb)]
 genmdb
 ```
+```{r}
+mbd = c("HC1-2B-L5","HC1-4","HC2-15A-L5","HC2-17B","HC3-1","HC3-5-L5B","HC3-7","HC3-10","HC3-11",
+        "SS2-9-L5","SS2-14-L5","SS2-18-L5","SS3-3","SS3-14","SS3-15","SS3-16","SS3-20","SS5-18")
+HCSS <- HCSSall[i=mbd, drop=TRUE]
+HCSS <- HCSS[loc=isPoly(HCSS)]
+HCSS
+genoM <- tab(HCSS)
+genoM <- genoM[,seq(1,ncol(genoM)-1,2)]
+head(genoM)[,c(1:10)]
+write.table(genoM,file="../analyses/2bRAD/MBD_HCSS_Afilt32m70_01_pp90.geno",quote = F)
+```
+```{r}
+# get geno with maf > 0.05 ( excludes singletons)
+x <- HCSS[loc=which(minorAllele(HCSS)> 0.05)]
+x
+xM <- tab(x)
+xM <- xM[,seq(1,ncol(xM)-1,2)]
+write.table(xM,file="../analyses/2bRAD/MBD_HCSS_Afilt32m70_01_pp90_maf05.geno",quote = F)
+```
+
 ```{r}
 #pca <- dudi.pca(genmdb,cent=TRUE,scale=TRUE,scannf = T)
 ```
