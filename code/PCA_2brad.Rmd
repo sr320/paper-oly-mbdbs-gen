@@ -1,0 +1,309 @@
+---
+title: 'PCA of 2b RAD data'
+output:
+  html_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(radiator)
+library(adegenet)
+library(PCAviz)
+```
+#PCA of all samples uses VCF  
+
+##Convert VCF to genind  
+
+```{r}
+data <- read_vcf("../data/HCSS_Afilt32m70_01_pp90.vcf",strata = "../../SSHCfiltNreps.strata",parallel.core = 1,vcf.stats = FALSE, filter.monomorphic=FALSE)
+```
+```{r}
+gen <- genomic_converter(data,strata = "../../SSHCfiltNreps.strata",output = "genind", filter.monomorphic=F)
+```
+##Run PCA
+```{r}
+HCSSall <- gen$genind
+HCSSall
+save(HCSSall,file="../analyses/2bRAD/HCSS_Afilt32m70_01_pp90.genind")
+```
+```{r}
+geno <- tab(HCSSall)
+geno <- geno[,seq(1,ncol(geno)-1,2)]
+head(geno)[,c(1:10)]
+write.table(geno,file="../analyses/2bRAD/HCSS_Afilt32m70_01_pp90.geno",quote = F)
+```
+
+```{r}
+NA.afDraw<- function(ind){
+  ind.mat <- ind@tab
+  new.mat <- ind.mat
+  af = colSums(ind.mat[,seq(1,ncol(ind.mat)-1,2)],na.rm = TRUE)/
+      (2*apply(ind.mat[,seq(1,ncol(ind.mat)-1,2)],2,function(x) sum(!is.na(x))))
+  af.Draw <- function(geno, af){
+     new <- function(geno,af){
+        if(is.na(geno)){
+        newA = rbinom(1,2,af)
+        }
+        else {newA <- geno}
+        return(newA)
+   }
+  new.row <- mapply(geno,af,FUN = new)
+  return(new.row)}
+  
+  new.mat[,seq(1,ncol(ind.mat)-1,2)] <- t(apply(ind.mat[,seq(1,ncol(ind.mat)-1,2)],1,af.Draw,af))
+  new.mat[,seq(2,ncol(ind.mat),2)] <- 2-new.mat[,seq(1,ncol(ind.mat)-1,2)]
+  new.ind <- ind
+  new.ind@tab <- new.mat
+  return(new.ind)
+}
+```
+
+```{r}
+u.na <- NA.afDraw(gen$genind)
+```
+```{r}
+#pca <- dudi.pca(u.na,cent=TRUE,scale=TRUE,scannf = T)
+```
+```{r}
+pca <- dudi.pca(u.na,cent=TRUE,scale=TRUE,scannf = F, nf = 10)
+```
+
+
+```{r}
+col6 <-  c("red","blue")
+par(mfrow=c(2,2))
+s.class(pca$li, strata(u.na)$POP_ID,xax=1,yax=2, 
+        sub = "HCSS_Afilt32m70_01_pp90, PC1-2, 114 inds, 5269 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$POP_ID,xax=1,yax=3, 
+        sub = "HCSS_Afilt32m70_01_pp90, PC1-3, 114 inds, 5269 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$POP_ID,xax=1,yax=4, 
+        sub = "HCSS_Afilt32m70_01_pp90, PC1-4, 114 inds, 5269 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pca$li, strata(u.na)$POP_ID,xax=1,yax=5, 
+        sub = "HCSS_Afilt32m70_01_pp90, PC1-5, 114 inds, 5269 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+```
+
+```{r}
+eig.perc <- 100*pca$eig/sum(pca$eig)
+head(eig.perc)
+```
+Saving PCA
+```{r}
+write.table(pca$li,file = "../analyses/2bRAD/PCA_allHCSS.tab",sep="\t",quote = F)
+save(pca,  file = "../analyses/2bRAD/PCA_allHCSS.Robj")
+```
+##Get top loading SNPs  
+```{r}
+library(factoextra)
+PCA.var.loadings <- get_pca_var(pca)
+
+#data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
+# Subset variable loadings for those that contribute >5% to PC axes 
+loci <- rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05)) #axis 1 
+loci = sapply(strsplit(loci,"\\."), '[',1)
+loci <- unique(loci)
+length(loci)
+contig <- sapply(strsplit(loci,"__"), '[',2)
+pos <- sapply(strsplit(loci,"__"), '[',3)
+
+positions <- cbind(contig,pos)
+head(positions)
+
+```
+```{r}
+# read in fst per site
+fst= read.csv("../analyses/2bRAD/HCSS_sfsm70_PerSiteFst.csv")
+head(fst)
+```
+```{r}
+# get fst for the top 5% of PC1 loadings, and save
+pc1fst <- merge(positions,fst, all.x=T)[,c('contig','pos','fst')]
+head(pc1fst)
+```
+```{r}
+write.table(pc1fst,"../analyses/2bRAD/Fst_PCA_allHCSS_95.tab",sep="\t",quote = F,row.names = F)
+```
+
+##old way
+```{r}
+li <-pca$li
+c1 <- pca$c1
+colnames(c1) <- colnames(li)
+#create pcaviz object
+pviz <- pcaviz(x=li,rotation=c1,dat=u.na$strata)
+```
+```{r}
+pcaviz_loadingsplot(pviz,min.rank = 0.95)
+```
+```{r}
+PC1snps = rownames(pca$c1[which(abs(pca$c1$CS1) > quantile(abs(pca$c1$CS1),0.95)),])
+length(PC1snps)
+head(PC1snps)
+```
+```{r}
+loci = sapply(strsplit(PC1snps,"\\."), '[',1)
+loci <- unique(loci)
+contig <- sapply(strsplit(loci,"__"), '[',2)
+pos <- sapply(strsplit(loci,"__"), '[',3)
+
+positions <- cbind(contig,pos)
+head(positions)
+```
+```{r}
+# read in fst per site
+fst= read.csv("../analyses/2bRAD/HCSS_sfsm70_PerSiteFst.csv")
+head(fst)
+```
+```{r}
+# get fst for the top 5% of PC1 loadings, and save
+pc1fst <- merge(positions,fst, all.x=T)[,c('contig','pos','fst')]
+head(pc1fst)
+```
+```{r}
+write.table(pc1fst,"../analyses/2bRAD/Fst_PCA_allHCSS_95.tab",sep="\t",quote = F,row.names = F)
+```
+
+#PCA of just MBD samples
+```{r}
+mbd = c("HC1-2B-L5","HC1-4","HC2-15A-L5","HC2-17B","HC3-1","HC3-5-L5B","HC3-7","HC3-10","HC3-11",
+        "SS2-9-L5","SS2-14-L5","SS2-18-L5","SS3-3","SS3-14","SS3-15","SS3-16","SS3-20","SS5-18")
+genmdb <- u.na[i=mbd,drop=TRUE]
+genmdb <- genmdb[loc=isPoly(genmdb)]
+genmdb
+```
+```{r}
+mbd = c("HC1-2B-L5","HC1-4","HC2-15A-L5","HC2-17B","HC3-1","HC3-5-L5B","HC3-7","HC3-10","HC3-11",
+        "SS2-9-L5","SS2-14-L5","SS2-18-L5","SS3-3","SS3-14","SS3-15","SS3-16","SS3-20","SS5-18")
+HCSS <- HCSSall[i=mbd, drop=TRUE]
+HCSS <- HCSS[loc=isPoly(HCSS)]
+HCSS
+genoM <- tab(HCSS)
+genoM <- genoM[,seq(1,ncol(genoM)-1,2)]
+head(genoM)[,c(1:10)]
+write.table(genoM,file="../analyses/2bRAD/MBD_HCSS_Afilt32m70_01_pp90.geno",quote = F)
+```
+```{r}
+# get geno with maf > 0.05 ( excludes singletons)
+x <- HCSS[loc=which(minorAllele(HCSS)> 0.05)]
+x
+xM <- tab(x)
+xM <- xM[,seq(1,ncol(xM)-1,2)]
+write.table(xM,file="../analyses/2bRAD/MBD_HCSS_Afilt32m70_01_pp90_maf05.geno",quote = F)
+```
+
+```{r}
+#pca <- dudi.pca(genmdb,cent=TRUE,scale=TRUE,scannf = T)
+```
+```{r}
+pcaM <- dudi.pca(genmdb,cent=TRUE,scale=TRUE,scannf = F, nf = 10)
+```
+
+
+```{r}
+col6 <-  c("red","blue")
+par(mfrow=c(2,2))
+s.class(pcaM$li, strata(genmdb)$POP_ID,xax=1,yax=2, 
+        sub = "HCSS_Afilt32m70_01_pp90 MBD, PC1-2, 18 inds, 4373 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pcaM$li, strata(genmdb)$POP_ID,xax=1,yax=3, 
+        sub = "HCSS_Afilt32m70_01_pp90 MBD, PC1-3, 18 inds, 4373 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pcaM$li, strata(genmdb)$POP_ID,xax=1,yax=4, 
+        sub = "HCSS_Afilt32m70_01_pp90 MBD, PC1-4, 18 inds, 4373 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+s.class(pcaM$li, strata(genmdb)$POP_ID,xax=1,yax=5, 
+        sub = "HCSS_Afilt32m70_01_pp90 MBD, PC1-5, 18 inds, 4373 SNPs ",
+        possub = "topleft",col=transp(col6,.6),axesell=FALSE,
+        cstar=0, cpoint=3, grid=FALSE, cellipse = 0)
+```
+
+```{r}
+eig.perc <- 100*pcaM$eig/sum(pcaM$eig)
+head(eig.perc)
+```
+Saving PCA
+```{r}
+write.table(pcaM$li,file = "../analyses/2bRAD/PCA_MBD.tab",sep="\t",quote = F)
+save(pcaM,  file = "../analyses/2bRAD/PCA_MBD.Robj")
+```
+##Get top loading SNPs  
+```{r}
+library(factoextra)
+PCA.var.loadings <- get_pca_var(pcaM)
+
+#data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
+# Subset variable loadings for those that contribute >5% to PC axes 
+loci <- rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05)) #axis 1 
+loci = sapply(strsplit(loci,"\\."), '[',1)
+loci <- unique(loci)
+length(loci)
+contig <- sapply(strsplit(loci,"__"), '[',2)
+pos <- sapply(strsplit(loci,"__"), '[',3)
+
+positions <- cbind(contig,pos)
+head(positions)
+
+```
+
+```{r}
+# get fst for the top 5% of PC1 loadings, and save
+pc1fstM <- merge(positions,fst, all.x=T)[,c('contig','pos','fst')]
+head(pc1fstM)
+```
+```{r}
+write.table(pc1fstM,"../analyses/2bRAD/Fst_PCA_MBD_95.tab",sep="\t",quote = F,row.names = F)
+```
+
+
+###Old, gets top 5% quantile
+```{r}
+li <-pcaM$li
+c1 <- pcaM$c1
+colnames(c1) <- colnames(li)
+#create pcaviz object
+pvizM <- pcaviz(x=li,rotation=c1,dat=genmdb$strata)
+```
+```{r}
+pcaviz_loadingsplot(pvizM,min.rank = 0.95)
+```
+```{r}
+PC1snpsM = rownames(pcaM$c1[which(abs(pcaM$c1$CS1) > quantile(abs(pcaM$c1$CS1),0.95)),])
+length(PC1snpsM)
+head(PC1snpsM)
+```
+```{r}
+lociM = sapply(strsplit(PC1snpsM,"\\."), '[',1)
+lociM <- unique(lociM)
+contig <- sapply(strsplit(lociM,"__"), '[',2)
+pos <- sapply(strsplit(lociM,"__"), '[',3)
+
+positionsM <- cbind(contig,pos)
+head(positionsM)
+```
+
+```{r}
+# get fst for the top 5% of PC1 loadings, and save
+pc1fstM <- merge(positionsM,fst, all.x=T)[,c('contig','pos','fst')]
+head(pc1fstM)
+```
+```{r}
+write.table(pc1fstM,"../analyses/2bRAD/Fst_PCA_MBD_95.tab",sep="\t",quote = F,row.names = F)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
