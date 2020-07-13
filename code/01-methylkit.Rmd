@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries
 
 ```{r message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly", "readr", "GenomicRanges", "vegan") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly", "readr", "GenomicRanges", "vegan", "factoextra") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -388,7 +388,6 @@ write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"),
 ### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
 
 ```{r}
-library(factoextra)
 PCA.var.loadings <- get_pca_var(PCA.filtered)
 
 data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
@@ -418,6 +417,18 @@ summary(PCA.filtered.top.Pst$Pst_Values)
 
 # Write out Pst results - reminder these are for the loci that contribute 5% or greater to PCA (which was run with all loci)
 write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+```
+
+### Plot Pst of top-contributors to the all-loci PCA against Fst for top contributors to the SNP PCA 
+
+```{r}
+Fst.SNPs.PCA <- read_delim(file = url("https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/2bRAD/Fst_PCA_allHCSS_95.tab"), delim = "\t", col_names = TRUE) 
+
+inner_join(x=Fst.SNPs.PCA, 
+           y=PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","pos", "end")) %>% dplyr::select("contig", "pos", "Pst_Values") %>%
+             mutate(pos=as.numeric(pos)), by=c("contig", "pos"))
+
+# Unfortunately there are no overlapping loci, i.e. none that were top contributors to both the Methylation PCA and SNP PCA  
 ```
 
 ### Principal Component Analyses, DMLs only 
@@ -497,6 +508,19 @@ summary(PCA.DMLs.top.Pst$Pst_Values)
 # Write out Pst results - reminder these are for the loci that contribute >5% to PCA (which was run with DMLs only)
 write.table(PCA.DMLs.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "DMLs", "Pst_PCA-DMLs-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
 ```
+
+### Plot Pst of top-contributors to the DML PCA against Fst for top contributors to the SNP PCA 
+
+```{r}
+PCA.DMLs.top.Pst
+
+inner_join(x=Fst.SNPs.PCA, 
+           y=PCA.DMLs.top.Pst %>% separate(Quant_Varia, into=c("contig","pos", "end")) %>% dplyr::select("contig", "pos", "Pst_Values") %>%
+             mutate(pos=as.numeric(pos)), by=c("contig", "pos"))
+
+# Unfortunately there are no overlapping loci, i.e. none that were top contributors to both the DML PCA and SNP PCA  
+```
+
 
 ### Principal Component Analyses, Loci with highest 100 Pst values 
 
@@ -712,6 +736,57 @@ for (i in 1:3) {
 }
 ```
 
+## Generate list of methylated loci that were sequenced/found in each population separately, and for all populations combined 
+
+
+### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples for each pop, and 14 of the 18 samples for all samples combined. Also, destrand. 
+
+```{r}
+# Use the reorganize functino from methylKit to subset a MethylRaw object based on sample ID (requires re-establishing treatment levels)
+
+meth_filter_HC=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(1:9),treatment=rep(0, times=9)), destrand=TRUE, min.per.group=7L)
+meth_filter_SS=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(10:18),treatment=rep(1, times=9)), destrand=TRUE, min.per.group=7L)
+meth_filter_all=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(1:18),treatment=rep(2, times=18)), destrand=TRUE, min.per.group=7L)
+
+# Subset HC data to include only those with 50% or greater average % methylation, save to .bed file format 
+write_delim(
+  percMethylation(meth_filter_HC, rowids=T) %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>% 
+  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
+  filter(mean>=50) %>% 
+  separate(rowname, into=c("contig","start", "end")) %>% 
+  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
+  dplyr::select(contig, start, end) %>%
+  mutate_if(is.numeric, as.integer),
+  "../analyses/methylation-filtered/HC-meth-loci.bed",  delim = '\t', col_names = FALSE)
+
+# Subset SS data to include only those with 50% or greater average % methylation, save to .bed file format 
+write_delim(
+  percMethylation(meth_filter_SS, rowids=T) %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>% 
+  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
+  filter(mean>=50) %>% 
+  separate(rowname, into=c("contig","start", "end")) %>% 
+  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
+  dplyr::select(contig, start, end) %>%
+  mutate_if(is.numeric, as.integer),
+  "../analyses/methylation-filtered/SS-meth-loci.bed",  delim = '\t', col_names = FALSE)
+
+# Subset combined data to include only those with 50% or greater average % methylation, save to .bed file format 
+write_delim(
+  percMethylation(meth_filter_all, rowids=T) %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>% 
+  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
+  filter(mean>=50) %>% 
+  separate(rowname, into=c("contig","start", "end")) %>% 
+  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
+  dplyr::select(contig, start, end) %>%
+  mutate_if(is.numeric, as.integer),
+  "../analyses/methylation-filtered/all-meth-loci.bed",  delim = '\t', col_names = FALSE)
+```
 
 
 

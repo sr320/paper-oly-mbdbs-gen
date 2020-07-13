@@ -231,6 +231,7 @@ write_delim(results_2kbslop[!duplicated(results_2kbslop$gene), c("contig_gene", 
 ### Here is the number of differentially methylated genes (5 loci per gene): 
 
 ```{r}
+load("../analyses/DMGs/R-objects/DMGs_2kbslop")
 length(unique(DMGs_2kbslop$gene))  
 ```
 

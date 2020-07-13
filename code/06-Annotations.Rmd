@@ -118,6 +118,17 @@ bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-f
 bedtools intersect -v -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/macau/AllLociMACAU-unknown.bed
 ```
 
+## 3. Population-specific loci that are methylated overlapping with genes 
+
+```{bash}
+bedtools intersect -wb -a "../analyses/methylation-filtered/HC-meth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/HC-meth-gene.bed
+
+bedtools intersect -wb -a "../analyses/methylation-filtered/SS-meth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/SS-meth-gene.bed
+
+bedtools intersect -wb -a "../analyses/methylation-filtered/all-meth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/all-meth-gene.bed
+```
+
+
 ## Prepare blastx annotation files to merge with DML and MACAU results 
 
 #### Download oly blastx file
