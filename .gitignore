@@ -24,6 +24,7 @@ analyses/methylation-characteristics/all-gene.bed
 analyses/methylation-characteristics/methylated-gene.bed
 analyses/methylation-characteristics/merged_all_5x.bed
 analyses/methylation-characteristics/merged_methylated_5x.bed
+
 analyses/methylation-filtered/meth_filter_gene.2kbslop.tab
 analyses/methylation-filtered/meth_filter_gene.tab
 
@@ -35,6 +36,7 @@ genome-annot/Olurida_transcriptome_v3.fasta
 
 genome-features/Olurida_v081_CG-motif.gff
 genome-features/20190709-Olurida_v081.stringtie.gtf
+genome-features/Olurida_v081_CG-motif.gff.idx
 
 resources/Olurida_v081.fa
 resources/uniprot_sprot.fasta
