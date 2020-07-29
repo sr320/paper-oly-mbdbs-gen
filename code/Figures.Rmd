@@ -1,0 +1,128 @@
+---
+title: "Figures"
+author: "Laura H Spencer"
+date: "7/13/2020"
+output: html_document
+---
+
+## PCA Figure, genetic data for only MBD samples 
+
+```{r, fig.show='hide'}
+#Create dataframe with sample treatment information, color & symbol scheme 
+plotCustomization <- data.frame(sample = 1:18, population=c(
+                                rep("HC", times=9), 
+                                rep("SS", times=9)),
+                                color=c(rep("firebrick3", times=9),
+                                rep("dodgerblue3", times=9)),
+                                symbol=c(rep(16, times=9),
+                                rep(17, times=9))) 
+
+# Check out genetic PCA axes 
+load("analyses/2bRAD/PCA_MBD.Robj") 
+ordiplot(pcaM) #x=(-100,100), y=(-40,60) 
+
+# calculate % variance explained by each PC axis (order from 1+): 
+100*pcaM$eig/sum(pcaM$eig)
+
+# Generate figure 
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+plot(1, type="n", xlab="", ylab="", xlim=c(-100, 100), ylim=c(-45, 65), axes=FALSE, ann=FALSE)
+points(x=pcaM$li[,1], y=pcaM$li[,2], col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (12.4%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (9.1%)", line = 3, cex = 1.5) #Add y-axis label
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.2, bty = "n") #Add legend 
+```
+
+## PCA Figure, all methylated loci after filtering 
+
+```{r, fig.show='hide'}
+load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object 
+
+PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+summary(PCA.filtered) #Look at summary statistics. The first PC explains 21.9% of variation, the second PC explains 18.3% of variation
+
+# Create figure 
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+PCA.figure <- ordiplot(PCA.filtered, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
+points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
+#Add multiple white boxes on top of the default black box to manually change the color
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
+#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (21.9%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (18.3%)", line = 3, cex = 1.5) #Add y-axis label
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.2, bty = "n") #Add a legend with information about ambient and elevated samples
+```
+
+## PCA Figure, DMLs only 
+
+```{r, fig.show='hide'}
+load("../analyses/DMLs/R-objects/dml25_counts")
+
+PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE, sd.filter = T) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+summary(PCA.DMLs) #Look at summary statistics. The first PC explains 3.2% of variation, the second PC explains 1.6% of variation
+
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+PCA.figure <- ordiplot(PCA.DMLs, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
+points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
+#Add multiple white boxes on top of the default black box to manually change the color
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+box(col = "white")
+#ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
+#ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (3.2%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (1.6%)", line = 3, cex = 1.5) #Add y-axis label
+legend("bottom", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.3, bty = "n") #Add a legend 
+```
+
+## Heatmap of DMLs 
+
+```{r}
+load("../analyses/DMLs/R-objects/DMLs_heatmap")
+
+#ggplotly(
+ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T) +
+  scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr_start)) + 
+  #scale_fill_viridis(discrete=FALSE) 
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) + 
+  scale_fill_distiller(palette = "YlGnBu", direction = 1) #)
+  #scale_fill_gradient(low="gray5", high="white")
+```
+

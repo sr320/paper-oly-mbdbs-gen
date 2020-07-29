@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries
 
 ```{r message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here", "scales") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "scales", "dplyr", "corrplot") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
@@ -27,7 +27,17 @@ lapply(list.of.packages, FUN = function(X) {
 bedtools --version
 ```
 
-## Get data 
+## Get all CpG loci in genome 
+
+```{r}
+CpGs <- read.table(file = here::here("genome-features", "Olurida_v081_CG-motif.gff"))[,c(1,4,5)] %>% setNames(c("contig", "start", "end"))
+
+# How many CpG loci are there in the genome? 
+nrow(CpGs)
+```
+
+
+## Get methylation data 
 
 Downloaded tab files with methylation proportions at each locus: 
 - All loci b/f filtering: https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_all_s456.CpG_report.merged_CpG_evidence.cov  
@@ -53,13 +63,40 @@ A locus is methylated if 50% or greater reads are methylated, that is they were 
 
 ```{r}
 allmeth <- allmeth %>% 
-  mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated")))
+  mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated"))) %>%
+  mutate(coverage=methylated+unmethylated)
 
 allmeth.5x <- allmeth.5x %>% 
-  mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated")))
+  mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated"))) %>%
+  mutate(coverage=methylated+unmethylated)
 
 # allmeth.10x <- allmeth.10x %>% 
 #   mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated")))
+```
+
+## Calculate summary stats that Yaamini reports in her paper 
+Work with 5x coverage file 
+
+```{r}
+# How many of loci with 5x coverage were methylated (>=50% reads methylated)? 
+nrow(subset(allmeth, coverage>4 & meth_perc>=50))/nrow(subset(allmeth, coverage>4))*100
+
+# How many of loci with 5x coverage were sparsely methylated?
+nrow(subset(allmeth, coverage>4 & meth_perc<50 & meth_perc>=10))/nrow(subset(allmeth, coverage>4))*100
+
+# How many of loci with 5x coverage were sparsely methylated?
+nrow(subset(allmeth, coverage>4 & meth_perc<10))/nrow(subset(allmeth, coverage>4))*100
+
+# How many loci are methylated with 5x coverage, compared to all CpG loci in genome? 
+nrow(subset(allmeth, coverage>4 & meth_perc>=50))/nrow(CpGs)*100
+
+nrow(allmeth)/nrow(CpGs)*100 #we have data for ~31% of CpGs in genome 
+nrow(subset(allmeth, methyl.status=="methylated"))/nrow(CpGs)*100 #w/o filtering for coverage, 18% of CpGs in 
+
+nrow(allmeth.5x)/nrow(CpGs)*100 #after filtering for 5x coverage, we have data for ~7.4% of CpGs in genome 
+nrow(subset(allmeth.5x, methyl.status=="methylated"))/nrow(CpGs)*100 #after filtering for coverage, 6.7% of CpGs in genome are methylated
+
+nrow(subset(allmeth.5x, methyl.status=="methylated"))/nrow(allmeth)*100
 ```
 
 #### How many methylated & unmethylated sites are there before filtering for coverage? 
@@ -172,7 +209,7 @@ cat ../analyses/methylation-characteristics/all_methylated_5x.bed | wc -l >> ../
 ```{r}
 methdata.summary <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-features.tab"), delim="\t", col_names=FALSE) %>%
   add_column(feature=c("mRNA", "CDS", "exon", "gene", "gene2kb", "2kbflank-up", "2kbflank-down","TE", "ASV", "unknown", "all")) %>% 
-  rename(X1 = "methylated") %>% 
+  dplyr::rename(methylated=X1) %>% 
   mutate_at(vars(methylated), as.numeric)
 ```
 
@@ -213,7 +250,7 @@ cat ../data/zr1394_all_s456_5x.bedgraph | wc -l >> ../analyses/methylation-chara
 
 ```{r}
 methdata.summary <- cbind(read_delim(here::here("analyses", "methylation-characteristics", "all5x-features.tab"), delim="\t", col_names=FALSE), methdata.summary) %>%
-  rename(X1 = "all5x") %>% 
+  rename(all5x=X1) %>% 
   mutate_at(vars(all5x), as.numeric)
 ```
 
@@ -255,7 +292,7 @@ cat ../genome-features/Olurida_v081_CG-motif.gff | wc -l >> ../analyses/methylat
 
 ```{r}
 print(methdata.summary <- cbind(read_delim(here::here("analyses", "methylation-characteristics", "CpGs-features.tab"), delim="\t", col_names=FALSE), methdata.summary) %>%
-  rename(X1 = "CpGs") %>% 
+  rename(CpGs=X1) %>% 
   mutate_at(vars(CpGs), as.numeric))
 ```
 
@@ -295,6 +332,41 @@ methdata.summary.long <- cbind(melt(methdata.summary[,c("feature", "methylated",
          analysis=fct_relevel(as.factor(analysis), c("CpGs", "all5x", "methylated")))
 ```
 
+## Conduct chi-squared test of homogeneity 
+
+The null hypothesis is that loci distributions in the genome are the same between different categories.
+
+### Is distribution of total CpGs vs. methylated CpGs the same? 
+
+```{r}
+meth.chisq <- methdata.summary %>% filter(feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="ASV" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() #no, they are different. P-value very low. 
+meth.chisq
+
+meth.chisq$observed
+meth.chisq$expected
+corrplot(meth.chisq$residuals, is.cor = FALSE)
+```
+
+**Positive residuals are in blue.** Positive values in cells specify an attraction (positive association) between the corresponding row and column variables. 
+--> Exons and splice variants are more likely to be methylated. 
+
+**Negative residuals are in red.** This implies a repulsion (negative association) between the corresponding row and column variables. 
+--> Transposable elements, introns, and gene flanking regions are less likely. 
+
+### Examine the contribution of each genome feature to the chi-square value (in percentage) 
+
+```{r}
+contrib <- 100*meth.chisq$residuals^2/meth.chisq$statistic
+round(contrib, 3) 
+corrplot(contrib, is.cor = FALSE)
+```
+
+The relative contribution of each cell to the total Chi-square score give some indication of the nature of the dependency between rows and columns of the contingency table. From the table/image above, it can be seen that the most contributing cells to the Chi-square are ASV/methylated (47.54%), unknown/methylated (26.6%), CDS & exons / methylated (5.6% each). 
+
+These cells contribute about 47.06% to the total Chi-square score and thus account for most of the difference between expected and observed values.
+
+
+
 ### Summary barplot showing where methylated loci and all loci overlap with known gene features (and unknown)
 
 NOTE: Summary barplot should also include all CpG loci in Oly genome. Need to add. 
@@ -315,10 +387,24 @@ scale_fill_manual(name = "Loci Location", labels = c("Exon", "Intron", "Upstream
     "methylated" = "Methylated Loci"))
 ```
 
-## Next steps 
+## Make non-stacked barplots 
 
-Need to try to figure out what the ASV data means, since it looks somewhat interesting 
-
+```{r}
+ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
+                     (feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
+                        feature=="2kbflank-down" | feature=="TE" | feature=="ASV" | feature=="unknown")), 
+       aes(x=feature, y=percent, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", position = "dodge", width = .5) +
+scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
+                  values=c("#a6cee3", "#1f78b4")) +
+  ggtitle("% of all CpG loci and methylated loci that fall within genome features") +
+  labs(y="% of Loci", x=NULL) +
+  theme_minimal() + theme(legend.position ="bottom") + 
+  scale_x_discrete(
+    labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="5' flanking\nregion (-2kb)", 
+             `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement", ASV="Splice\nvariant", 
+             unknown="Unknown region\n of genome"))
+```
 
 
 

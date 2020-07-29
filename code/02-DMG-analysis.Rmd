@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries 
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car", "Pstat") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2","dplyr", "tidyr", "readr", "stringr", "plotly", "car", "Pstat", "clipr") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -210,36 +210,30 @@ results_2kbslop$adj.pval.pop <- p.adjust(results_2kbslop$pval.treatment, method=
 #results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
 ```
 
-### Extract only genes that were differentially methylated (p-adj < 0.05), 
+## Extract methylation data for DMGs 
 
 ```{r}
-#save df with differentially methylated genes 
+#save df with differentially methylated genes (this df includes methylation data per sample)
 DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #%>%
 #  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
 save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
-
-
-DMGs_2kbslop.genes <- DMGs_2kbslop[!duplicated(DMGs_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
-
-# Save .bed file for gene enrichment and visualization 
-write_delim(DMGs_2kbslop.genes[,c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
-
-# Save .bed file for all genes included in DMG analysis 
-write_delim(results_2kbslop[!duplicated(results_2kbslop$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/AllGenes-DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
 ```
 
-### Here is the number of differentially methylated genes (5 loci per gene): 
+### Edit gene and DMG stats dataframe, add uniprot accession numbers 
 
 ```{r}
-load("../analyses/DMGs/R-objects/DMGs_2kbslop")
-length(unique(DMGs_2kbslop$gene))  
-```
+# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
+Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
+  separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
+  select(geneID, uniprotID)
 
-### Extract GO terms for DMGs_2kbslop and save to file 
-
-```{r}
-# split gene data in "notes_gene" column into separate columns 
-DMGs_2kbslop.genes <- DMGs_2kbslop.genes %>%
+# 
+DMGresults_genes <- 
+  
+  # return only 1 row per gene+/-2kb 
+  results_2kbslop[!duplicated(results_2kbslop$gene), c("gene", "contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
+  
+  # Split giant gene "Notes" column into separate columns 
   mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
        Parent=str_extract(notes_gene, "Parent=(.*?);"),
        Name=str_extract(notes_gene, "Name=(.*?);"),
@@ -249,11 +243,238 @@ DMGs_2kbslop.genes <- DMGs_2kbslop.genes %>%
        Note=str_extract(notes_gene, "Note=(.*?);"),
        Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
        Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
-       )
-write_csv(DMGs_2kbslop.genes, path = here::here("analyses", "DMGs", "DMGs_2kbslop.genes.csv"))
+       ) %>% 
+  
+  #remove extraneous info from Olur gene ID
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>% 
+  
+  #add uniprot IDs to gene dataframe 
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
+```
 
-#Extract GO terms 
-DMGs_2kbslop.genes.GO <- DMGs_2kbslop.genes %>%
+### Here is the number of differentially methylated genes (with min. 5 loci per gene): 
+
+```{r}
+nrow(DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,])
+```
+
+### Extract dataframes for DMG function analyses 
+
+```{r}
+# DMGs only ...
+
+# ... in .bed format 
+write_delim(DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,][,c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
+
+# ... with all info, including Olurida gene ID and Uniprot accession no. (NOTE: start/stop includes +/-2kb slop)
+write_delim(DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,], 
+            "../analyses/DMGs/DMGs_2kbslop_annotated.tab",  delim = '\t', col_names = FALSE)
+
+# All genes assessed ... 
+
+#  ... in .bed format 
+write_delim(DMGresults_genes[,c("contig_gene", "start_gene_2kb", "end_gene_2kb")], "../analyses/DMGs/all-genes-assessed_2kbslop.bed",  delim = '\t', col_names = FALSE)
+
+# ... with all info, including Olurida gene ID and Uniprot accession no. (NOTE: start/stop includes +/-2kb slop)
+write_delim(DMGresults_genes, "../analyses/DMGs/all-genes-assessed_2kbslop_annotated.tab",  
+            delim = '\t', col_names = FALSE)
+```
+
+## GO Enrichment Analysis in DAVID 
+
+### Copy DMG uniprot accession numbers to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,]$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+### Copy uniprot accession numbers for all assessed genes to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+## Enriched biological function, DMGs 
+
+| Term       | Count | %   | P-Value  | Fold Enrichment | Benjamini | FDR      | Fisher Exact |
+|------------|-------|-----|----------|-----------------|-----------|----------|--------------|
+| exocytosis | 3     | 2.6 | 8.50E-02 | 5.5             | 1.00E+00  | 7.30E+01 | 5.80E-03     |
+
+### The 3 genes represented in the "Exocytosis" GO term 
+
+| UNIPROT_ACCESSION | GENE NAME                                    | Related Genes | Species           |
+|-------------------|----------------------------------------------|---------------|-------------------|
+| P16157            | ankyrin 1(ANK1)                              | RG            | Homo sapiens      |
+| G3V801            | protease, serine 12(Prss12)                  | RG            | Rattus norvegicus |
+| Q5ZL74            | vesicle associated membrane protein 7(VAMP7) | RG            | Gallus gallus     |
+
+### Here is the gene list 
+
+| UNIPROT_ACCESSION | Name | Species |
+|-|-|-|
+| Q5ZL74 | vesicle associated membrane protein 7(VAMP7) | Gallus gallus |
+| P55861 | minichromosome maintenance complex component 2 L homeolog(mcm2.L) | Xenopus laevis |
+| Q63186 | eukaryotic translation initiation factor 2B subunit delta(Eif2b4) | Rattus norvegicus |
+| Q96PC2 | inositol hexakisphosphate kinase 3(IP6K3) | Homo sapiens |
+| E7FE13 | leucine rich repeat containing G protein-coupled receptor 4(lgr4) | Danio rerio |
+| O43301 | heat shock protein family A (Hsp70) member 12A(HSPA12A) | Homo sapiens |
+| O75293 | growth arrest and DNA damage inducible beta(GADD45B) | Homo sapiens |
+| P16157 | ankyrin 1(ANK1) | Homo sapiens |
+| P13648 | lamin A(LOC396224) | Gallus gallus |
+| Q9HAS3 | solute carrier family 28 member 3(SLC28A3) | Homo sapiens |
+| Q9ES30 | C1q and tumor necrosis factor related protein 3(C1qtnf3) | Mus musculus |
+| Q9JHS3 | late endosomal/lysosomal adaptor, MAPK and MTOR activator 2(Lamtor2) | Mus musculus |
+| Q5RC14 | chromosome 11 open reading frame, human C11orf49(C11H11orf49) | Pongo abelii |
+| P08183 | ATP binding cassette subfamily B member 1(ABCB1) | Homo sapiens |
+| P02469 | laminin B1(Lamb1) | Mus musculus |
+| Q9CR48 | DNA-damage regulated autophagy modulator 2(Dram2) | Mus musculus |
+| O95841 | angiopoietin like 1(ANGPTL1) | Homo sapiens |
+| P18052 | protein tyrosine phosphatase, receptor type, A(Ptpra) | Mus musculus |
+| Q99848 | EBNA1 binding protein 2(EBNA1BP2) | Homo sapiens |
+| Q5RFP3 | endoplasmic reticulum aminopeptidase 2(ERAP2) | Pongo abelii |
+| Q8TCT0 | ceramide kinase(CERK) | Homo sapiens |
+| Q5JU85 | IQ motif and Sec7 domain 2(IQSEC2) | Homo sapiens |
+| O60290 | zinc finger protein 862(ZNF862) | Homo sapiens |
+| Q8K482 | elastin microfibril interfacer 2(Emilin2) | Mus musculus |
+| Q6W5P4 | neuropeptide S receptor 1(NPSR1) | Homo sapiens |
+| Q80YE7 | death associated protein kinase 1(Dapk1) | Mus musculus |
+| O77621 | adrenoceptor alpha 1A(ADRA1A) | Canis lupus familiaris |
+| Q9H2S1 | potassium calcium-activated channel subfamily N member 2(KCNN2) | Homo sapiens |
+| P49796 | regulator of G-protein signaling 3(RGS3) | Homo sapiens |
+| Q6YHK3 | CD109 molecule(CD109) | Homo sapiens |
+| Q69ZK9 | neuroligin 2(Nlgn2) | Mus musculus |
+| Q5ZKJ5 | major facilitator superfamily domain containing 13A(MFSD13A) | Gallus gallus |
+| P59222 | scavenger receptor class F, member 2(Scarf2) | Mus musculus |
+| Q7L4I2 | arginine and serine rich coiled-coil 2(RSRC2) | Homo sapiens |
+| G3V801 | protease, serine 12(Prss12) | Rattus norvegicus |
+| Q02858 | endothelial-specific receptor tyrosine kinase(Tek) | Mus musculus |
+| Q6ZQQ6 | WD repeat domain 87(WDR87) | Homo sapiens |
+| Q3SWY8 | zinc finger with UFM1 specific peptidase domain(ZUFSP) | Bos taurus |
+| Q5RDC1 | family with sequence similarity 21 member C(FAM21C) | Pongo abelii |
+| Q86YI8 | PHD finger protein 13(PHF13) | Homo sapiens |
+| Q99958 | forkhead box C2(FOXC2) | Homo sapiens |
+| P07207 | Notch(N) | Drosophila melanogaster |
+| Q5ZMD4 | tripartite motif containing 59(TRIM59) | Gallus gallus |
+| Q8VIK1 | small nuclear ribonucleoprotein 25 (U11/U12)(Snrnp25) | Mus musculus |
+| Q58ED9 | N(alpha)-acetyltransferase 20, NatB catalytic subunit(naa20) | Danio rerio |
+| P12804 | fibrinogen-like protein 2(Fgl2) | Mus musculus |
+| Q9Y5X5 | neuropeptide FF receptor 2(NPFFR2) | Homo sapiens |
+| Q6IMH0 | testis, prostate and placenta expressed(Tepp) | Mus musculus |
+| A2CEA7 | Ras protein-specific guanine nucleotide-releasing factor 2b(rasgrf2b) | Danio rerio |
+| P10632 | cytochrome P450 family 2 subfamily C member 8(CYP2C8) | Homo sapiens |
+| Q13370 | phosphodiesterase 3B(PDE3B) | Homo sapiens |
+| P20918 | plasminogen(Plg) | Mus musculus |
+| Q08093 | calponin 2(Cnn2) | Mus musculus |
+| Q6UWM5 | GLI pathogenesis related 1 like 1(GLIPR1L1) | Homo sapiens |
+| P55264 | adenosine kinase(Adk) | Mus musculus |
+| A6NL82 | family with sequence similarity 183 member A(FAM183A) | Homo sapiens |
+| Q5R9H4 | APOBEC1 complementation factor(A1CF) | Pongo abelii |
+| Q9NXK8 | F-box and leucine rich repeat protein 12(FBXL12) | Homo sapiens |
+| P98156 | very low density lipoprotein receptor(Vldlr) | Mus musculus |
+| A5PJI7 | eukaryotic translation initiation factor 2B subunit gamma(EIF2B3) | Bos taurus |
+| Q9XWB9 | BTB and MATH domain-containing protein 36(bath-36) | Caenorhabditis elegans |
+| Q6Z7K5 | metal tolerance protein 3(LOC4330894) | Oryza sativa Japonica Group |
+| Q2KIK2 | MPV17 mitochondrial inner membrane protein like(MPV17L) | Bos taurus |
+| Q5R947 | IMP4 homolog, U3 small nucleolar ribonucleoprotein(IMP4) | Pongo abelii |
+| Q9DDT2 | phosphoinositide-3-kinase adaptor protein 1(PIK3AP1) | Gallus gallus |
+| Q5XGW6 | charged multivesicular body protein 4B S homeolog(chmp4b.S) | Xenopus laevis |
+| Q92180 | glucosaminyl (N-acetyl) transferase 1, core 2(GCNT1) | Bos taurus |
+| Q147U1 | zinc finger protein 846(ZNF846) | Homo sapiens |
+| Q90Y54 | jagged 1b(jag1b) | Danio rerio |
+| E9QAM5 | helicase with zinc finger 2, transcriptional coactivator(Helz2) | Mus musculus |
+| Q9VJ79 | Phosphodiesterase 11(Pde11) | Drosophila melanogaster |
+| Q9W6V5 | protein tyrosine phosphatase, receptor type J(PTPRJ) | Gallus gallus |
+| Q80YG3 | kelch domain containing 1(Klhdc1) | Mus musculus |
+| Q27421 | outspread(osp) | Drosophila melanogaster |
+| F1QYJ6 | sulfotransferase family, cytosolic, 6b, member 1(sult6b1) | Danio rerio |
+| Q17DK5 | AAEL004146-PA(CRY1_AEDAE) | Aedes aegypti |
+| Q2PZL6 | FAT atypical cadherin 4(Fat4) | Mus musculus |
+| Q96KE9 | BTB domain containing 6(BTBD6) | Homo sapiens |
+| Q9HAY6 | beta-carotene oxygenase 1(BCO1) | Homo sapiens |
+| B7Z0W9 | CG42265 gene product from transcript CG42265-RE(CG42265) | Drosophila melanogaster |
+| P30549 | tachykinin receptor 2(Tacr2) | Mus musculus |
+| M0ZYF3 | internal alternative NAD(P)H-ubiquinone oxidoreductase A1, mitochondrial-like(LOC102598594) | Solanum tuberosum |
+| Q5RF16 | beta-carotene oxygenase 2(BCO2) | Pongo abelii |
+| Q5EA25 | sushi repeat containing protein, X-linked 2(SRPX2) | Bos taurus |
+| Q0V9W6 | BTB (POZ) domain containing 6(btbd6) | Xenopus tropicalis |
+| Q80UN9 | tRNA isopentenyltransferase 1(Trit1) | Mus musculus |
+| Q80T91 | multiple EGF-like-domains 11(Megf11) | Mus musculus |
+| A7RHB3 | hypothetical protein(NEMVEDRAFT_v1g81173) | Nematostella vectensis |
+| Q5K651 | sterile alpha motif domain containing 9(SAMD9) | Homo sapiens |
+| Q5EB73 | transmembrane protein 246(Tmem246) | Rattus norvegicus |
+| L7YAI7 | beta-1,4-glucuronyltransferase 1(b4gat1) | Danio rerio |
+| P42696 | RNA binding motif protein 34(RBM34) | Homo sapiens |
+| Q4V8E5 | major facilitator superfamily domain containing 3(Mfsd3) | Rattus norvegicus |
+| O08848 | TROVE domain family, member 2(Trove2) | Mus musculus |
+| A2BGM5 | forkhead box N4(foxn4) | Danio rerio |
+| Q9H093 | NUAK family kinase 2(NUAK2) | Homo sapiens |
+| Q0E908 | Hillarin(Hil) | Drosophila melanogaster |
+| Q9T0F4 | P-loop containing nucleoside triphosphate hydrolases superfamily protein(AT4G09950) | Arabidopsis thaliana |
+| Q8K2L8 | trafficking protein particle complex 12(Trappc12) | Mus musculus |
+| Q4R4A2 | zinc finger with UFM1 specific peptidase domain(ZUFSP) | Macaca fascicularis |
+| Q3B8G0 | chromosome 1 open reading frame 123 L homeolog(c1orf123.L) | Xenopus laevis |
+| Q8NFU1 | bestrophin 2(BEST2) | Homo sapiens |
+| Q29076 | POU class 2 homeobox 1(POU2F1) | Sus scrofa |
+| Q5ZM41 | testis expressed 10(TEX10) | Gallus gallus |
+| G5EFC3 | Potassium voltage-gated channel protein egl-36(egl-36) | Caenorhabditis elegans |
+| Q7TPV2 | DAZ interacting protein 3, zinc finger(Dzip3) | Mus musculus |
+| Q7T3B0 | eukaryotic translation initiation factor 3, subunit M(eif3m) | Danio rerio |
+| Q91044 | neurotrophic tyrosine kinase, receptor, type 3(NTRK3) | Gallus gallus |
+| P11584 | myospheroid(mys) | Drosophila melanogaster |
+| P03957 | matrix metallopeptidase 3(Mmp3) | Rattus norvegicus |
+| Q9Y6R7 | Fc fragment of IgG binding protein(FCGBP) | Homo sapiens |
+| P32717 | metallo-beta-lactamase superfamily protein(yjcS) | Escherichia coli str. K-12 substr. MG1655 |
+| Q8C4G9 | adhesion G protein-coupled receptor A1(Adgra1) | Mus musculus |
+| Q86Z23 | complement C1q like 4(C1QL4) | Homo sapiens |
+|  | The below were not identified by DAVID, thus not in enrichment analysis  |  |
+| Q9I931 | Fucolectin-1 | Anguilla japonica |
+| H2A0M7 | Peroxidase-like protein | Margaritifera margaritifera |
+| P83425 | Heavy metal-binding protein HIP | Mytilus edulis |
+| Q25145 | Tropomyosin | Haliotis rufescens |
+| V5NAL9 | Toll-like receptor 4 | Pinctada imbricata |
+| Q59990 | Putative cytochrome P450 120 | Synechocystis sp. |
+| P0DKY8 | U8 snoRNA-decapping enzyme | Homalodisca vitripennis |
+| P46023 | G-protein coupled receptor GRL101 | Lymnaea stagnalis |
+| Q4PM12 | 60S ribosomal protein L36 | Ixodes scapularis |
+
+### Barplots showing % methylation of DMGs by population 
+
+```{r}
+results_2kbslop %>%
+left_join(DMGresults_genes[c("gene", "uniprotID", "Note")], by="gene") %>%
+  filter(uniprotID=="O43301") %>% View()
+
+# For all DMGs, calculate mean and sd percent methylation across samples by population 
+results_2kbslop %>% 
+  filter(adj.pval.pop < 0.05) %>%
+  group_by(population, gene) %>% 
+  dplyr::summarise(mean_percMeth = mean(percMeth, na.rm=TRUE), 
+                   sd_percMeth=sd(percMeth, na.rm=TRUE), n_distinct(start), n()) %>% 
+  #add uniprot IDs to gene dataframe 
+  left_join(DMGresults_genes[c("gene", "uniprotID", "Note")], by="gene") %>%
+
+# use this to call specific genes using Uniprot ID 
+    filter(uniprotID=="O43301") %>%
+
+# generate bar plot of mean % methylation +SD by population 
+  ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,118) +
+      scale_y_continuous(breaks=c(0,25, 50, 75, 100)) +
+      geom_pointrange(aes(ymin=mean_percMeth,
+                        ymax=mean_percMeth+sd_percMeth)) +
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle("Add gene name here") +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+```
+
+
+### Extract GO terms for DMGs_2kbslop and save to file 
+
+```{r}
+DMGs_2kbslop.genes.GO <- DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,] %>% 
   mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
   mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
   separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
@@ -264,161 +485,7 @@ DMGs_2kbslop.genes.GO <- DMGs_2kbslop.genes %>%
 write_delim(DMGs_2kbslop.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
 ```
 
-The file "../analyses/DMGs/DMGs_2kbslop.GO.txt" was opened outside of RMarkdown and the GO terms and p-values were pasted into REVIGO. I then exported the R script to generate the Biological Processes scatterplot. Here is the REVIGO table: 
-
-term_ID | description | frequency | plot_X | plot_Y | plot_size | log10 p-value | uniqueness | dispensability | representative | eliminated
--- | -- | -- | -- | -- | -- | -- | -- | -- | -- | --
-GO:0006260 | DNA replication | 1.58% | 5.949 | 2.822 | 5.306 | -6.1605 | 0.719 | 0 | 6260 | 0
-GO:0007155 | cell adhesion | 0.54% | -6.544 | 1.248 | 4.844 | -6.4135 | 0.914 | 0 | 7155 | 0
-GO:0007156 | homophilic cell adhesion via plasma membrane adhesion molecules | 0.10% | null | null | 4.087 | -6.4135 | 0.914 | 0.85 | 7155 | 1
-GO:0023052 | signaling | 6.77% | -3.032 | -0.496 | 5.939 | -7.3332 | 0.956 | 0 | 23052 | 0
-GO:0070588 | calcium ion transmembrane transport | 0.16% | -3.153 | -4.713 | 4.305 | -2.1079 | 0.868 | 0 | 70588 | 0
-GO:0009058 | biosynthetic process | 31.61% | -1.225 | -0.762 | 6.608 | -2.4968 | 0.943 | 0.026 | 9058 | 0
-GO:0006334 | nucleosome assembly | 0.09% | -4.686 | 5.561 | 4.057 | -3.6686 | 0.881 | 0.029 | 6334 | 0
-GO:0007264 | small GTPase mediated signal transduction | 0.49% | 1.48 | 6.771 | 4.794 | -2.1354 | 0.743 | 0.034 | 7264 | 0
-GO:0006457 | protein folding | 0.90% | -4.69 | 1.661 | 5.064 | -1.7376 | 0.912 | 0.037 | 6457 | 0
-GO:0007154 | cell communication | 7.22% | -6.016 | 3.233 | 5.967 | -4.0935 | 0.904 | 0.048 | 7154 | 0
-GO:0005975 | carbohydrate metabolic process | 5.26% | -3.347 | 3.585 | 5.829 | -3.2718 | 0.888 | 0.081 | 5975 | 0
-GO:0006030 | chitin metabolic process | 0.08% | 2.981 | -3.369 | 3.994 | -3.9452 | 0.855 | 0.103 | 6030 | 0
-GO:0032958 | inositol phosphate biosynthetic process | 0.01% | 4.623 | -5.39 | 2.943 | -6.0631 | 0.827 | 0.121 | 32958 | 0
-GO:0030154 | cell differentiation | 1.13% | 1.041 | -6.177 | 5.162 | -5.21 | 0.858 | 0.133 | 30154 | 0
-GO:0016567 | protein ubiquitination | 0.52% | 7.405 | 0.126 | 4.827 | -2.6487 | 0.717 | 0.15 | 16567 | 0
-GO:0016579 | protein deubiquitination | 0.20% | null | null | 4.398 | -1.8804 | 0.726 | 0.829 | 16567 | 1
-GO:0006006 | glucose metabolic process | 0.43% | 2.958 | -6.194 | 4.741 | -3.4042 | 0.835 | 0.213 | 6006 | 0
-GO:0055114 | oxidation-reduction process | 15.06% | 1.16 | -1.152 | 6.286 | -6.1605 | 0.859 | 0.214 | 55114 | 0
-GO:0019427 | acetyl-CoA biosynthetic process from acetate | 0.03% | 4.516 | -4.71 | 3.604 | -2.0321 | 0.81 | 0.237 | 19427 | 0
-GO:0006886 | intracellular protein transport | 1.20% | -4.141 | -3.625 | 5.187 | -1.5764 | 0.862 | 0.263 | 6886 | 0
-GO:0009408 | response to heat | 0.17% | 0.479 | 7.378 | 4.328 | -1.7376 | 0.834 | 0.315 | 9408 | 0
-GO:0006396 | RNA processing | 3.21% | 6.772 | 2.794 | 5.615 | -2.1891 | 0.746 | 0.319 | 6396 | 0
-GO:0006511 | ubiquitin-dependent protein catabolic process | 0.58% | 7.678 | -0.832 | 4.874 | -1.8804 | 0.781 | 0.321 | 6511 | 0
-GO:0006541 | glutamine metabolic process | 0.47% | 3.071 | -4.558 | 4.782 | -1.9271 | 0.785 | 0.33 | 6541 | 0
-GO:0001522 | pseudouridine synthesis | 0.35% | 6.93 | 1.68 | 4.652 | -2.1891 | 0.709 | 0.384 | 1522 | 0
-GO:0000154 | rRNA modification | 0.35% | null | null | 4.658 | -1.3136 | 0.678 | 0.701 | 1522 | 1
-GO:0006811 | ion transport | 5.34% | -3.91 | -4.255 | 5.836 | -2.1079 | 0.866 | 0.389 | 6811 | 0
-GO:0046600 | negative regulation of centriole replication | 0.00% | -2.59 | 5.971 | 2.477 | -2.1569 | 0.824 | 0.407 | 46600 | 0
-GO:0006486 | protein glycosylation | 0.32% | 5.491 | -1.021 | 4.61 | -2.0586 | 0.675 | 0.429 | 6486 | 0
-GO:0051103 | DNA ligation involved in DNA repair | 0.04% | 3.562 | 5.637 | 3.703 | -2.8009 | 0.703 | 0.454 | 51103 | 0
-GO:0035023 | regulation of Rho protein signal transduction | 0.13% | 1.394 | 7.1 | 4.206 | -1.5602 | 0.764 | 0.515 | 35023 | 0
-GO:0055085 | transmembrane transport | 8.92% | -4.515 | -3.723 | 6.058 | -1.5468 | 0.863 | 0.535 | 55085 | 0
-GO:0006355 | regulation of transcription, DNA-templated | 9.92% | 4.282 | 3.292 | 6.105 | -1.7475 | 0.633 | 0.537 | 6355 | 0
-GO:0006468 | protein phosphorylation | 4.14% | 6.56 | -0.302 | 5.725 | -2.3389 | 0.67 | 0.56 | 6468 | 0
-GO:0034220 | ion transmembrane transport | 3.53% | -3.536 | -4.332 | 5.656 | -1.6655 | 0.846 | 0.566 | 34220 | 0
-GO:0006470 | protein dephosphorylation | 0.59% | 6.774 | -1.091 | 4.875 | -1.5439 | 0.715 | 0.568 | 6470 | 0
-GO:0009451 | RNA modification | 1.78% | 6.493 | 1.45 | 5.358 | -2.1891 | 0.686 | 0.581 | 9451 | 0
-GO:0015914 | phospholipid transport | 0.08% | -4.251 | -3.327 | 3.987 | -1.3062 | 0.821 | 0.584 | 15914 | 0
-GO:0035556 | intracellular signal transduction | 4.00% | 1.211 | 6.286 | 5.71 | -1.705 | 0.704 | 0.593 | 35556 | 0
-GO:0007186 | G-protein coupled receptor signaling pathway | 0.88% | 0.818 | 6.368 | 5.054 | -1.6167 | 0.736 | 0.638 | 7186 | 0
-GO:0007166 | cell surface receptor signaling pathway | 0.92% | 0.957 | 6.609 | 5.072 | -1.4923 | 0.735 | 0.641 | 7166 | 0
-GO:0006281 | DNA repair | 2.23% | 3.916 | 4.695 | 5.457 | -2.8009 | 0.608 | 0.684 | 6281 | 0
-GO:0006310 | DNA recombination | 1.64% | 6.285 | 3.557 | 5.323 | -2.8009 | 0.732 | 0.688 | 6310 | 0
-
-
-### Here is a screen shot of the REVIGO plot showing GO terms associated with DMGs_2kbslop (5 methylated loci per gene) 
-
-![DMG_REVIGO_biological-functions.png](../analyses/DMGs/DMG_REVIGO_biological-functions.png) 
-
-### Here is a script to re-create that REVIGO plot  
-
-```{r, message=FALSE, warning=FALSE}
-# A plotting R script produced by the REVIGO server at http://revigo.irb.hr/
-# If you found REVIGO useful in your work, please cite the following reference:
-# Supek F et al. "REVIGO summarizes and visualizes long lists of Gene Ontology
-# terms" PLoS ONE 2011. doi:10.1371/journal.pone.0021800
-
-
-# --------------------------------------------------------------------------
-# If you don't have the ggplot2 package installed, uncomment the following line:
-# install.packages( "ggplot2" );
-library( ggplot2 );
-# --------------------------------------------------------------------------
-# If you don't have the scales package installed, uncomment the following line:
-# install.packages( "scales" );
-library( scales );
-
-
-# --------------------------------------------------------------------------
-# Here is your data from REVIGO. Scroll down for plot configuration options.
-
-revigo.names <- c("term_ID","description","frequency_%","plot_X","plot_Y","plot_size","log10_p_value","uniqueness","dispensability");
-revigo.data <- rbind(c("GO:0006260","DNA replication", 1.577, 5.949, 2.822, 5.306,-6.1605,0.719,0.000),
-c("GO:0007155","cell adhesion", 0.544,-6.544, 1.248, 4.844,-6.4135,0.914,0.000),
-c("GO:0023052","signaling", 6.765,-3.032,-0.496, 5.939,-7.3332,0.956,0.000),
-c("GO:0070588","calcium ion transmembrane transport", 0.157,-3.153,-4.713, 4.305,-2.1079,0.868,0.000),
-c("GO:0009058","biosynthetic process",31.611,-1.225,-0.762, 6.608,-2.4968,0.943,0.026),
-c("GO:0006334","nucleosome assembly", 0.089,-4.686, 5.561, 4.057,-3.6686,0.881,0.029),
-c("GO:0007264","small GTPase mediated signal transduction", 0.485, 1.480, 6.771, 4.794,-2.1354,0.743,0.034),
-c("GO:0006457","protein folding", 0.903,-4.690, 1.661, 5.064,-1.7376,0.912,0.037),
-c("GO:0007154","cell communication", 7.219,-6.016, 3.233, 5.967,-4.0935,0.904,0.048),
-c("GO:0005975","carbohydrate metabolic process", 5.260,-3.347, 3.585, 5.829,-3.2718,0.888,0.081),
-c("GO:0006030","chitin metabolic process", 0.077, 2.981,-3.369, 3.994,-3.9452,0.855,0.103),
-c("GO:0032958","inositol phosphate biosynthetic process", 0.007, 4.623,-5.390, 2.943,-6.0631,0.827,0.121),
-c("GO:0030154","cell differentiation", 1.133, 1.041,-6.177, 5.162,-5.2100,0.858,0.133),
-c("GO:0016567","protein ubiquitination", 0.523, 7.405, 0.126, 4.827,-2.6487,0.717,0.150),
-c("GO:0006006","glucose metabolic process", 0.430, 2.958,-6.194, 4.741,-3.4042,0.835,0.213),
-c("GO:0055114","oxidation-reduction process",15.060, 1.160,-1.152, 6.286,-6.1605,0.859,0.214),
-c("GO:0019427","acetyl-CoA biosynthetic process from acetate", 0.031, 4.516,-4.710, 3.604,-2.0321,0.810,0.237),
-c("GO:0006886","intracellular protein transport", 1.199,-4.141,-3.625, 5.187,-1.5764,0.862,0.263),
-c("GO:0009408","response to heat", 0.166, 0.479, 7.378, 4.328,-1.7376,0.834,0.315),
-c("GO:0006396","RNA processing", 3.210, 6.772, 2.794, 5.615,-2.1891,0.746,0.319),
-c("GO:0006511","ubiquitin-dependent protein catabolic process", 0.584, 7.678,-0.832, 4.874,-1.8804,0.781,0.321),
-c("GO:0006541","glutamine metabolic process", 0.472, 3.071,-4.558, 4.782,-1.9271,0.785,0.330),
-c("GO:0001522","pseudouridine synthesis", 0.350, 6.930, 1.680, 4.652,-2.1891,0.709,0.384),
-c("GO:0006811","ion transport", 5.344,-3.910,-4.255, 5.836,-2.1079,0.866,0.389),
-c("GO:0046600","negative regulation of centriole replication", 0.002,-2.590, 5.971, 2.477,-2.1569,0.824,0.407),
-c("GO:0006486","protein glycosylation", 0.317, 5.491,-1.021, 4.610,-2.0586,0.675,0.429),
-c("GO:0051103","DNA ligation involved in DNA repair", 0.039, 3.562, 5.637, 3.703,-2.8009,0.703,0.454),
-c("GO:0035023","regulation of Rho protein signal transduction", 0.125, 1.394, 7.100, 4.206,-1.5602,0.764,0.515),
-c("GO:0055085","transmembrane transport", 8.916,-4.515,-3.723, 6.058,-1.5468,0.863,0.535),
-c("GO:0006355","regulation of transcription, DNA-templated", 9.917, 4.282, 3.292, 6.105,-1.7475,0.633,0.537),
-c("GO:0006468","protein phosphorylation", 4.137, 6.560,-0.302, 5.725,-2.3389,0.670,0.560),
-c("GO:0034220","ion transmembrane transport", 3.528,-3.536,-4.332, 5.656,-1.6655,0.846,0.566),
-c("GO:0006470","protein dephosphorylation", 0.585, 6.774,-1.091, 4.875,-1.5439,0.715,0.568),
-c("GO:0009451","RNA modification", 1.778, 6.493, 1.450, 5.358,-2.1891,0.686,0.581),
-c("GO:0015914","phospholipid transport", 0.076,-4.251,-3.327, 3.987,-1.3062,0.821,0.584),
-c("GO:0035556","intracellular signal transduction", 4.000, 1.211, 6.286, 5.710,-1.7050,0.704,0.593),
-c("GO:0007186","G-protein coupled receptor signaling pathway", 0.882, 0.818, 6.368, 5.054,-1.6167,0.736,0.638),
-c("GO:0007166","cell surface receptor signaling pathway", 0.920, 0.957, 6.609, 5.072,-1.4923,0.735,0.641),
-c("GO:0006281","DNA repair", 2.234, 3.916, 4.695, 5.457,-2.8009,0.608,0.684),
-c("GO:0006310","DNA recombination", 1.641, 6.285, 3.557, 5.323,-2.8009,0.732,0.688));
-
-one.data <- data.frame(revigo.data);
-names(one.data) <- revigo.names;
-one.data <- one.data [(one.data$plot_X != "null" & one.data$plot_Y != "null"), ];
-one.data$plot_X <- as.numeric( as.character(one.data$plot_X) );
-one.data$plot_Y <- as.numeric( as.character(one.data$plot_Y) );
-one.data$plot_size <- as.numeric( as.character(one.data$plot_size) );
-one.data$log10_p_value <- as.numeric( as.character(one.data$log10_p_value) );
-one.data$frequency <- as.numeric( as.character(one.data$frequency) );
-one.data$uniqueness <- as.numeric( as.character(one.data$uniqueness) );
-one.data$dispensability <- as.numeric( as.character(one.data$dispensability) );
-#head(one.data);
-
-
-# --------------------------------------------------------------------------
-# Names of the axes, sizes of the numbers and letters, names of the columns,
-# etc. can be changed below
-
-p1 <- ggplot( data = one.data );
-p1 <- p1 + geom_point( aes( plot_X, plot_Y, colour = log10_p_value, size = plot_size), alpha = I(0.6) ) + scale_size_area();
-p1 <- p1 + scale_colour_gradientn( colours = c("blue", "green", "yellow", "red"), limits = c( min(one.data$log10_p_value), 0) );
-p1 <- p1 + geom_point( aes(plot_X, plot_Y, size = plot_size), shape = 21, fill = "transparent", colour = I (alpha ("black", 0.6) )) + scale_size_area();
-p1 <- p1 + scale_size( range=c(5, 30)) + theme_bw(); # + scale_fill_gradientn(colours = heat_hcl(7), limits = c(-300, 0) );
-#ex <- one.data [ one.data$dispensability < 0.15, ]; 
-p1 <- p1 + geom_text( data = one.data, aes(plot_X, plot_Y, label = description), colour = I(alpha("black", 0.85)), size = 3 );
-p1 <- p1 + labs (y = "semantic space x", x = "semantic space y");
-p1 <- p1 + theme(legend.key = element_blank()) ;
-one.x_range = max(one.data$plot_X) - min(one.data$plot_X);
-one.y_range = max(one.data$plot_Y) - min(one.data$plot_Y);
-p1 <- p1 + xlim(min(one.data$plot_X)-one.x_range/10,max(one.data$plot_X)+one.x_range/10);
-p1 <- p1 + ylim(min(one.data$plot_Y)-one.y_range/10,max(one.data$plot_Y)+one.y_range/10);
-
-# --------------------------------------------------------------------------
-# Output the plot to screen
-
-p1;
-```
-
-### IGV 
+### Files for IGV 
 
 Create bed files to visualze as a track of DMGs_2kbslop in IGV 
 
@@ -432,56 +499,6 @@ DMGs_2kbslop.bed <- meth_filter_genes_2kbslop %>%
   distinct(contig_gene, start_gene_2kb, end_gene_2kb)
 #DMGs_2kbslop.bed <- DMGs_2kbslop.bed[!duplicated(test$contig_gene),]
 readr::write_delim(DMGs_2kbslop.bed, "../analyses/DMGs/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
-```
-
-### Barplots showing % methylation of all methylated genes by population 
-NOTE: this code is commented out as it's not needed and prints too many bar plots 
-
-```{r}
-# ggplotly(meth_filter_genes_2kbslop %>%
-#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
-#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
-#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
-#   group_by(population, gene) %>%
-#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
-#             mean_percentMeth = mean(percMeth)) %>%
-#   ggplot(aes(x = population, y = mean_percentMeth, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
-# 
-# #checking to make sure numCs + numTs = coverage; should be 1:1 line 
-# plot(meth_filter_genes_2kbslop$numCs + meth_filter_genes_2kbslop$numTs ~ meth_filter_genes_2kbslop$coverage)  
-# 
-# ## Look at coverage for each DMG by population (mean % methylation across samples)
-# ggplotly(meth_filter_genes_2kbslop %>%
-#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
-#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
-#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
-#   group_by(population, gene) %>%
-#   summarise(sum_cov = sum(coverage), 
-#             mean_cov = mean(coverage)) %>%
-#   ggplot(aes(x = population, y = mean_cov, fill = population)) + 
-#     geom_bar(stat="identity") + 
-#     facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
-# 
-# DMG_counts <- meth_filter_genes_2kbslop %>%
-#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
-#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
-#            end_gene %in% DMGs_2kbslop.genes$end_gene)
-# 
-# # Look at coverage for each DMG locus, by population 
-# # mean % methylation across samples  
-# DMG_genes_unique <- unique(DMG_counts$gene)
-# for (i in 1:length(DMG_genes_unique)) {
-#   temp <-  DMG_counts %>% 
-#   filter(chr == "Contig22489") %>%
-#   group_by(population, chr, start) %>%
-#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
-#             mean_percentMeth = mean(percMeth))
-#     print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
-#     geom_bar(stat="identity") + 
-#     facet_wrap(~start) + 
-#     theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
-#     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
-#   }
 ```
 
 ### Identify DMGs_2kbslop that contain DMLs 
@@ -714,336 +731,6 @@ ggplot(DMGs_2kbslop, aes(sample, gene, fill= percMeth)) + xlab("Sample") + geom_
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-----------------------------------------------------------------------
-
-### DMG analysis with relaxed loci settings 
-
-#### Filter for genes with **at minimum 4 methylated loci**
-
-```{r}
-newdata_4loci <- min.filt_2kbslop[which(min.filt_2kbslop$n > 3), ]
-sub_meth_table_2kbslop_4loci <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata_4loci$vars,]
-save(sub_meth_table_2kbslop_4loci, file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop_4loci")
-```
-
-### Here is the number of genes that remain after filtering for those with 4 or more methylated loci within each gene region:
-
-```{r}
-length(unique(sub_meth_table_2kbslop_4loci$gene))  
-```
-
-### Run GLM to test for differences among population for each gene individually 
-
-Note: this script was created by Hollie Putnam ([GM.Rmd](https://raw.githubusercontent.com/hputnam/Geoduck_Meth/master/RAnalysis/Scripts/GM.Rmd)); there are minor revisions below. I retained some commented out lines (notably-testing for position w/n gene, such as intron & exon) in case we want to include those as factors in the future. 
-
-```{r}
-# create data frame to stored results
-results_2kbslop_4loci <- data.frame()
-
-gs <- unique(sub_meth_table_2kbslop_4loci$gene)
-
-#first subset the unique dataframes and second run the GLMs
-for(i in 1:length(gs)){
-  
-  #subset the dataframe gene by gene
-  sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop_4loci, gene ==gs[i])
-  
-  # fit glm position model
-  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
-             data=sub_meth_table_2kbslop1, family=binomial)
-  a <- anova(fit, test="Chisq")
-  
-  # capture summary stats to data frame
-  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene_2kb", "end_gene_2kb", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
-                   pval.treatment = a$`Pr(>Chi)`[2],
-                   #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
-                   #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
-                   stringsAsFactors = F)
-  
-  # bind rows of temporary data frame to the results data frame
-  results_2kbslop_4loci <- rbind(results_2kbslop_4loci, df)
-}
-
-results_2kbslop_4loci[is.na(results_2kbslop_4loci)] <- 0
-results_2kbslop_4loci$adj.pval.pop <- p.adjust(results_2kbslop_4loci$pval.treatment, method='BH')
-#results_2kbslop$adj.pval.position <- p.adjust(results_2kbslop$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
-#results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
-```
-
-### Extract only genes that were differentially methylated (4 loci min) (p-adj < 0.05):
-
-```{r}
-#save df with differentially methylated genes 
-DMGs_2kbslop_4loci <- subset(results_2kbslop_4loci, adj.pval.pop < 0.05) #%>%
-#  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
-
-DMGs_2kbslop_4loci.genes <- DMGs_2kbslop_4loci[!duplicated(DMGs_2kbslop_4loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
-save(DMGs_2kbslop_4loci, file="../analyses/DMGs/R-objects/DMGs_2kbslop_4loci")
-```
-
-### Here is the number of differentially methylated genes (4 loci min): 
-
-```{r}
-length(unique(DMGs_2kbslop_4loci$gene))  
-```
-
-### Extract GO terms for DMGs_2kbslop_4loci and save to file 
-
-```{r}
-# split gene data in "notes_gene" column into separate columns 
-DMGs_2kbslop_4loci.genes <- DMGs_2kbslop_4loci.genes %>%
-  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
-       Parent=str_extract(notes_gene, "Parent=(.*?);"),
-       Name=str_extract(notes_gene, "Name=(.*?);"),
-       Alias=str_extract(notes_gene, "Alias=(.*?);"),
-       AED=str_extract(notes_gene, "AED=(.*?);"),
-       eAED=str_extract(notes_gene, "eAED=(.*?);"),
-       Note=str_extract(notes_gene, "Note=(.*?);"),
-       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
-       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
-       )
-write_csv(DMGs_2kbslop_4loci.genes, path = here::here("analyses", "DMGs", "DMGs_2kbslop_4loci.genes.csv"))
-
-#Extract GO terms 
-DMGs_2kbslop_4loci.genes.GO <- DMGs_2kbslop_4loci.genes %>%
-  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
-  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
-  separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
-  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
-  dplyr::select(-GO_number) %>%
-  filter(!is.na(Note) & !is.na(GO_term))
-
-write_delim(DMGs_2kbslop_4loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_4loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
-```
-
-### Calculate Pst for each gene (min 4 loci per gene)
-
-##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 4 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
-
-```{r}
-# How many gene regions are there after filtering for those with 4 methylated loci? 
-sub_meth_table_2kbslop_4loci %>% 
-       distinct(gene) %>%
-  nrow()
-
-# I think this filtering step doesn't account for the 2kb +/- start and stop 
-perc_meth_genes_2kbslop_4loci <- sub_meth_table_2kbslop_4loci %>% 
-   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
-   dplyr::summarise(
-    mean_percMeth = mean(percMeth, na.rm=TRUE),
-    sd_percMeth=sd(percMeth, na.rm=TRUE),
-    n())  
-
-# check to make sure % methylation is calculated separately for each sample and gene region 
-perc_meth_genes_2kbslop_4loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
-  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
-
-# How many unique gene regions? 
-perc_meth_genes_2kbslop_4loci %>% 
-       ungroup() %>% 
-  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
-       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
-  nrow()
-
-# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
-perc_meth_genes_2kbslop_4loci_wide <- perc_meth_genes_2kbslop_4loci %>% 
-  ungroup() %>%
-  tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
-  dplyr::select(population, sample, gene_region, mean_percMeth) %>%
-  spread(gene_region, mean_percMeth) %>%
-  tibble::column_to_rownames(var = "sample")
-
-head(perc_meth_genes_2kbslop_4loci_wide[1:4]) #confirm correct format 
-ncol(perc_meth_genes_2kbslop_4loci_wide) #1724 gene regions 
-```
-
-### Run Pst 
-
-```{r}
-#Now run the following line and it will provide Pst estimates for every gene.
-genes_2kbslop_4loci_Pst <- Pst(perc_meth_genes_2kbslop_4loci_wide)
-
-# Check out Pst distribution 
-hist(genes_2kbslop_4loci_Pst$Pst_Values)
-summary(genes_2kbslop_4loci_Pst$Pst_Values)
-nrow(genes_2kbslop_4loci_Pst)
-
-# format of dataframe that I will save 
-head(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
-
-# Write out Pst results 
-write.table(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_4loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
-
-head(genes_2kbslop_4loci_Pst %>% 
-  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
-  filter(Pst_Values>0.5))
-```
-
-----------------------------------------------------------------------
-
-### DMG analysis with relaxed loci settings 
-
-#### Filter for genes with **at minimum 3 methylated loci**
-
-```{r}
-newdata_3loci <- min.filt_2kbslop[which(min.filt_2kbslop$n > 2), ]
-sub_meth_table_2kbslop_3loci <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata_3loci$vars,]
-save(sub_meth_table_2kbslop_3loci, file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop_3loci")
-```
-
-### Here is the number of genes that remain after filtering for those with 4 or more methylated loci within each gene region:
-
-```{r}
-length(unique(sub_meth_table_2kbslop_3loci$gene))  
-```
-
-### Run GLM to test for differences among population for each gene individually 
-
-Note: this script was created by Hollie Putnam ([GM.Rmd](https://raw.githubusercontent.com/hputnam/Geoduck_Meth/master/RAnalysis/Scripts/GM.Rmd)); there are minor revisions below. I retained some commented out lines (notably-testing for position w/n gene, such as intron & exon) in case we want to include those as factors in the future. 
-
-```{r}
-# create data frame to stored results
-results_2kbslop_3loci <- data.frame()
-
-gs <- unique(sub_meth_table_2kbslop_3loci$gene)
-
-#first subset the unique dataframes and second run the GLMs
-for(i in 1:length(gs)){
-  
-  #subset the dataframe gene by gene
-  sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop_3loci, gene ==gs[i])
-  
-  # fit glm position model
-  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
-             data=sub_meth_table_2kbslop1, family=binomial)
-  a <- anova(fit, test="Chisq")
-  
-  # capture summary stats to data frame
-  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene_2kb", "end_gene_2kb", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
-                   pval.treatment = a$`Pr(>Chi)`[2],
-                   #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
-                   #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
-                   stringsAsFactors = F)
-  
-  # bind rows of temporary data frame to the results data frame
-  results_2kbslop_3loci <- rbind(results_2kbslop_3loci, df)
-}
-
-results_2kbslop_3loci[is.na(results_2kbslop_3loci)] <- 0
-results_2kbslop_3loci$adj.pval.pop <- p.adjust(results_2kbslop_3loci$pval.treatment, method='BH')
-#results_2kbslop$adj.pval.position <- p.adjust(results_2kbslop$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
-#results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
-```
-
-### Extract only genes that were differentially methylated (3 loci min) (p-adj < 0.05):
-
-```{r}
-#save df with differentially methylated genes 
-DMGs_2kbslop_3loci <- subset(results_2kbslop_3loci, adj.pval.pop < 0.05) #%>%
-#  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
-
-DMGs_2kbslop_3loci.genes <- DMGs_2kbslop_3loci[!duplicated(DMGs_2kbslop_3loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
-save(DMGs_2kbslop_3loci, file="../analyses/DMGs/R-objects/DMGs_2kbslop_3loci")
-```
-
-### Here is the number of differentially methylated genes (3 loci min): 
-
-```{r}
-length(unique(DMGs_2kbslop_3loci$gene))  
-```
-
-### Extract GO terms for DMGs_2kbslop_3loci and save to file 
-
-```{r}
-# split gene data in "notes_gene" column into separate columns 
-DMGs_2kbslop_3loci.genes <- DMGs_2kbslop_3loci.genes %>%
-  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
-       Parent=str_extract(notes_gene, "Parent=(.*?);"),
-       Name=str_extract(notes_gene, "Name=(.*?);"),
-       Alias=str_extract(notes_gene, "Alias=(.*?);"),
-       AED=str_extract(notes_gene, "AED=(.*?);"),
-       eAED=str_extract(notes_gene, "eAED=(.*?);"),
-       Note=str_extract(notes_gene, "Note=(.*?);"),
-       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
-       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
-       )
-write_csv(DMGs_2kbslop_3loci.genes, path = here::here("analyses", "DMGs", "DMGs_2kbslop_3loci.genes.csv"))
-
-#Extract GO terms 
-DMGs_2kbslop_3loci.genes.GO <- DMGs_2kbslop_3loci.genes %>%
-  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
-  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
-  separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
-  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
-  dplyr::select(-GO_number) %>%
-  filter(!is.na(Note) & !is.na(GO_term))
-
-write_delim(DMGs_2kbslop_3loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_3loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
-```
-
-### Calculate Pst for each gene (min 3 loci per gene)
-
-##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 3 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
-
-```{r}
-# How many gene regions are there after filtering for those with 3 methylated loci? 
-sub_meth_table_2kbslop_3loci %>% 
-       distinct(gene) %>%
-  nrow()
-
-# I think this filtering step doesn't account for the 2kb +/- start and stop 
-perc_meth_genes_2kbslop_3loci <- sub_meth_table_2kbslop_3loci %>% 
-   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
-   dplyr::summarise(
-    mean_percMeth = mean(percMeth, na.rm=TRUE),
-    sd_percMeth=sd(percMeth, na.rm=TRUE),
-    n())  
-
-# check to make sure % methylation is calculated separately for each sample and gene region 
-perc_meth_genes_2kbslop_3loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
-  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
-
-# How many unique gene regions? 
-perc_meth_genes_2kbslop_3loci %>% 
-       ungroup() %>% 
-  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
-       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
-  nrow()
-
-# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
-perc_meth_genes_2kbslop_3loci_wide <- perc_meth_genes_2kbslop_3loci %>% 
-  ungroup() %>%
-  tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
-  dplyr::select(population, sample, gene_region, mean_percMeth) %>%
-  spread(gene_region, mean_percMeth) %>%
-  tibble::column_to_rownames(var = "sample")
-
-head(perc_meth_genes_2kbslop_3loci_wide[1:4]) #confirm correct format 
-ncol(perc_meth_genes_2kbslop_3loci_wide) #1724 gene regions 
-```
-
-### Run Pst 
-
-```{r}
-#Now run the following line and it will provide Pst estimates for every gene.
-genes_2kbslop_3loci_Pst <- Pst(perc_meth_genes_2kbslop_3loci_wide)
-
-# Check out Pst distribution 
-hist(genes_2kbslop_3loci_Pst$Pst_Values)
-summary(genes_2kbslop_3loci_Pst$Pst_Values)
-nrow(genes_2kbslop_3loci_Pst)
-
-# format of dataframe that I will save 
-head(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
-
-# Write out Pst results 
-write.table(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_3loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
-
-head(genes_2kbslop_3loci_Pst %>% 
-  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
-  filter(Pst_Values>0.5))
-```
-
 ## Calculate Pst for all genes represented in our methylation data 
 
 #### First, how many gene regions are there? 
@@ -1216,5 +903,538 @@ perc.meth.Pst.done %>%
   ggtitle("Mean Methylation Pst (comparing population) by relative gene location") +
   theme_minimal() #+
 #  theme(axis.text.x=element_blank())
+```
+
+
+
+# Additional optional analyses 
+
+----------------------------------------------------------------------
+
+### DMG analysis with relaxed loci settings 
+
+#### Filter for genes with **at minimum 4 methylated loci**
+
+```{r}
+newdata_4loci <- min.filt_2kbslop[which(min.filt_2kbslop$n > 3), ]
+sub_meth_table_2kbslop_4loci <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata_4loci$vars,]
+save(sub_meth_table_2kbslop_4loci, file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop_4loci")
+```
+
+### Here is the number of genes that remain after filtering for those with 4 or more methylated loci within each gene region:
+
+```{r}
+length(unique(sub_meth_table_2kbslop_4loci$gene))  
+```
+
+### Run GLM to test for differences among population for each gene individually 
+
+Note: this script was created by Hollie Putnam ([GM.Rmd](https://raw.githubusercontent.com/hputnam/Geoduck_Meth/master/RAnalysis/Scripts/GM.Rmd)); there are minor revisions below. I retained some commented out lines (notably-testing for position w/n gene, such as intron & exon) in case we want to include those as factors in the future. 
+
+```{r}
+# create data frame to stored results
+results_2kbslop_4loci <- data.frame()
+
+gs <- unique(sub_meth_table_2kbslop_4loci$gene)
+
+#first subset the unique dataframes and second run the GLMs
+for(i in 1:length(gs)){
+  
+  #subset the dataframe gene by gene
+  sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop_4loci, gene ==gs[i])
+  
+  # fit glm position model
+  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
+             data=sub_meth_table_2kbslop1, family=binomial)
+  a <- anova(fit, test="Chisq")
+  
+  # capture summary stats to data frame
+  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene_2kb", "end_gene_2kb", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
+                   pval.treatment = a$`Pr(>Chi)`[2],
+                   #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
+                   #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
+                   stringsAsFactors = F)
+  
+  # bind rows of temporary data frame to the results data frame
+  results_2kbslop_4loci <- rbind(results_2kbslop_4loci, df)
+}
+
+results_2kbslop_4loci[is.na(results_2kbslop_4loci)] <- 0
+results_2kbslop_4loci$adj.pval.pop <- p.adjust(results_2kbslop_4loci$pval.treatment, method='BH')
+#results_2kbslop$adj.pval.position <- p.adjust(results_2kbslop$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
+#results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
+```
+
+### Edit gene and DMG stats dataframe, add uniprot accession numbers 
+
+```{r}
+# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
+# Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
+#   separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
+#   select(geneID, uniprotID)
+
+# 
+DMGresults_genes_4loci <- 
+  
+  # return only 1 row per gene+/-2kb 
+  results_2kbslop_4loci[!duplicated(results_2kbslop_4loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
+  
+  # Split giant gene "Notes" column into separate columns 
+  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
+       Parent=str_extract(notes_gene, "Parent=(.*?);"),
+       Name=str_extract(notes_gene, "Name=(.*?);"),
+       Alias=str_extract(notes_gene, "Alias=(.*?);"),
+       AED=str_extract(notes_gene, "AED=(.*?);"),
+       eAED=str_extract(notes_gene, "eAED=(.*?);"),
+       Note=str_extract(notes_gene, "Note=(.*?);"),
+       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
+       ) %>% 
+  
+  #remove extraneous info from Olur gene ID
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>% 
+  
+  #add uniprot IDs to gene dataframe 
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
+```
+
+### Here is the number of differentially methylated genes (with min. 5 loci per gene): 
+
+```{r}
+nrow(DMGresults_genes_4loci[DMGresults_genes_4loci$adj.pval.pop < 0.05,])
+```
+
+## GO Enrichment Analysis in DAVID 
+
+### Copy DMG uniprot accession numbers to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes_4loci[DMGresults_genes_4loci$adj.pval.pop < 0.05,]$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+### Copy uniprot accession numbers for all assessed genes to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes_4loci$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+### Extract only genes that were differentially methylated (4 loci min) (p-adj < 0.05):
+
+```{r}
+# #save df with differentially methylated genes 
+# DMGs_2kbslop_4loci <- subset(results_2kbslop_4loci, adj.pval.pop < 0.05) #%>%
+# #  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
+# 
+# DMGs_2kbslop_4loci.genes <- DMGs_2kbslop_4loci[!duplicated(DMGs_2kbslop_4loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
+# save(DMGs_2kbslop_4loci, file="../analyses/DMGs/R-objects/DMGs_2kbslop_4loci")
+```
+
+## Extract methylation data for DMGs 
+
+```{r}
+# #save df with differentially methylated genes (this df includes methylation data per sample)
+# DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #%>%
+# #  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
+# save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
+```
+
+### Extract GO terms for DMGs_2kbslop_4loci and save to file 
+
+```{r}
+# split gene data in "notes_gene" column into separate columns 
+DMGs_2kbslop_4loci.genes <- DMGs_2kbslop_4loci.genes %>%
+  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
+       Parent=str_extract(notes_gene, "Parent=(.*?);"),
+       Name=str_extract(notes_gene, "Name=(.*?);"),
+       Alias=str_extract(notes_gene, "Alias=(.*?);"),
+       AED=str_extract(notes_gene, "AED=(.*?);"),
+       eAED=str_extract(notes_gene, "eAED=(.*?);"),
+       Note=str_extract(notes_gene, "Note=(.*?);"),
+       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
+       )
+write_csv(DMGs_2kbslop_4loci.genes, path = here::here("analyses", "DMGs", "DMGs_2kbslop_4loci.genes.csv"))
+
+#Extract GO terms 
+DMGs_2kbslop_4loci.genes.GO <- DMGs_2kbslop_4loci.genes %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
+  separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
+  dplyr::select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term))
+
+write_delim(DMGs_2kbslop_4loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_4loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
+```
+
+### Calculate Pst for each gene (min 4 loci per gene)
+
+##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 4 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+# How many gene regions are there after filtering for those with 4 methylated loci? 
+sub_meth_table_2kbslop_4loci %>% 
+       distinct(gene) %>%
+  nrow()
+
+# I think this filtering step doesn't account for the 2kb +/- start and stop 
+perc_meth_genes_2kbslop_4loci <- sub_meth_table_2kbslop_4loci %>% 
+   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes_2kbslop_4loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# How many unique gene regions? 
+perc_meth_genes_2kbslop_4loci %>% 
+       ungroup() %>% 
+  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  nrow()
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+perc_meth_genes_2kbslop_4loci_wide <- perc_meth_genes_2kbslop_4loci %>% 
+  ungroup() %>%
+  tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  dplyr::select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  tibble::column_to_rownames(var = "sample")
+
+head(perc_meth_genes_2kbslop_4loci_wide[1:4]) #confirm correct format 
+ncol(perc_meth_genes_2kbslop_4loci_wide) #1724 gene regions 
+```
+
+### Run Pst 
+
+```{r}
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_2kbslop_4loci_Pst <- Pst(perc_meth_genes_2kbslop_4loci_wide)
+
+# Check out Pst distribution 
+hist(genes_2kbslop_4loci_Pst$Pst_Values)
+summary(genes_2kbslop_4loci_Pst$Pst_Values)
+nrow(genes_2kbslop_4loci_Pst)
+
+# format of dataframe that I will save 
+head(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
+
+# Write out Pst results 
+write.table(genes_2kbslop_4loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_4loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+head(genes_2kbslop_4loci_Pst %>% 
+  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  filter(Pst_Values>0.5))
+```
+
+----------------------------------------------------------------------
+
+### DMG analysis with relaxed loci settings 
+
+#### Filter for genes with **at minimum 3 methylated loci**
+
+```{r}
+newdata_3loci <- min.filt_2kbslop[which(min.filt_2kbslop$n > 2), ]
+sub_meth_table_2kbslop_3loci <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata_3loci$vars,]
+save(sub_meth_table_2kbslop_3loci, file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop_3loci")
+```
+
+### Here is the number of genes that remain after filtering for those with 4 or more methylated loci within each gene region:
+
+```{r}
+length(unique(sub_meth_table_2kbslop_3loci$gene))  
+```
+
+### Run GLM to test for differences among population for each gene individually 
+
+Note: this script was created by Hollie Putnam ([GM.Rmd](https://raw.githubusercontent.com/hputnam/Geoduck_Meth/master/RAnalysis/Scripts/GM.Rmd)); there are minor revisions below. I retained some commented out lines (notably-testing for position w/n gene, such as intron & exon) in case we want to include those as factors in the future. 
+
+```{r}
+# create data frame to stored results
+results_2kbslop_3loci <- data.frame()
+
+gs <- unique(sub_meth_table_2kbslop_3loci$gene)
+
+#first subset the unique dataframes and second run the GLMs
+for(i in 1:length(gs)){
+  
+  #subset the dataframe gene by gene
+  sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop_3loci, gene ==gs[i])
+  
+  # fit glm position model
+  fit <- glm(matrix(c(numCs, numTs), ncol=2) ~ as.factor(population) + (1|sample), 
+             data=sub_meth_table_2kbslop1, family=binomial)
+  a <- anova(fit, test="Chisq")
+  
+  # capture summary stats to data frame
+  df <- data.frame(sub_meth_table_2kbslop1[c("population", "sample", "contig_gene", "start_gene_2kb", "end_gene_2kb", "gene", "chr", "start", "sample", "coverage", "numCs", "numTs", "percMeth", "notes_gene")],
+                   pval.treatment = a$`Pr(>Chi)`[2],
+                   #pval.position = a$`Pr(>Chi)`[3], #uncomment if you want to include position of CpG within a gene
+                   #pval.treatment_x_position = a$`Pr(>Chi)`[4], #uncomment if you want to include position of CpG within a gene interaction with treatment
+                   stringsAsFactors = F)
+  
+  # bind rows of temporary data frame to the results data frame
+  results_2kbslop_3loci <- rbind(results_2kbslop_3loci, df)
+}
+
+results_2kbslop_3loci[is.na(results_2kbslop_3loci)] <- 0
+results_2kbslop_3loci$adj.pval.pop <- p.adjust(results_2kbslop_3loci$pval.treatment, method='BH')
+#results_2kbslop$adj.pval.position <- p.adjust(results_2kbslop$pval.position, method='BH') #uncomment if you want to include position of CpG within a gene
+#results_2kbslop$adj.pval.treatment_x_position <- p.adjust(results_2kbslop$pval.treatment_x_position, method='BH') #uncomment if you want to include position of CpG within a gene interaction with treatment
+```
+
+### Edit gene and DMG stats dataframe, add uniprot accession numbers 
+
+```{r}
+# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
+# Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
+#   separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
+#   select(geneID, uniprotID)
+
+# 
+DMGresults_genes_3loci <- 
+  
+  # return only 1 row per gene+/-2kb 
+  results_2kbslop_3loci[!duplicated(results_2kbslop_3loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
+  
+  # Split giant gene "Notes" column into separate columns 
+  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
+       Parent=str_extract(notes_gene, "Parent=(.*?);"),
+       Name=str_extract(notes_gene, "Name=(.*?);"),
+       Alias=str_extract(notes_gene, "Alias=(.*?);"),
+       AED=str_extract(notes_gene, "AED=(.*?);"),
+       eAED=str_extract(notes_gene, "eAED=(.*?);"),
+       Note=str_extract(notes_gene, "Note=(.*?);"),
+       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
+       ) %>% 
+  
+  #remove extraneous info from Olur gene ID
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>% 
+  
+  #add uniprot IDs to gene dataframe 
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
+```
+
+### Here is the number of differentially methylated genes (with min. 5 loci per gene): 
+
+```{r}
+nrow(DMGresults_genes_3loci[DMGresults_genes_3loci$adj.pval.pop < 0.05,])
+```
+
+## GO Enrichment Analysis in DAVID 
+
+### Copy DMG uniprot accession numbers to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes_3loci[DMGresults_genes_3loci$adj.pval.pop < 0.05,]$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+### Copy uniprot accession numbers for all assessed genes to clipboard, then paste into DAVID 
+```{r}
+write_clip(
+DMGresults_genes_3loci$uniprotID %>%
+  na.omit() %>% as.vector())
+```
+
+### Extract only genes that were differentially methylated (3 loci min) (p-adj < 0.05):
+
+```{r}
+#save df with differentially methylated genes 
+DMGs_2kbslop_3loci <- subset(results_2kbslop_3loci, adj.pval.pop < 0.05) #%>%
+#  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
+
+DMGs_2kbslop_3loci.genes <- DMGs_2kbslop_3loci[!duplicated(DMGs_2kbslop_3loci$gene), c("contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")]
+save(DMGs_2kbslop_3loci, file="../analyses/DMGs/R-objects/DMGs_2kbslop_3loci")
+```
+
+### Here is the number of differentially methylated genes (3 loci min): 
+
+```{r}
+length(unique(DMGs_2kbslop_3loci$gene))  
+```
+
+### Extract GO terms for DMGs_2kbslop_3loci and save to file 
+
+```{r}
+# split gene data in "notes_gene" column into separate columns 
+DMGs_2kbslop_3loci.genes <- DMGs_2kbslop_3loci.genes %>%
+  mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
+       Parent=str_extract(notes_gene, "Parent=(.*?);"),
+       Name=str_extract(notes_gene, "Name=(.*?);"),
+       Alias=str_extract(notes_gene, "Alias=(.*?);"),
+       AED=str_extract(notes_gene, "AED=(.*?);"),
+       eAED=str_extract(notes_gene, "eAED=(.*?);"),
+       Note=str_extract(notes_gene, "Note=(.*?);"),
+       Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
+       )
+write_csv(DMGs_2kbslop_3loci.genes, path = here::here("analyses", "DMGs", "DMGs_2kbslop_3loci.genes.csv"))
+
+#Extract GO terms 
+DMGs_2kbslop_3loci.genes.GO <- DMGs_2kbslop_3loci.genes %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(Ontology_term = str_replace(Ontology_term, pattern=";",replacement = "")) %>%
+  separate(Ontology_term, sep=",", into=paste("GO", 1:11, sep="_")) %>%
+  pivot_longer(cols=c("GO_1","GO_2","GO_3","GO_4","GO_5","GO_6","GO_7","GO_8","GO_9","GO_10","GO_11"), names_to = "GO_number", values_to = "GO_term") %>%
+  dplyr::select(-GO_number) %>%
+  filter(!is.na(Note) & !is.na(GO_term))
+
+write_delim(DMGs_2kbslop_3loci.genes.GO[,c("GO_term","adj.pval.pop")], path = here::here("analyses/", "DMGs/", "DMGs_2kbslop_3loci.GO.txt"), delim = '\t', col_names = F) #write out df with just GO terms and p-adj values 
+```
+
+### Calculate Pst for each gene (min 3 loci per gene)
+
+##### First, calculate Pst of average % methylation within genes and +/- 2kb. Only look genes that have **at minimum 3 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
+
+```{r}
+# How many gene regions are there after filtering for those with 3 methylated loci? 
+sub_meth_table_2kbslop_3loci %>% 
+       distinct(gene) %>%
+  nrow()
+
+# I think this filtering step doesn't account for the 2kb +/- start and stop 
+perc_meth_genes_2kbslop_3loci <- sub_meth_table_2kbslop_3loci %>% 
+   group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
+   dplyr::summarise(
+    mean_percMeth = mean(percMeth, na.rm=TRUE),
+    sd_percMeth=sd(percMeth, na.rm=TRUE),
+    n())  
+
+# check to make sure % methylation is calculated separately for each sample and gene region 
+perc_meth_genes_2kbslop_3loci %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
+  ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
+
+# How many unique gene regions? 
+perc_meth_genes_2kbslop_3loci %>% 
+       ungroup() %>% 
+  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+       distinct(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  nrow()
+
+# Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
+perc_meth_genes_2kbslop_3loci_wide <- perc_meth_genes_2kbslop_3loci %>% 
+  ungroup() %>%
+  tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  dplyr::select(population, sample, gene_region, mean_percMeth) %>%
+  spread(gene_region, mean_percMeth) %>%
+  tibble::column_to_rownames(var = "sample")
+
+head(perc_meth_genes_2kbslop_3loci_wide[1:4]) #confirm correct format 
+ncol(perc_meth_genes_2kbslop_3loci_wide) #1724 gene regions 
+```
+
+### Run Pst 
+
+```{r}
+#Now run the following line and it will provide Pst estimates for every gene.
+genes_2kbslop_3loci_Pst <- Pst(perc_meth_genes_2kbslop_3loci_wide)
+
+# Check out Pst distribution 
+hist(genes_2kbslop_3loci_Pst$Pst_Values)
+summary(genes_2kbslop_3loci_Pst$Pst_Values)
+nrow(genes_2kbslop_3loci_Pst)
+
+# format of dataframe that I will save 
+head(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
+
+# Write out Pst results 
+write.table(genes_2kbslop_3loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_3loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+
+head(genes_2kbslop_3loci_Pst %>% 
+  separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
+  filter(Pst_Values>0.5))
+```
+
+## Examine methylation in genes known to differ in response to environmental stressors 
+These genes were examined via qPCR identified in the Heare et al. paper
+
+```{r}
+# load("../analyses/methylation-filtered/R-objects/perc.meth")
+library(data.table)
+
+x <- perc.meth %>% unlist() %>% as.data.frame() %>% rownames_to_column() %>%
+  separate(col=rowname, into=c("contig", "start", "end"), sep = "\\.", remove = F) %>% select(contig, start, end) %>% mutate_at(vars(start, end), as.numeric) %>%
+  #mutate(start=start-1, end=end+1) %>% 
+  setDT() 
+
+y <- read_delim(here::here("genome-features", "Heare-PCRtargets-2kslop.gff"), delim = "\t", col_names = F) %>% select(X1, X4, X5) %>% set_names(c("contig", "start", "end")) %>% setDT() %>% setkey(contig, start, end)
+
+# Find which methylated loci are found within any of the Heare qPCR genes 
+print(meth.heare <- foverlaps(x=x, y=y, type="within", nomatch =NULL))  #one gene, contains 2 methylated loci 
+
+perc.meth %>% unlist() %>% as.data.frame() %>% rownames_to_column() %>%
+  separate(col=rowname, into=c("contig", "start", "end"), sep = "\\.", remove = T) %>%
+  filter(contig==unique(meth.heare$contig) & start==c(meth.heare$i.start)) %>% 
+  pivot_longer(cols = -c(contig, start, end), names_to = "sample") %>% mutate_at(vars(sample), as.numeric) %>%
+  mutate(population=factor(ifelse(sample < 10, 'Hood Canal', "South Sound"))) %>% 
+  ggplot(aes(x=population, y=value, fill=population)) + geom_boxplot() + geom_jitter(width = .05) + facet_wrap(vars(start)) + 
+  theme_minimal() + scale_fill_manual(values=c("firebrick3", "dodgerblue3")) + xlab(NULL) + ylab("% Methylated") + ggtitle("% Methylation by population\nloci in PCR gene, tth-1 (Thymosin beta)")
+
+test <- perc.meth %>% unlist() %>% as.data.frame() %>% rownames_to_column() %>%
+  separate(col=rowname, into=c("contig", "start", "end"), sep = "\\.", remove = T) %>%
+  filter(contig==unique(meth.heare$contig) & start==c(meth.heare$i.start)) %>% 
+  pivot_longer(cols = -c(contig, start, end), names_to = "sample") %>% mutate_at(vars(sample), as.numeric) %>%
+  mutate(population=factor(ifelse(sample < 10, 'Hood Canal', "South Sound")))
+
+# Does % methylation differ among the two populations? 
+Anova(glm(value~population, data=subset(test, start==7879))) #not diff. 
+Anova(glm(value~population, data=subset(test, start==9731))) #kinda diff. 
+```
+
+
+### old barplot code, commented out not sure if it works still 
+
+```{r}
+# ggplotly(meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
+#   group_by(population, gene) %>%
+#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+#             mean_percentMeth = mean(percMeth)) %>%
+#   ggplot(aes(x = population, y = mean_percentMeth, fill = population)) + geom_bar(stat="identity") + facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+# 
+# #checking to make sure numCs + numTs = coverage; should be 1:1 line 
+# plot(meth_filter_genes_2kbslop$numCs + meth_filter_genes_2kbslop$numTs ~ meth_filter_genes_2kbslop$coverage)  
+# 
+# ## Look at coverage for each DMG by population (mean % methylation across samples)
+# ggplotly(meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene) %>% 
+#   group_by(population, gene) %>%
+#   summarise(sum_cov = sum(coverage), 
+#             mean_cov = mean(coverage)) %>%
+#   ggplot(aes(x = population, y = mean_cov, fill = population)) + 
+#     geom_bar(stat="identity") + 
+#     facet_wrap(~gene) + theme_light() + scale_fill_manual(values=c("firebrick3","dodgerblue3")))
+# 
+# DMG_counts <- meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
+#            start_gene %in% DMGs_2kbslop.genes$start_gene & 
+#            end_gene %in% DMGs_2kbslop.genes$end_gene)
+# 
+# # Look at coverage for each DMG locus, by population 
+# # mean % methylation across samples  
+# DMG_genes_unique <- unique(DMG_counts$gene)
+# for (i in 1:length(DMG_genes_unique)) {
+#   temp <-  DMG_counts %>% 
+#   filter(chr == "Contig22489") %>%
+#   group_by(population, chr, start) %>%
+#   summarise(allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+#             mean_percentMeth = mean(percMeth))
+#     print(ggplotly(ggplot(temp, aes(x = population, y = mean_percentMeth, fill = population)) + 
+#     geom_bar(stat="identity") + 
+#     facet_wrap(~start) + 
+#     theme_light() + ggtitle(paste("gene = ", "Contig22489", sep="")) +
+#     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
+#   }
 ```
 

@@ -8,7 +8,7 @@ output: html_document
 ### Load libraries 
 
 ```{r setup, message=FALSE, warning=FALSE, results=FALSE}
-list.of.packages <- c("tidyverse", "reshape2", "here", "scales") #add new libraries here 
+list.of.packages <- c("tidyverse", "reshape2", "here", "scales", "clipr") #add new libraries here 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -126,48 +126,6 @@ bedtools intersect -wb -a "../analyses/methylation-filtered/HC-meth-loci.bed" -b
 bedtools intersect -wb -a "../analyses/methylation-filtered/SS-meth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/SS-meth-gene.bed
 
 bedtools intersect -wb -a "../analyses/methylation-filtered/all-meth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/all-meth-gene.bed
-```
-
-
-## Prepare blastx annotation files to merge with DML and MACAU results 
-
-#### Download oly blastx file
-NOTE: remove "eval=FALSE" to execute this code chunk 
-
-```{bash, eval = FALSE}
-#curl https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/Olgene_blastx_uniprot.05.tab > ../data/Olgene_blastx_uniprot.05.tab
-```
-
-#### convert pipes to tab
-
-```{bash}
-tr '|' '\t' < ../data/Olgene_blastx_uniprot.05.tab \
-> ../data/Olgene_blastx_uniprot.05-20191122.tab
-wc -l ../data/Olgene_blastx_uniprot.05-20191122.tab
-```
-
-#### Reduce the number of columns using awk. Sort, and save as a new file.
-
-```{bash}
-awk -v OFS='\t' '{print $1, $3, $13}' \
-< ../data/Olgene_blastx_uniprot.05-20191122.tab | sort \
-> ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
-wc -l ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
-```
-
-#### Preview blastx annotation files file that will be joined with feature lists to annotate 
-
-```{bash}
-head ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
-```
-
-#### Read blastx annotation file to object 
-
-```{r}
-uniprot <- read_delim(here::here("data", "Olgene_blastx_uniprot.05-20191122-sort.tab"), delim="\t", col_names = FALSE) %>%
-  setNames(c("gene", "UniprotID", "unknown")) %>% 
-  separate(gene, into = c("contig.feat", "start.feat", "end.feat"), sep = '[:-]') %>%
-  mutate_at(c("start.feat", "end.feat"),as.numeric)
 ```
 
 # Summarizing Annotations 
@@ -425,6 +383,114 @@ ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="flank-up"  |
 ggsave(filename = "../analyses/barplot-DMLs-SALs.png", device = "png")
 ```
 
+## DAVID Enrichment Analysis 
+
+### DMLs 
+
+```{r}
+# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
+Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
+  separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
+  select(geneID, uniprotID)
+
+### Copy Uniprot accession numbers for DMLs that are annotated 
+DML.features[["DML.gene2kb"]] %>%
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%  #remove extraneous info from Olur gene ID
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  select(uniprotID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard 
+
+
+### Copy Uniprot accession numbers for all loci assessed for DMLs that are annotated 
+allLociDML.features[["allLociDML.gene2kb"]] %>%
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%  #remove extraneous info from Olur gene ID
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  select(uniprotID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard       
+
+```
+
+## Enriched biological function, DMLs 
+
+| Category         | Term                                        | RT | Count | %   | P-Value  | Fold Enrichment | Benjamini | FDR      | Fisher Exact |
+|------------------|---------------------------------------------|----|-------|-----|----------|-----------------|-----------|----------|--------------|
+| GOTERM_BP_DIRECT | glucose homeostasis                         | RT | 4     | 5.3 | 1.10E-02 | 7.9             | 1.00E+00  | 1.50E+01 | 1.00E-03     |
+| GOTERM_BP_DIRECT | positive regulation of cell   proliferation | RT | 5     | 6.7 | 2.10E-02 | 4.5             | 1.00E+00  | 2.70E+01 | 3.90E-03     |
+| GOTERM_BP_DIRECT | digestive tract development                 | RT | 3     | 4   | 3.20E-02 | 9.9             | 1.00E+00  | 3.80E+01 | 2.20E-03     |
+| GOTERM_BP_DIRECT | kidney development                          | RT | 4     | 5.3 | 3.50E-02 | 5.3             | 9.90E-01  | 4.10E+01 | 5.40E-03     |
+| GOTERM_BP_DIRECT | rhythmic process                            | RT | 3     | 4   | 4.40E-02 | 8.4             | 9.90E-01  | 4.80E+01 | 3.80E-03     |
+| GOTERM_BP_DIRECT | receptor-mediated endocytosis               | RT | 4     | 5.3 | 4.90E-02 | 4.6             | 9.90E-01  | 5.20E+01 | 8.70E-03     |
+| GOTERM_BP_DIRECT | Notch signaling pathway                     | RT | 4     | 5.3 | 5.70E-02 | 4.4             | 9.90E-01  | 5.70E+01 | 1.10E-02     |
+| GOTERM_BP_DIRECT | liver development                           | RT | 3     | 4   | 7.10E-02 | 6.6             | 9.90E-01  | 6.60E+01 | 8.40E-03     |
+
+
+### Size Associated Soci (SALs, identified via MACAU) 
+
+```{r}
+### Copy Uniprot accession numbers for SALs that are annotated 
+macau.features[["macau.gene2kb"]] %>%
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%  #remove extraneous info from Olur gene ID
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  select(uniprotID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard 
+
+
+### Copy Uniprot accession numbers for all loci assessed for DMLs that are annotated 
+allLociMACAU.features[["allLociMACAU.gene2kb"]] %>%
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%  #remove extraneous info from Olur gene ID
+  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  select(uniprotID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard       
+
+```
+
+### No Enriched biological function, SALs. Here are the genes: 
+
+| UNIPROT_ACCESSION | Name                                                | Species                 |
+|-------------------|-----------------------------------------------------|-------------------------|
+| Q9NUV9            | GTPase, IMAP family member 4(GIMAP4)                | Homo sapiens            |
+| Q3HNG7            | H1 histone family, member O, oocyte-specific(H1FOO) | Bos taurus              |
+| Q9DC40            | telomere maintenance 2(Telo2)                       | Mus musculus            |
+| Q6IMN6            | caprin family member 2(CAPRIN2)                     | Homo sapiens            |
+| Q5SZD4            | glycine-N-acyltransferase like 3(GLYATL3)           | Homo sapiens            |
+| Q0E908            | Hillarin(Hil)                                       | Drosophila melanogaster |
+| P79152            | Cytochrome P450 3A19                                | Capra hircus aegagrus   |
+| P18503            | Short-chain collagen C4                             | Ephydatia muelleri      |
+
+### Compare all genes in HC samples to all genes genome, then all genes in SS to all genes in genome. 
+
+# These are genes which contain methylated loci in HC & SS samples: 
+../analyses/methylation-filtered/HC-meth-gene.bed
+../analyses/methylation-filtered/SS-meth-gene.bed
+
+```{r}
+# Copy UniprotIDs for all genes in O. lurida genome- this is our background list for DAVID Enrichment Analyses 
+Olurida_gene_uniprot %>% 
+  select(uniprotID) %>% na.omit() %>% as.vector() %>%
+  write_clip()
+
+# Copy UniprotIDs for all genes that contain 5 or greater methylated loci in the Hood Canal 
+read_delim(here::here("analyses", "methylation-filtered", "HC-meth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
+mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
+  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
+  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
+  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+
+# Copy UniprotIDs for all genes that contain 5 or greater methylated loci in the South Sound 
+read_delim(here::here("analyses", "methylation-filtered", "SS-meth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
+mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
+  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
+  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
+  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+
+```
+
+DAVID results saved here: 
+- Enriched biological functions in Hood Canal, methylated genes: ../analyses/methylation-filtered/DAVID_enriched-methylated-genes-HC.txt
+- Enriched biological functions in South Sound, methylated genes: ../analyses/methylation-filtered/DAVID_enriched-methylated-genes-SS.txt  
+
 ## Extract GO terms 
 
 ```{r}
@@ -503,7 +569,20 @@ write.table(subset(allLociMACAU.features.df, feature=="gene"), here::here("analy
 
 #save all loci feature df object to file, to use in notebook #12 
 save(allLociMACAU.features.df, file=here::here("analyses", "macau", "R-objects", "allLociMACAU.features.df")) 
+
+# Save GO terms only from enriched methylated gene lists (HC and SS)
+
+read_delim(here::here("analyses", "methylation-filtered", "DAVID_enriched-methylated-genes-HC.txt"), delim = "\t") %>%
+  separate(Term, into = c("GO", "function"), sep = "~") %>% select(GO) %>% as.vector() %>%
+  write.table(here::here("analyses", "methylation-filtered", "GO-terms_enriched-methylated-genes-HC.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+read_delim(here::here("analyses", "methylation-filtered", "DAVID_enriched-methylated-genes-SS.txt"), delim = "\t") %>%
+  separate(Term, into = c("GO", "function"), sep = "~") %>% select(GO) %>% as.vector() %>%
+  write.table(here::here("analyses", "methylation-filtered", "GO-terms_enriched-methylated-genes-SS.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE)
+
 ```
+
+
 
 
 
@@ -661,4 +740,46 @@ bedtools intersect -u -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b 
 
 echo "Loci that do not overlap with known features:"
 bedtools intersect -v -a "../analyses/macau/macau.sign.length.perc.meth.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" | wc -l
+```
+
+
+## Prepare blastx annotation files to merge with DML and MACAU results 
+
+#### Download oly blastx file
+NOTE: remove "eval=FALSE" to execute this code chunk 
+
+```{bash, eval = FALSE}
+#curl https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/Olgene_blastx_uniprot.05.tab > ../data/Olgene_blastx_uniprot.05.tab
+```
+
+#### convert pipes to tab
+
+```{bash}
+tr '|' '\t' < ../data/Olgene_blastx_uniprot.05.tab \
+> ../data/Olgene_blastx_uniprot.05-20191122.tab
+wc -l ../data/Olgene_blastx_uniprot.05-20191122.tab
+```
+
+#### Reduce the number of columns using awk. Sort, and save as a new file.
+
+```{bash}
+awk -v OFS='\t' '{print $1, $3, $13}' \
+< ../data/Olgene_blastx_uniprot.05-20191122.tab | sort \
+> ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
+wc -l ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
+```
+
+#### Preview blastx annotation files file that will be joined with feature lists to annotate 
+
+```{bash}
+head ../data/Olgene_blastx_uniprot.05-20191122-sort.tab
+```
+
+#### Read blastx annotation file to object 
+
+```{r}
+uniprot <- read_delim(here::here("data", "Olgene_blastx_uniprot.05-20191122-sort.tab"), delim="\t", col_names = FALSE) %>%
+  setNames(c("gene", "UniprotID", "unknown")) %>% 
+  separate(gene, into = c("contig.feat", "start.feat", "end.feat"), sep = '[:-]') %>%
+  mutate_at(c("start.feat", "end.feat"),as.numeric)
 ```

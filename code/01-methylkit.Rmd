@@ -132,6 +132,7 @@ getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=TRUE)
 ```{r}
 filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
                                       hi.count=100,hi.perc=NULL)
+save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
 
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
 save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
@@ -388,6 +389,8 @@ write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"),
 ### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
 
 ```{r}
+# load("../analyses/methylation-filtered/R-objects/PCA.filtered")
+
 PCA.var.loadings <- get_pca_var(PCA.filtered)
 
 data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
@@ -416,7 +419,7 @@ hist(PCA.filtered.top.Pst$Pst_Values, col = "gray50")
 summary(PCA.filtered.top.Pst$Pst_Values)
 
 # Write out Pst results - reminder these are for the loci that contribute 5% or greater to PCA (which was run with all loci)
-write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE, quote = F)
 ```
 
 ### Plot Pst of top-contributors to the all-loci PCA against Fst for top contributors to the SNP PCA 
@@ -426,10 +429,15 @@ Fst.SNPs.PCA <- read_delim(file = url("https://raw.githubusercontent.com/sr320/p
 
 inner_join(x=Fst.SNPs.PCA, 
            y=PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","pos", "end")) %>% dplyr::select("contig", "pos", "Pst_Values") %>%
-             mutate(pos=as.numeric(pos)), by=c("contig", "pos"))
+             mutate(pos=as.numeric(pos)), by=c("contig")) %>% 
+  # ggplot(aes(x=pos.x, y=pos.y)) + geom_jitter(size=3) + theme_minimal() 
+  ggplot(aes(x=fst, y=Pst_Values)) + geom_point(size=3) + theme_minimal() + 
+  xlab("Fst") + ylab("Pst") + ggtitle("Pst ~ Fst of loci on the same contig that are top contributors to PCAs")
 
-# Unfortunately there are no overlapping loci, i.e. none that were top contributors to both the Methylation PCA and SNP PCA  
+# 6 top contributing methylated loci that are on the same contig as a top contribuing SNP 
+# But no exact matches (none that are the exact same contig+position) 
 ```
+
 
 ### Principal Component Analyses, DMLs only 
 
@@ -686,6 +694,8 @@ DML.calcs <- meth_filter_reshaped %>%
 ### Heatmap
 
 ```{r}
+load("../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+
 DMLs_heatmap <- meth_filter_reshaped %>%
   mutate(sample=factor(sample, levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)), 
          chr_start=paste(chr, start, sep="_")) %>%
