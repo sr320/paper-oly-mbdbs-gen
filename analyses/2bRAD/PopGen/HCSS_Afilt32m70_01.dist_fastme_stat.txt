@@ -1,0 +1,55 @@
+
+ - FastME 2.1.6.1 - 
+
+
+Paper to be cited:
+
+FastME 2.0 - A comprehensive, accurate and fast distance-based phylogeny inference program.
+	Vincent Lefort, Richard Desper and Olivier Gascuel,
+	Molecular Biology and Evolution 32(10), 2798-800, 2015.
+
+-------------------------------------------------------------------------------
+Settings for this run:
+
+  I                                      Input data type  Matrix          
+  D                                   Number of datasets  1               
+  M                         Initial tree building method  TaxAdd_BalME    
+  N                                   NNI postprocessing  NNI_BalME       
+  S                                   SPR postprocessing  no              
+
+-------------------------------------------------------------------------------
+Dataset 1
+	Before NNI:     tree length is 7.66592921
+	NNI      1: new tree length is 7.66163012
+	NNI      2: new tree length is 7.65894792
+	NNI      3: new tree length is 7.65671838
+	NNI      4: new tree length is 7.65496231
+	NNI      5: new tree length is 7.65346145
+	NNI      6: new tree length is 7.65218075
+	NNI      7: new tree length is 7.65090627
+	NNI      8: new tree length is 7.64973579
+	NNI      9: new tree length is 7.64860807
+	NNI     10: new tree length is 7.64752155
+	NNI     11: new tree length is 7.64653200
+	NNI     12: new tree length is 7.64565369
+	NNI     13: new tree length is 7.64485751
+	NNI     14: new tree length is 7.64399988
+	NNI     15: new tree length is 7.64301851
+	NNI     16: new tree length is 7.64202118
+	NNI     17: new tree length is 7.64123547
+	NNI     18: new tree length is 7.64047704
+	NNI     19: new tree length is 7.63975524
+	NNI     20: new tree length is 7.63921003
+	NNI     21: new tree length is 7.63876413
+	NNI     22: new tree length is 7.63814922
+	NNI     23: new tree length is 7.63670851
+	NNI     24: new tree length is 7.63634971
+	NNI     25: new tree length is 7.63612908
+	NNI     26: new tree length is 7.63603452
+	NNI     27: new tree length is 7.63600729
+	NNI     28: new tree length is 7.63556726
+	NNI     29: new tree length is 7.63529685
+	NNI     30: new tree length is 7.63513946
+	Performed 30 NNI(s).
+
+	Explained variance : 0.88912017
