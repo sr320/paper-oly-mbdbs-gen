@@ -42,3 +42,9 @@ resources/Olurida_v081.fa
 resources/uniprot_sprot.fasta
 resources/uniprot_sprot_20200208.fasta.psq
 resources/uniprot_sprot_20200208.fasta.phr
+
+#Admixture outputs
+analyses/2bRAD/PopGen/*_K*_run*
+
+#Outlier annotations
+analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-*bed
