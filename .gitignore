@@ -48,3 +48,15 @@ analyses/2bRAD/PopGen/*_K*_run*
 
 #Outlier annotations
 analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-*bed
+
+#mQTL
+analyses/2bRAD/mQTL/*
+!MBD_HCSS_Afilt32m70_maf05_m2pop_sites50k_mQTL
+!MBD_HCSS_Afilt32m70_maf05_m2pop_format.tab
+!snppos_mqtl_05_m2pop.tab
+!meth_filter_allsites.tab
+!methsitespos_mqtl.tab
+!covariate.tab
+!*feature*
+!cis-meth.features.df
+!*uniprot*
