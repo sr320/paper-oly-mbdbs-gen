@@ -36,7 +36,6 @@ CpGs <- read.table(file = here::here("genome-features", "Olurida_v081_CG-motif.g
 nrow(CpGs)
 ```
 
-
 ## Get methylation data 
 
 Downloaded tab files with methylation proportions at each locus: 
@@ -175,18 +174,51 @@ nrow(all_unmethylated_5x)
 
 ```{bash}
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-characteristics/methylated-gene.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylated-gene2kb.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-up.gff" >  ../analyses/methylation-characteristics/methylated-2kbflank-up.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.2kbflank-down.gff" >  ../analyses/methylation-characteristics/methylated-2kbflank-down.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.exon.gff" >  ../analyses/methylation-characteristics/methylated-exon.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.CDS.gff" >  ../analyses/methylation-characteristics/methylated-CDS.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.mRNA.gff" >  ../analyses/methylation-characteristics/methylated-mRNA.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_TE-Cg.gff" >  ../analyses/methylation-characteristics/methylated-TE.bed
+
 bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/methylated-ASV.bed
+
 bedtools intersect -v -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/methylated-unknown.bed
+
+#### Find the number of methylated loci that overlap with genes that have various # of isoforms 
+
+bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_genes.1isoform.bed" >  ../analyses/methylation-characteristics/methylated-1isoform.bed
+
+bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_genes.2-5isoforms.bed" > ../analyses/methylation-characteristics/methylated-2-5isoforms.bed
+
+bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_genes.6-10isoforms.bed" > ../analyses/methylation-characteristics/methylated-6-10isoforms.bed
+
+bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_genes.11-20isoforms.bed" > ../analyses/methylation-characteristics/methylated-11-20isoforms.bed
+
+bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081_genes.21-70isoforms.bed" > ../analyses/methylation-characteristics/methylated-21-70isoforms.bed
 ```
 
 #### Start an R df to save feature counts 
+
+First check to see if the file exists already. If it does, delete it, so I can re-create it from scratch 
+
+```{r}
+#Define the file name that will be deleted
+fn <- "../analyses/methylation-characteristics/methylation-features.tab"
+#Check its existence
+if (file.exists(fn)) {
+  #Delete file if it exists
+  file.remove(fn)
+}
+```
 
 Create a simple tab file with the # of methylated loci (i.e. lines) that are in each gene feature 
 
@@ -202,13 +234,18 @@ cat ../analyses/methylation-characteristics/methylated-TE.bed | wc -l >> ../anal
 grep exon ../analyses/methylation-characteristics/methylated-ASV.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/methylated-unknown.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 cat ../analyses/methylation-characteristics/all_methylated_5x.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-1isoform.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-2-5isoforms.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-6-10isoforms.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-11-20isoforms.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
+cat ../analyses/methylation-characteristics/methylated-21-70isoforms.bed | wc -l >> ../analyses/methylation-characteristics/methylation-features.tab
 ```
 
 ### Read in that tab file, add column with feature type 
 
 ```{r}
 methdata.summary <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-features.tab"), delim="\t", col_names=FALSE) %>%
-  add_column(feature=c("mRNA", "CDS", "exon", "gene", "gene2kb", "2kbflank-up", "2kbflank-down","TE", "ASV", "unknown", "all")) %>% 
+  add_column(feature=c("mRNA", "CDS", "exon", "gene", "gene2kb", "2kbflank-up", "2kbflank-down","TE", "ASV", "unknown", "all", "1 isoform", "2-5 isoforms", "6-10 isoforms", "11-20 isoforms", "21-70 isoforms")) %>% 
   dplyr::rename(methylated=X1) %>% 
   mutate_at(vars(methylated), as.numeric)
 ```
@@ -228,9 +265,35 @@ bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-fe
 bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_TE-Cg.gff" >  ../analyses/methylation-characteristics/all-TE.bed
 bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/all-ASV.bed
 bedtools intersect -v -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/methylation-characteristics/all-unknown.bed
+
+#### Find the number of all sequenced loci that overlap with genes that have various # of isoforms 
+
+bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_genes.1isoform.bed" >  "../analyses/methylation-characteristics/all-1isoform.bed"
+
+bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_genes.2-5isoforms.bed"  >  "../analyses/methylation-characteristics/all-2-5isoforms.bed"
+
+bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_genes.6-10isoforms.bed" >  "../analyses/methylation-characteristics/all-6-10isoforms.bed"
+
+bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_genes.11-20isoforms.bed" >  "../analyses/methylation-characteristics/all-11-20isoforms.bed"
+
+bedtools intersect -wb -a "../data/zr1394_all_s456_5x.bedgraph" -b "../genome-features/Olurida_v081_genes.21-70isoforms.bed" >  "../analyses/methylation-characteristics/all-21-70isoforms.bed"
 ```
 
-Create a simple tab file with the # of loci that we have data for (5x coverage) that are in each gene feature 
+Generate a simple tab file with the # of loci that we have data for (5x coverage) that are in each gene feature 
+
+First check to see if the file exists already. If it does, delete it, so I can re-create it from scratch 
+
+```{r}
+#Define the file name that will be deleted
+fn <- "../analyses/methylation-characteristics/all5x-features.tab"
+#Check its existence
+if (file.exists(fn)) {
+  #Delete file if it exists
+  file.remove(fn)
+}
+```
+
+Now, start building the .tab file with summary counts 
 
 ```{bash}
 cat ../analyses/methylation-characteristics/all-mRNA.bed | wc -l  >> ../analyses/methylation-characteristics/all5x-features.tab
@@ -244,6 +307,11 @@ cat ../analyses/methylation-characteristics/all-TE.bed | wc -l >> ../analyses/me
 grep exon ../analyses/methylation-characteristics/all-ASV.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../analyses/methylation-characteristics/all-unknown.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 cat ../data/zr1394_all_s456_5x.bedgraph | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-1isoform.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-2-5isoforms.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-6-10isoforms.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-11-20isoforms.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
+cat ../analyses/methylation-characteristics/all-21-70isoforms.bed | wc -l >> ../analyses/methylation-characteristics/all5x-features.tab
 ```
 
 ### Read in that tab file, add column with feature type 
@@ -268,11 +336,37 @@ bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_TE-Cg.gff" > ../analyses/methylation-characteristics/CpGs-TE.bed
 bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/20190709-Olurida_v081.stringtie.gtf" > ../analyses/methylation-characteristics/CpGs-ASV.bed
 bedtools intersect -v -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" > ../analyses/methylation-characteristics/CpGs-unknown.bed
+
+
+#### Find the number of CpG loci (candidate sites for methylation) that overlap with genes that have various # of isoforms 
+
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_genes.1isoform.bed" >  "../analyses/methylation-characteristics/CpGs-1isoform.bed"
+
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_genes.2-5isoforms.bed"  >  "../analyses/methylation-characteristics/CpGs-2-5isoforms.bed"
+
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_genes.6-10isoforms.bed" >  "../analyses/methylation-characteristics/CpGs-6-10isoforms.bed"
+
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_genes.11-20isoforms.bed" >  "../analyses/methylation-characteristics/CpGs-11-20isoforms.bed"
+
+bedtools intersect -wb -a "../genome-features/Olurida_v081_CG-motif.gff" -b "../genome-features/Olurida_v081_genes.21-70isoforms.bed" >  "../analyses/methylation-characteristics/CpGs-21-70isoforms.bed"
 ```
+
 
 ### Add CpG counts to summary dataframe 
 
 ### Create a simple tab file with the # of loci (i.e. lines) that are in each gene feature 
+
+First, delete if it already exists 
+
+```{r}
+#Define the file name that will be deleted
+fn <- "../analyses/methylation-characteristics/CpGs-features.tab"
+#Check its existence
+if (file.exists(fn)) {
+  #Delete file if it exists
+  file.remove(fn)
+}
+```
 
 ```{bash}
 cat ../analyses/methylation-characteristics/CpGs-mRNA.bed | wc -l  >> ../analyses/methylation-characteristics/CpGs-features.tab
@@ -286,6 +380,11 @@ cat ../analyses/methylation-characteristics/CpGs-TE.bed | wc -l >> ../analyses/m
 grep exon ../analyses/methylation-characteristics/CpGs-ASV.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
 cat ../analyses/methylation-characteristics/CpGs-unknown.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
 cat ../genome-features/Olurida_v081_CG-motif.gff | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
+cat ../analyses/methylation-characteristics/CpGs-1isoform.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
+cat ../analyses/methylation-characteristics/CpGs-2-5isoforms.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
+cat ../analyses/methylation-characteristics/CpGs-6-10isoforms.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
+cat ../analyses/methylation-characteristics/CpGs-11-20isoforms.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
+cat ../analyses/methylation-characteristics/CpGs-21-70isoforms.bed | wc -l >> ../analyses/methylation-characteristics/CpGs-features.tab
 ```
 
 ### Read in that tab file, add column with feature type 
@@ -328,7 +427,7 @@ methdata.summary.long <- cbind(melt(methdata.summary[,c("feature", "methylated",
                                   variable.name = "analysis", value.name = "count"),
                              melt(methdata.summary[,c("feature", "methperc","all5xperc", "CpGperc")], 
                                   variable.name = "analysis", value.name = "percent"))[,c(1,2,3,6)] %>%
-  mutate(feature=fct_relevel(as.factor(feature), c("gene", "gene2kb", "exon", "intron", "geneflank2kb", "2kbflank-up", "2kbflank-down", "CDS", "mRNA", "TE", "ASV", "unknown", "all")),
+  mutate(feature=fct_relevel(as.factor(feature), c("gene", "gene2kb", "exon", "intron", "geneflank2kb", "2kbflank-up", "2kbflank-down", "CDS", "mRNA", "TE", "ASV", "1 isoform", "2-5 isoforms", "6-10 isoforms", "11-20 isoforms", "21-70 isoforms", "unknown", "all")),
          analysis=fct_relevel(as.factor(analysis), c("CpGs", "all5x", "methylated")))
 ```
 
@@ -339,8 +438,9 @@ The null hypothesis is that loci distributions in the genome are the same betwee
 ### Is distribution of total CpGs vs. methylated CpGs the same? 
 
 ```{r}
-meth.chisq <- methdata.summary %>% filter(feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="ASV" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() #no, they are different. P-value very low. 
-meth.chisq
+meth.chisq <- methdata.summary %>% filter(feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
+
+meth.chisq #no, they are different. P-value very low. 
 
 meth.chisq$observed
 meth.chisq$expected
@@ -348,10 +448,10 @@ corrplot(meth.chisq$residuals, is.cor = FALSE)
 ```
 
 **Positive residuals are in blue.** Positive values in cells specify an attraction (positive association) between the corresponding row and column variables. 
---> Exons and splice variants are more likely to be methylated. 
+--> Exons, genes, and introns are more likely to be methylated. 
 
 **Negative residuals are in red.** This implies a repulsion (negative association) between the corresponding row and column variables. 
---> Transposable elements, introns, and gene flanking regions are less likely. 
+--> Transposable elements, and unknown regions are less likely. 
 
 ### Examine the contribution of each genome feature to the chi-square value (in percentage) 
 
@@ -361,19 +461,86 @@ round(contrib, 3)
 corrplot(contrib, is.cor = FALSE)
 ```
 
-The relative contribution of each cell to the total Chi-square score give some indication of the nature of the dependency between rows and columns of the contingency table. From the table/image above, it can be seen that the most contributing cells to the Chi-square are ASV/methylated (47.54%), unknown/methylated (26.6%), CDS & exons / methylated (5.6% each). 
+The relative contribution of each cell to the total Chi-square score give some indication of the nature of the dependency between rows and columns of the contingency table. From the table/image above, it can be seen that the most contributing cells to the Chi-square are exon/methylated (41.62%), gene/methylated (21.39%), and unknown/methylated (26.7%). 
 
-These cells contribute about 47.06% to the total Chi-square score and thus account for most of the difference between expected and observed values.
+These cells contribute about 89.77% to the total Chi-square score and thus account for most of the difference between expected and observed values.
 
 
-
-### Summary barplot showing where methylated loci and all loci overlap with known gene features (and unknown)
-
-NOTE: Summary barplot should also include all CpG loci in Oly genome. Need to add. 
+### Is distribution of total CpGs vs. methylated CpGs across genes with various # of isoforms the same? 
 
 ```{r}
-levels(methdata.summary.long$feature)
+meth.isoform.chisq <- methdata.summary %>% filter(feature=="1 isoform" | feature== "2-5 isoforms" | feature=="6-10 isoforms" | feature=="11-20 isoforms" | feature=="21-70 isoforms") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
 
+meth.isoform.chisq #no, they are different. P-value very low. 
+
+meth.isoform.chisq$observed
+meth.isoform.chisq$expected
+corrplot(meth.isoform.chisq$residuals, is.cor = FALSE)
+```
+
+**Positive residuals are in blue.** Positive values in cells specify an attraction (positive association) between the corresponding row and column variables. 
+--> genes with more isoforms (6+) are more likely to be methylated. 
+
+**Negative residuals are in red.** This implies a repulsion (negative association) between the corresponding row and column variables. 
+--> Genes with only 1 form are less likely to be methylated, compared to all CpG loci
+
+### Examine the contribution of each genome feature to the chi-square value (in percentage) 
+
+```{r}
+contrib.isoform <- 100*meth.isoform.chisq$residuals^2/meth.isoform.chisq$statistic
+round(contrib.isoform, 3) 
+corrplot(contrib.isoform, is.cor = FALSE)
+```
+### Summary barplot showing where methylated loci and all CpG loci (potential methylated sites) overlap with known gene features (and unknown)
+
+```{r}
+ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
+                     (feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
+                        feature=="2kbflank-down" | feature=="TE" | feature=="unknown")), 
+       aes(x=feature, y=percent, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", position = "dodge", width = .5) +
+scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
+                  values=c("#a6cee3", "#1f78b4")) +
+  ggtitle("% of all CpG loci and methylated loci that fall within genome features") +
+  labs(y="% of Loci", x=NULL) +
+  theme_minimal() + theme(legend.position ="bottom") + 
+  geom_text(aes(label=percent(percent, accuracy = 0.1)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
+  scale_x_discrete(
+    labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="5' flanking\nregion (-2kb)", 
+             `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement",
+             unknown="Unknown region\n of genome"))
+```
+
+### Summary barplot showing where methylated loci and all CpG loci (potential methylated sites) overlap with genes with various # of isoforms 
+
+```{r}
+ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
+                     (feature=="1 isoform" | feature== "2-5 isoforms" | 
+                        feature=="6-10 isoforms" | feature=="11-20 isoforms" | 
+                        feature=="21-70 isoforms")), 
+       aes(x=feature, y=percent, fill=analysis, label=percent(percent, accuracy = 0.1))) + 
+  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", position = "dodge", width = .5) +
+scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
+                  values=c("#a6cee3", "#1f78b4")) +
+  ggtitle("% of all CpG loci and methylated loci that fall within genes with various # isoforms") +
+  labs(y="% of Loci", x=NULL) +
+    geom_text(aes(label=percent(percent, accuracy = 0.1)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
+  theme_minimal() + theme(legend.position ="bottom") #+ 
+```
+
+
+
+
+
+
+
+# Boneyard 
+
+
+### Summary STACKED barplot showing where methylated loci and all loci overlap with known gene features (and unknown)
+
+```{r}
 ggplot(data=subset(methdata.summary.long, feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="exon" | feature=="intron" |feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
   geom_bar(stat="identity", width = .5) +
  geom_bar(stat="identity", position="fill", width=0.5) + #use this instead for stacked bp to total 100%
@@ -387,31 +554,6 @@ scale_fill_manual(name = "Loci Location", labels = c("Exon", "Intron", "Upstream
     "methylated" = "Methylated Loci"))
 ```
 
-## Make non-stacked barplots 
-
-```{r}
-ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
-                     (feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
-                        feature=="2kbflank-down" | feature=="TE" | feature=="ASV" | feature=="unknown")), 
-       aes(x=feature, y=percent, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
-  geom_bar(stat="identity", position = "dodge", width = .5) +
-scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
-                  values=c("#a6cee3", "#1f78b4")) +
-  ggtitle("% of all CpG loci and methylated loci that fall within genome features") +
-  labs(y="% of Loci", x=NULL) +
-  theme_minimal() + theme(legend.position ="bottom") + 
-  scale_x_discrete(
-    labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="5' flanking\nregion (-2kb)", 
-             `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement", ASV="Splice\nvariant", 
-             unknown="Unknown region\n of genome"))
-```
-
-
-
-
-
-
-# Boneyard 
 
 
 ### DEFUNCT: Merge all .bam files into one, called "all.merged.bam", saved in the same directory (my external hard drive)

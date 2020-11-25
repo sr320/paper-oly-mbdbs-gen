@@ -31,109 +31,6 @@ load(here::here("analyses", "methylation-filtered", "R-objects", "meth_filter_re
 head(meth_filter_reshaped) 
 ```
 
-### Use bedtools `slop` to include 2kb regions on either side of gene regions 
-
-I want to identify methylated loci that are within genes but also 2kb upstream and downstream of gene regions. Therefore, before intersecting methylated loci with genes, I need to create a gene region +/- 2kb file. I will do this using `slopBed`.
-
-First, generate a "genome file", which defines size of each chromosome. This is so the `slop` function restricts results to within a contig. I can use the indexed FASTA file that I created for a blast. 
-
-Extract column 1 (contig name) and column 2 (# bases in the contig)
-
-```{bash}
-head -n 2 "../resources/Olurida_v081.fa.fai"
-cut -f 1,2 "../resources/Olurida_v081.fa.fai" > "../resources/Olurida_chrom.sizes"
-head -n 2 "../resources/Olurida_chrom.sizes"
-```
-
-### Run slopBed with gene feature file 
-
-```{bash}
-head -n 4 "../genome-features/Olurida_v081-20190709.gene.gff"
-```
-
-```{bash}
-slopBed \
--i "../genome-features/Olurida_v081-20190709.gene.gff" \
--g "../resources/Olurida_chrom.sizes" \
--b 2000 \
-> "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff"
-head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff"
-```
-
-### Use intersectBed to find where loci and genes intersect, allowing loci to be mapped to annotated genes
-  
-  wb: Print all lines in the second file
-  a: input data file, which was created in previous code chunk
-  b: save annotated gene list
-
-```{bash}
-intersectBed \
-  -wb \
-  -a "../analyses/methylation-filtered/meth_filter_long.tab" \
-  -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" \
-  > "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
-```
-
-### Here is the number of loci associated with gene regions +/- 2kb: 
-
-```{bash}
-wc -l "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
-```
-
-### Check out format of resulting gene regions 
-
-```{bash}
-head -n 2  "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
-```
-
-### Now run intersectBed to NOT include the 2kb flanks  
-
-Return the number of loci associated with gene regions. Not sure if this will be used, but it's good to save it just in case. 
-
-```{bash}
-intersectBed \
-  -wb \
-  -a "../analyses/methylation-filtered/meth_filter_long.tab" \
-  -b "../genome-features/Olurida_v081-20190709.gene.gff" \
-  > "../analyses/methylation-filtered/meth_filter_gene.tab"
-wc -l "../analyses/methylation-filtered/meth_filter_gene.tab"
-```
-
-### Check out resulting files which contain methylated loci that are within gene regions (+/- 2kb), and gene bodies: 
-
-```{bash}
-head -n 3 "../analyses/methylation-filtered/meth_filter_gene.2kbslop.tab"
-```
-
-```{bash}
-head -n 1 "../analyses/methylation-filtered/meth_filter_gene.tab"
-```
-
-### For the fun of it, re-run slopBed with gene feature file to create 1) downtream flanking region (+2kb downstream, 3'), and 2) upstream flanking region (-2kb upstream, 5')
-
-Downstream / 3' (using the `-r` option to indicate "add") 
-```{bash}
-bedtools flank \
--i "../genome-features/Olurida_v081-20190709.gene.gff" \
--g "../resources/Olurida_chrom.sizes" \
--r 2000 \
--l 0 \
-> "../genome-features/Olurida_v081-20190709.2kbflank-down.gff"
-head -n 3 "../genome-features/Olurida_v081-20190709.2kbflank-down.gff"
-```
-
-Upstream / 5' (using the `-l` option to indicate "subract") 
-```{bash}
-bedtools flank \
--i "../genome-features/Olurida_v081-20190709.gene.gff" \
--g "../resources/Olurida_chrom.sizes" \
--l 2000 \
--r 0 \
-> "../genome-features/Olurida_v081-20190709.2kbflank-up.gff"
-head -n 3 "../genome-features/Olurida_v081-20190709.2kbflank-up.gff"
-```
-
-
 ### Binomial GLMs to test for differentially methylated genes regions. 
 
 #### Add columns for organization / filtering: 
@@ -152,6 +49,7 @@ meth_filter_genes_2kbslop <-
 
 ```{r}
 length(unique(meth_filter_genes_2kbslop$gene)) 
+View(meth_filter_genes_2kbslop)
 ```
 
 ### Filter for genes with **at minimum 5 methylated loci**
@@ -222,10 +120,11 @@ save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
 ### Edit gene and DMG stats dataframe, add uniprot accession numbers 
 
 ```{r}
+
 # Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
-Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
-  separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
-  select(geneID, uniprotID)
+# Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
+#   separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
+#   select(geneID, uniprotID)
 
 # 
 DMGresults_genes <- 
@@ -242,14 +141,16 @@ DMGresults_genes <-
        eAED=str_extract(notes_gene, "eAED=(.*?);"),
        Note=str_extract(notes_gene, "Note=(.*?);"),
        Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
-       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);")
+       Dbxref=str_extract(notes_gene, "Dbxref=(.*?);"),
+       SPID=str_extract(notes_gene, "SPID=(.*?);")
        ) %>% 
   
-  #remove extraneous info from Olur gene ID
-  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>% 
+  #remove extraneous info from Olur gene ID and Uniprot species ID ("SPID")
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";"))
   
   #add uniprot IDs to gene dataframe 
-  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
+  #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
 ```
 
 ### Here is the number of differentially methylated genes (with min. 5 loci per gene): 
@@ -285,166 +186,278 @@ write_delim(DMGresults_genes, "../analyses/DMGs/all-genes-assessed_2kbslop_annot
 ### Copy DMG uniprot accession numbers to clipboard, then paste into DAVID 
 ```{r}
 write_clip(
-DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,]$uniprotID %>%
+DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,]$SPID %>%
   na.omit() %>% as.vector())
 ```
 
 ### Copy uniprot accession numbers for all assessed genes to clipboard, then paste into DAVID 
 ```{r}
 write_clip(
-DMGresults_genes$uniprotID %>%
+DMGresults_genes$SPID %>%
   na.omit() %>% as.vector())
 ```
 
 ## Enriched biological function, DMGs 
 
-| Term       | Count | %   | P-Value  | Fold Enrichment | Benjamini | FDR      | Fisher Exact |
-|------------|-------|-----|----------|-----------------|-----------|----------|--------------|
-| exocytosis | 3     | 2.6 | 8.50E-02 | 5.5             | 1.00E+00  | 7.30E+01 | 5.80E-03     |
+| Category         | Term                                                                 | Count | %    | PValue | Genes                                                                  | List Total | Pop Hits | Pop Total | Fold Enrichment | Bonferroni | Benjamini | FDR |
+|------------------|----------------------------------------------------------------------|-------|------|--------|------------------------------------------------------------------------|------------|----------|-----------|-----------------|------------|-----------|-----|
+| GOTERM_BP_DIRECT | GO:0007399~nervous system development                                | 9     | 5.14 | 0.011  | O15075, Q04721, Q7T163, Q8VHN7, B1AYB6, Q8WXG9, P16621, P29503, Q5SNZ0 | 155        | 17       | 756       | 2.58            | 0.9999     | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0045214~sarcomere organization                                    | 4     | 2.29 | 0.060  | G4SLH0, Q2V2M9, A2ASS6, Q8WZ42                                         | 155        | 5        | 756       | 3.90            | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:1903955~positive regulation of protein targeting to mitochondrion | 4     | 2.29 | 0.060  | Q7Z6Z7, Q7TMY8, Q571F8, Q587J7                                         | 155        | 5        | 756       | 3.90            | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0008152~metabolic process                                         | 5     | 2.86 | 0.089  | Q66PG2, P13086, O17732, Q99NB1, P07742                                 | 155        | 9        | 756       | 2.71            | 1.0        | 1.0       | 1.0 |
 
-### The 3 genes represented in the "Exocytosis" GO term 
+### Convert GO terms to GO Slim, 
 
-| UNIPROT_ACCESSION | GENE NAME                                    | Related Genes | Species           |
-|-------------------|----------------------------------------------|---------------|-------------------|
-| P16157            | ankyrin 1(ANK1)                              | RG            | Homo sapiens      |
-| G3V801            | protease, serine 12(Prss12)                  | RG            | Rattus norvegicus |
-| Q5ZL74            | vesicle associated membrane protein 7(VAMP7) | RG            | Gallus gallus     |
+Use this spreadsheet that assigns each GO Term to a GO Slim: http://owl.fish.washington.edu/halfshell/bu-alanine-wd/17-07-20/GO-GOslim.sorted
 
-### Here is the gene list 
+```{r}
+# Read in the GO Slim table  
+GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', col_names = FALSE) %>% 
+  setNames(c("GO", "term", "slim", "category")) %>% 
+  mutate_at(vars(category, slim), as.factor)
 
-| UNIPROT_ACCESSION | Name | Species |
-|-|-|-|
-| Q5ZL74 | vesicle associated membrane protein 7(VAMP7) | Gallus gallus |
-| P55861 | minichromosome maintenance complex component 2 L homeolog(mcm2.L) | Xenopus laevis |
-| Q63186 | eukaryotic translation initiation factor 2B subunit delta(Eif2b4) | Rattus norvegicus |
-| Q96PC2 | inositol hexakisphosphate kinase 3(IP6K3) | Homo sapiens |
-| E7FE13 | leucine rich repeat containing G protein-coupled receptor 4(lgr4) | Danio rerio |
-| O43301 | heat shock protein family A (Hsp70) member 12A(HSPA12A) | Homo sapiens |
-| O75293 | growth arrest and DNA damage inducible beta(GADD45B) | Homo sapiens |
-| P16157 | ankyrin 1(ANK1) | Homo sapiens |
-| P13648 | lamin A(LOC396224) | Gallus gallus |
-| Q9HAS3 | solute carrier family 28 member 3(SLC28A3) | Homo sapiens |
-| Q9ES30 | C1q and tumor necrosis factor related protein 3(C1qtnf3) | Mus musculus |
-| Q9JHS3 | late endosomal/lysosomal adaptor, MAPK and MTOR activator 2(Lamtor2) | Mus musculus |
-| Q5RC14 | chromosome 11 open reading frame, human C11orf49(C11H11orf49) | Pongo abelii |
-| P08183 | ATP binding cassette subfamily B member 1(ABCB1) | Homo sapiens |
-| P02469 | laminin B1(Lamb1) | Mus musculus |
-| Q9CR48 | DNA-damage regulated autophagy modulator 2(Dram2) | Mus musculus |
-| O95841 | angiopoietin like 1(ANGPTL1) | Homo sapiens |
-| P18052 | protein tyrosine phosphatase, receptor type, A(Ptpra) | Mus musculus |
-| Q99848 | EBNA1 binding protein 2(EBNA1BP2) | Homo sapiens |
-| Q5RFP3 | endoplasmic reticulum aminopeptidase 2(ERAP2) | Pongo abelii |
-| Q8TCT0 | ceramide kinase(CERK) | Homo sapiens |
-| Q5JU85 | IQ motif and Sec7 domain 2(IQSEC2) | Homo sapiens |
-| O60290 | zinc finger protein 862(ZNF862) | Homo sapiens |
-| Q8K482 | elastin microfibril interfacer 2(Emilin2) | Mus musculus |
-| Q6W5P4 | neuropeptide S receptor 1(NPSR1) | Homo sapiens |
-| Q80YE7 | death associated protein kinase 1(Dapk1) | Mus musculus |
-| O77621 | adrenoceptor alpha 1A(ADRA1A) | Canis lupus familiaris |
-| Q9H2S1 | potassium calcium-activated channel subfamily N member 2(KCNN2) | Homo sapiens |
-| P49796 | regulator of G-protein signaling 3(RGS3) | Homo sapiens |
-| Q6YHK3 | CD109 molecule(CD109) | Homo sapiens |
-| Q69ZK9 | neuroligin 2(Nlgn2) | Mus musculus |
-| Q5ZKJ5 | major facilitator superfamily domain containing 13A(MFSD13A) | Gallus gallus |
-| P59222 | scavenger receptor class F, member 2(Scarf2) | Mus musculus |
-| Q7L4I2 | arginine and serine rich coiled-coil 2(RSRC2) | Homo sapiens |
-| G3V801 | protease, serine 12(Prss12) | Rattus norvegicus |
-| Q02858 | endothelial-specific receptor tyrosine kinase(Tek) | Mus musculus |
-| Q6ZQQ6 | WD repeat domain 87(WDR87) | Homo sapiens |
-| Q3SWY8 | zinc finger with UFM1 specific peptidase domain(ZUFSP) | Bos taurus |
-| Q5RDC1 | family with sequence similarity 21 member C(FAM21C) | Pongo abelii |
-| Q86YI8 | PHD finger protein 13(PHF13) | Homo sapiens |
-| Q99958 | forkhead box C2(FOXC2) | Homo sapiens |
-| P07207 | Notch(N) | Drosophila melanogaster |
-| Q5ZMD4 | tripartite motif containing 59(TRIM59) | Gallus gallus |
-| Q8VIK1 | small nuclear ribonucleoprotein 25 (U11/U12)(Snrnp25) | Mus musculus |
-| Q58ED9 | N(alpha)-acetyltransferase 20, NatB catalytic subunit(naa20) | Danio rerio |
-| P12804 | fibrinogen-like protein 2(Fgl2) | Mus musculus |
-| Q9Y5X5 | neuropeptide FF receptor 2(NPFFR2) | Homo sapiens |
-| Q6IMH0 | testis, prostate and placenta expressed(Tepp) | Mus musculus |
-| A2CEA7 | Ras protein-specific guanine nucleotide-releasing factor 2b(rasgrf2b) | Danio rerio |
-| P10632 | cytochrome P450 family 2 subfamily C member 8(CYP2C8) | Homo sapiens |
-| Q13370 | phosphodiesterase 3B(PDE3B) | Homo sapiens |
-| P20918 | plasminogen(Plg) | Mus musculus |
-| Q08093 | calponin 2(Cnn2) | Mus musculus |
-| Q6UWM5 | GLI pathogenesis related 1 like 1(GLIPR1L1) | Homo sapiens |
-| P55264 | adenosine kinase(Adk) | Mus musculus |
-| A6NL82 | family with sequence similarity 183 member A(FAM183A) | Homo sapiens |
-| Q5R9H4 | APOBEC1 complementation factor(A1CF) | Pongo abelii |
-| Q9NXK8 | F-box and leucine rich repeat protein 12(FBXL12) | Homo sapiens |
-| P98156 | very low density lipoprotein receptor(Vldlr) | Mus musculus |
-| A5PJI7 | eukaryotic translation initiation factor 2B subunit gamma(EIF2B3) | Bos taurus |
-| Q9XWB9 | BTB and MATH domain-containing protein 36(bath-36) | Caenorhabditis elegans |
-| Q6Z7K5 | metal tolerance protein 3(LOC4330894) | Oryza sativa Japonica Group |
-| Q2KIK2 | MPV17 mitochondrial inner membrane protein like(MPV17L) | Bos taurus |
-| Q5R947 | IMP4 homolog, U3 small nucleolar ribonucleoprotein(IMP4) | Pongo abelii |
-| Q9DDT2 | phosphoinositide-3-kinase adaptor protein 1(PIK3AP1) | Gallus gallus |
-| Q5XGW6 | charged multivesicular body protein 4B S homeolog(chmp4b.S) | Xenopus laevis |
-| Q92180 | glucosaminyl (N-acetyl) transferase 1, core 2(GCNT1) | Bos taurus |
-| Q147U1 | zinc finger protein 846(ZNF846) | Homo sapiens |
-| Q90Y54 | jagged 1b(jag1b) | Danio rerio |
-| E9QAM5 | helicase with zinc finger 2, transcriptional coactivator(Helz2) | Mus musculus |
-| Q9VJ79 | Phosphodiesterase 11(Pde11) | Drosophila melanogaster |
-| Q9W6V5 | protein tyrosine phosphatase, receptor type J(PTPRJ) | Gallus gallus |
-| Q80YG3 | kelch domain containing 1(Klhdc1) | Mus musculus |
-| Q27421 | outspread(osp) | Drosophila melanogaster |
-| F1QYJ6 | sulfotransferase family, cytosolic, 6b, member 1(sult6b1) | Danio rerio |
-| Q17DK5 | AAEL004146-PA(CRY1_AEDAE) | Aedes aegypti |
-| Q2PZL6 | FAT atypical cadherin 4(Fat4) | Mus musculus |
-| Q96KE9 | BTB domain containing 6(BTBD6) | Homo sapiens |
-| Q9HAY6 | beta-carotene oxygenase 1(BCO1) | Homo sapiens |
-| B7Z0W9 | CG42265 gene product from transcript CG42265-RE(CG42265) | Drosophila melanogaster |
-| P30549 | tachykinin receptor 2(Tacr2) | Mus musculus |
-| M0ZYF3 | internal alternative NAD(P)H-ubiquinone oxidoreductase A1, mitochondrial-like(LOC102598594) | Solanum tuberosum |
-| Q5RF16 | beta-carotene oxygenase 2(BCO2) | Pongo abelii |
-| Q5EA25 | sushi repeat containing protein, X-linked 2(SRPX2) | Bos taurus |
-| Q0V9W6 | BTB (POZ) domain containing 6(btbd6) | Xenopus tropicalis |
-| Q80UN9 | tRNA isopentenyltransferase 1(Trit1) | Mus musculus |
-| Q80T91 | multiple EGF-like-domains 11(Megf11) | Mus musculus |
-| A7RHB3 | hypothetical protein(NEMVEDRAFT_v1g81173) | Nematostella vectensis |
-| Q5K651 | sterile alpha motif domain containing 9(SAMD9) | Homo sapiens |
-| Q5EB73 | transmembrane protein 246(Tmem246) | Rattus norvegicus |
-| L7YAI7 | beta-1,4-glucuronyltransferase 1(b4gat1) | Danio rerio |
-| P42696 | RNA binding motif protein 34(RBM34) | Homo sapiens |
-| Q4V8E5 | major facilitator superfamily domain containing 3(Mfsd3) | Rattus norvegicus |
-| O08848 | TROVE domain family, member 2(Trove2) | Mus musculus |
-| A2BGM5 | forkhead box N4(foxn4) | Danio rerio |
-| Q9H093 | NUAK family kinase 2(NUAK2) | Homo sapiens |
-| Q0E908 | Hillarin(Hil) | Drosophila melanogaster |
-| Q9T0F4 | P-loop containing nucleoside triphosphate hydrolases superfamily protein(AT4G09950) | Arabidopsis thaliana |
-| Q8K2L8 | trafficking protein particle complex 12(Trappc12) | Mus musculus |
-| Q4R4A2 | zinc finger with UFM1 specific peptidase domain(ZUFSP) | Macaca fascicularis |
-| Q3B8G0 | chromosome 1 open reading frame 123 L homeolog(c1orf123.L) | Xenopus laevis |
-| Q8NFU1 | bestrophin 2(BEST2) | Homo sapiens |
-| Q29076 | POU class 2 homeobox 1(POU2F1) | Sus scrofa |
-| Q5ZM41 | testis expressed 10(TEX10) | Gallus gallus |
-| G5EFC3 | Potassium voltage-gated channel protein egl-36(egl-36) | Caenorhabditis elegans |
-| Q7TPV2 | DAZ interacting protein 3, zinc finger(Dzip3) | Mus musculus |
-| Q7T3B0 | eukaryotic translation initiation factor 3, subunit M(eif3m) | Danio rerio |
-| Q91044 | neurotrophic tyrosine kinase, receptor, type 3(NTRK3) | Gallus gallus |
-| P11584 | myospheroid(mys) | Drosophila melanogaster |
-| P03957 | matrix metallopeptidase 3(Mmp3) | Rattus norvegicus |
-| Q9Y6R7 | Fc fragment of IgG binding protein(FCGBP) | Homo sapiens |
-| P32717 | metallo-beta-lactamase superfamily protein(yjcS) | Escherichia coli str. K-12 substr. MG1655 |
-| Q8C4G9 | adhesion G protein-coupled receptor A1(Adgra1) | Mus musculus |
-| Q86Z23 | complement C1q like 4(C1QL4) | Homo sapiens |
-|  | The below were not identified by DAVID, thus not in enrichment analysis  |  |
-| Q9I931 | Fucolectin-1 | Anguilla japonica |
-| H2A0M7 | Peroxidase-like protein | Margaritifera margaritifera |
-| P83425 | Heavy metal-binding protein HIP | Mytilus edulis |
-| Q25145 | Tropomyosin | Haliotis rufescens |
-| V5NAL9 | Toll-like receptor 4 | Pinctada imbricata |
-| Q59990 | Putative cytochrome P450 120 | Synechocystis sp. |
-| P0DKY8 | U8 snoRNA-decapping enzyme | Homalodisca vitripennis |
-| P46023 | G-protein coupled receptor GRL101 | Lymnaea stagnalis |
-| Q4PM12 | 60S ribosomal protein L36 | Ixodes scapularis |
+GO.enriched.DMG <- read_delim(here::here("analyses", "DMGs", "Enriched-BioFunc-DMGs.txt"), delim = '\t', col_names = TRUE) %>% 
+   separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
+   left_join(GOSlim, by=c("GO", "term")) #add slim 
+```
+
+### The 9 genes represented in the "Nervous system development" GO term 
+
+| ID     | Gene Name                                       | Species                 |
+|--------|-------------------------------------------------|-------------------------|
+| P16621 | Leukocyte-antigen-related-like(Lar)             | Drosophila melanogaster |
+| Q8WXG9 | adhesion G protein-coupled receptor V1(ADGRV1)  | Homo sapiens            |
+| Q8VHN7 | adhesion G protein-coupled receptor V1(Adgrv1)  | Mus musculus            |
+| Q5SNZ0 | coiled coil domain containing 88A(Ccdc88a)      | Mus musculus            |
+| O15075 | doublecortin like kinase 1(DCLK1)               | Homo sapiens            |
+| Q7T163 | kinase D-interacting substrate 220b(kidins220b) | Danio rerio             |
+| B1AYB6 | methyl-CpG binding domain protein 5(Mbd5)       | Mus musculus            |
+| P29503 | neuralized(neur)                                | Drosophila melanogaster |
+| Q04721 | notch 2(NOTCH2)                                 | Homo sapiens            |
+
+### The 4 genes represented in the "Sarcomere organization" GO term 
+
+| ID     | Gene Name                                    | Species                |
+|--------|----------------------------------------------|------------------------|
+| G4SLH0 | Titin homolog(ttn-1)                         | Caenorhabditis elegans |
+| Q2V2M9 | formin homology 2 domain containing 3(FHOD3) | Homo sapiens           |
+| Q8WZ42 | titin(TTN)                                   | Homo sapiens           |
+| A2ASS6 | titin(Ttn)                                   | Mus musculus           |
+
+### The 4 genes represented in the "positive regulation of protein targeting to mitochondrion" GO term 
+
+| ID     | Gene Name                                                                 | Species      |
+|--------|---------------------------------------------------------------------------|--------------|
+| Q7TMY8 | HECT, UBA and WWE domain containing 1(Huwe1)                              | Mus musculus |
+| Q7Z6Z7 | HECT, UBA and WWE domain containing 1, E3 ubiquitin protein ligase(HUWE1) | Homo sapiens |
+| Q571F8 | glutaminase 2 (liver, mitochondrial)(Gls2)                                | Mus musculus |
+| Q587J7 | tudor domain containing 12(TDRD12)                                        | Homo sapiens |
+
+### The 5 genes represented in the "metabolic process" GO term 
+
+| ID     | Gene Name                                              | Species                |
+|--------|--------------------------------------------------------|------------------------|
+| O17732 | PYruvate Carboxylase(pyc-1)                            | Caenorhabditis elegans |
+| Q99NB1 | acyl-CoA synthetase short-chain family member 1(Acss1) | Mus musculus           |
+| Q66PG2 | like-glycosyltransferase(large)                        | Danio rerio            |
+| P07742 | ribonucleotide reductase M1(Rrm1)                      | Mus musculus           |
+| P13086 | succinate-CoA ligase, alpha subunit(Suclg1)            | Rattus norvegicus      |
+
+### Here is the full list of genes that were differentially methylated  
+
+| UNIPROT_ACCESSION | Name                                                                                                     | Species                        |
+|-------------------|----------------------------------------------------------------------------------------------------------|--------------------------------|
+| A0MGZ7            | heparan sulfate 6-O-sulfotransferase 3b(hs6st3b)                                                         | Danio rerio                    |
+| Q9HCD6            | tetratricopeptide repeat, ankyrin repeat and coiled-coil containing 2(TANC2)                             | Homo sapiens                   |
+| Q66PG2            | like-glycosyltransferase(large)                                                                          | Danio rerio                    |
+| D3YWJ0            | nuclear GTPase, germinal center associated(Nuggc)                                                        | Mus musculus                   |
+| Q9FLQ7            | actin binding protein(AT5G07740)                                                                         | Arabidopsis thaliana           |
+| Q0P5G1            | tonsoku-like, DNA repair protein(TONSL)                                                                  | Bos taurus                     |
+| Q6UWH6            | testis expressed 261(TEX261)                                                                             | Homo sapiens                   |
+| Q9W0T1            | Enhancer of bithorax(E(bx))                                                                              | Drosophila melanogaster        |
+| Q9UMZ2            | synergin gamma(SYNRG)                                                                                    | Homo sapiens                   |
+| Q03145            | Eph receptor A2(Epha2)                                                                                   | Mus musculus                   |
+| Q7T163            | kinase D-interacting substrate 220b(kidins220b)                                                          | Danio rerio                    |
+| Q14315            | filamin C(FLNC)                                                                                          | Homo sapiens                   |
+| A5D7H2            | striatin 3(STRN3)                                                                                        | Bos taurus                     |
+| Q06A37            | chromodomain helicase DNA binding protein 7(CHD7)                                                        | Gallus gallus                  |
+| O95477            | ATP binding cassette subfamily A member 1(ABCA1)                                                         | Homo sapiens                   |
+| O15014            | zinc finger protein 609(ZNF609)                                                                          | Homo sapiens                   |
+| O08774            | regulator of G-protein signaling 12(Rgs12)                                                               | Rattus norvegicus              |
+| Q6INA9            | SET domain, bifurcated 1 L homeolog(setdb1.L)                                                            | Xenopus laevis                 |
+| Q03254            | protein serine/threonine phosphatase(FCP1)                                                               | Saccharomyces cerevisiae S288C |
+| P59280            | kelch-like 8(Klhl8)                                                                                      | Mus musculus                   |
+| Q8NC51            | SERPINE1 mRNA binding protein 1(SERBP1)                                                                  | Homo sapiens                   |
+| Q6XP49            | GLIS family zinc finger 3(Glis3)                                                                         | Mus musculus                   |
+| O88281            | multiple EGF-like-domains 6(Megf6)                                                                       | Rattus norvegicus              |
+| Q9UPZ6            | thrombospondin type 1 domain containing 7A(THSD7A)                                                       | Homo sapiens                   |
+| Q96L91            | E1A binding protein p400(EP400)                                                                          | Homo sapiens                   |
+| Q7ZYZ6            | discs, large (Drosophila) homolog-associated protein 1a(dlgap1a)                                         | Danio rerio                    |
+| Q96AY4            | tetratricopeptide repeat domain 28(TTC28)                                                                | Homo sapiens                   |
+| Q62371            | discoidin domain receptor family, member 2(Ddr2)                                                         | Mus musculus                   |
+| Q32L77            | chromosome 8 open reading frame, human C9orf135(C8H9orf135)                                              | Bos taurus                     |
+| A3KMZ6            | COX11 cytochrome c oxidase assembly homolog (yeast)(COX11)                                               | Bos taurus                     |
+| P20241            | Neuroglian(Nrg)                                                                                          | Drosophila melanogaster        |
+| Q96QT6            | PHD finger protein 12(PHF12)                                                                             | Homo sapiens                   |
+| Q2T9T9            | F-box and WD repeat domain containing 9(FBXW9)                                                           | Bos taurus                     |
+| Q8NE09            | regulator of G-protein signaling 22(RGS22)                                                               | Homo sapiens                   |
+| Q00420            | GA repeat binding protein, beta 1(Gabpb1)                                                                | Mus musculus                   |
+| Q80TY5            | vacuolar protein sorting 13B(Vps13b)                                                                     | Mus musculus                   |
+| Q8BZ20            | poly (ADP-ribose) polymerase family, member 12(Parp12)                                                   | Mus musculus                   |
+| B2GUN4            | KIAA0430(kiaa0430)                                                                                       | Xenopus tropicalis             |
+| Q09JY9            | shroom family member 2(shroom2)                                                                          | Xenopus tropicalis             |
+| Q9BV44            | THUMP domain containing 3(THUMPD3)                                                                       | Homo sapiens                   |
+| Q6GLJ1            | BTB (POZ) domain containing 17 S homeolog(btbd17.S)                                                      | Xenopus laevis                 |
+| O55131            | septin 7(Sept7)                                                                                          | Mus musculus                   |
+| Q00174            | Laminin A(LanA)                                                                                          | Drosophila melanogaster        |
+| Q3UGM2            | NIMA (never in mitosis gene a)- related kinase 10(Nek10)                                                 | Mus musculus                   |
+| Q5F477            | lipid droplet associated hydrolase(LDAH)                                                                 | Gallus gallus                  |
+| Q2V2M9            | formin homology 2 domain containing 3(FHOD3)                                                             | Homo sapiens                   |
+| P13221            | glutamic-oxaloacetic transaminase 1(Got1)                                                                | Rattus norvegicus              |
+| Q9HC84            | mucin 5B, oligomeric mucus/gel-forming(MUC5B)                                                            | Homo sapiens                   |
+| Q5XF04            | Exostosin family protein(AT2G31990)                                                                      | Arabidopsis thaliana           |
+| Q9UPR3            | SMG5, nonsense mediated mRNA decay factor(SMG5)                                                          | Homo sapiens                   |
+| Q8K4L3            | supervillin(Svil)                                                                                        | Mus musculus                   |
+| Q9Y2B1            | transmembrane protein 5(TMEM5)                                                                           | Homo sapiens                   |
+| Q5GH73            | XK related 6(XKR6)                                                                                       | Homo sapiens                   |
+| Q8WXG9            | adhesion G protein-coupled receptor V1(ADGRV1)                                                           | Homo sapiens                   |
+| Q8VIJ5            | meningioma expressed antigen 5 (hyaluronidase)(Mgea5)                                                    | Rattus norvegicus              |
+| Q9I7F7            | Activated Cdc42 kinase-like(Ack-like)                                                                    | Drosophila melanogaster        |
+| Q9UKJ3            | G-patch domain containing 8(GPATCH8)                                                                     | Homo sapiens                   |
+| Q7Z6Z7            | HECT, UBA and WWE domain containing 1, E3 ubiquitin protein ligase(HUWE1)                                | Homo sapiens                   |
+| Q9BUJ2            | heterogeneous nuclear ribonucleoprotein U like 1(HNRNPUL1)                                               | Homo sapiens                   |
+| Q7Z442            | polycystin 1 like 2 (gene/pseudogene)(PKD1L2)                                                            | Homo sapiens                   |
+| P59511            | a disintegrin-like and metallopeptidase (reprolysin type) with thrombospondin type 1 motif, 20(Adamts20) | Mus musculus                   |
+| Q9UL36            | zinc finger protein 236(ZNF236)                                                                          | Homo sapiens                   |
+| Q8NI27            | THO complex 2(THOC2)                                                                                     | Homo sapiens                   |
+| P36993            | protein phosphatase 1B, magnesium dependent, beta isoform(Ppm1b)                                         | Mus musculus                   |
+| Q3UZV7            | RIKEN cDNA 9330182L06 gene(9330182L06Rik)                                                                | Mus musculus                   |
+| P28191            | Tyrosine-protein phosphatase 1(ptp-1)                                                                    | Caenorhabditis elegans         |
+| Q8VHG2            | angiomotin(Amot)                                                                                         | Mus musculus                   |
+| Q69ZS7            | Hbs1-like (S. cerevisiae)(Hbs1l)                                                                         | Mus musculus                   |
+| Q9JIS1            | regulating synaptic membrane exocytosis 2(Rims2)                                                         | Rattus norvegicus              |
+| Q03059            | choline acetyltransferase(Chat)                                                                          | Mus musculus                   |
+| Q8WZ42            | titin(TTN)                                                                                               | Homo sapiens                   |
+| P13406            | FYN proto-oncogene, Src family tyrosine kinase L homeolog(fyn.L)                                         | Xenopus laevis                 |
+| Q8IW19            | aprataxin and PNKP like factor(APLF)                                                                     | Homo sapiens                   |
+| Q60636            | PR domain containing 1, with ZNF domain(Prdm1)                                                           | Mus musculus                   |
+| Q0V989            | coiled-coil domain containing 85C(ccdc85c)                                                               | Xenopus tropicalis             |
+| Q96GM8            | target of EGR1, member 1 (nuclear)(TOE1)                                                                 | Homo sapiens                   |
+| Q5XGG2            | TruB pseudouridine (psi) synthase family member 2(trub2)                                                 | Xenopus tropicalis             |
+| O61491            | Flotillin 1(Flo1)                                                                                        | Drosophila melanogaster        |
+| Q9HCE9            | anoctamin 8(ANO8)                                                                                        | Homo sapiens                   |
+| A2ASS6            | titin(Ttn)                                                                                               | Mus musculus                   |
+| Q8NBD8            | transmembrane protein 229B(TMEM229B)                                                                     | Homo sapiens                   |
+| P08183            | ATP binding cassette subfamily B member 1(ABCB1)                                                         | Homo sapiens                   |
+| Q3UF64            | ring finger protein, transmembrane 2(Rnft2)                                                              | Mus musculus                   |
+| P29503            | neuralized(neur)                                                                                         | Drosophila melanogaster        |
+| Q28C33            | TBC1 domain family member 30(tbc1d30)                                                                    | Xenopus tropicalis             |
+| Q9ESM0            | inositol hexakisphosphate kinase 1(Ip6k1)                                                                | Rattus norvegicus              |
+| Q99NB1            | acyl-CoA synthetase short-chain family member 1(Acss1)                                                   | Mus musculus                   |
+| P19137            | laminin, alpha 1(Lama1)                                                                                  | Mus musculus                   |
+| Q8IYR2            | SET and MYND domain containing 4(SMYD4)                                                                  | Homo sapiens                   |
+| Q571F8            | glutaminase 2 (liver, mitochondrial)(Gls2)                                                               | Mus musculus                   |
+| Q5U249            | AT-hook containing transcription factor 1 L homeolog(ahctf1.L)                                           | Xenopus laevis                 |
+| Q96K62            | zinc finger and BTB domain containing 45(ZBTB45)                                                         | Homo sapiens                   |
+| Q6ZVT6            | chromosome 3 open reading frame 67(C3orf67)                                                              | Homo sapiens                   |
+| Q5SNZ0            | coiled coil domain containing 88A(Ccdc88a)                                                               | Mus musculus                   |
+| Q6ZNA1            | zinc finger protein 836(ZNF836)                                                                          | Homo sapiens                   |
+| Q63648            | neurofibromin 2(Nf2)                                                                                     | Rattus norvegicus              |
+| Q7TMY8            | HECT, UBA and WWE domain containing 1(Huwe1)                                                             | Mus musculus                   |
+| Q14517            | FAT atypical cadherin 1(FAT1)                                                                            | Homo sapiens                   |
+| O57415            | ras responsive element binding protein 1(RREB1)                                                          | Gallus gallus                  |
+| P35555            | fibrillin 1(FBN1)                                                                                        | Homo sapiens                   |
+| Q9NU22            | midasin AAA ATPase 1(MDN1)                                                                               | Homo sapiens                   |
+| Q5G270            | protease, serine 12(PRSS12)                                                                              | Gorilla gorilla                |
+| P51892            | ligase I, DNA, ATP-dependent S homeolog(lig1.S)                                                          | Xenopus laevis                 |
+| Q6GQR8            | zinc finger protein 329(Zfp329)                                                                          | Mus musculus                   |
+| Q8TCU4            | ALMS1, centrosome and basal body associated protein(ALMS1)                                               | Homo sapiens                   |
+| O46385            | supervillin(SVIL)                                                                                        | Bos taurus                     |
+| Q8WVM0            | transcription factor B1, mitochondrial(TFB1M)                                                            | Homo sapiens                   |
+| Q6INP9            | breast cancer anti-estrogen resistance 3 L homeolog(bcar3.L)                                             | Xenopus laevis                 |
+| O17732            | PYruvate Carboxylase(pyc-1)                                                                              | Caenorhabditis elegans         |
+| Q96NE9            | FERM domain containing 6(FRMD6)                                                                          | Homo sapiens                   |
+| O00237            | ring finger protein 103(RNF103)                                                                          | Homo sapiens                   |
+| P13086            | succinate-CoA ligase, alpha subunit(Suclg1)                                                              | Rattus norvegicus              |
+| P07742            | ribonucleotide reductase M1(Rrm1)                                                                        | Mus musculus                   |
+| O15013            | Rho guanine nucleotide exchange factor 10(ARHGEF10)                                                      | Homo sapiens                   |
+| Q63470            | dual specificity tyrosine phosphorylation regulated kinase 1A(Dyrk1a)                                    | Rattus norvegicus              |
+| Q0P4S5            | jade family PHD finger 3(jade3)                                                                          | Xenopus tropicalis             |
+| Q9EQ60            | calcium voltage-gated channel subunit alpha1 H(Cacna1h)                                                  | Rattus norvegicus              |
+| Q6DFF9            | mitogen-activated protein kinase binding protein 1 L homeolog(mapkbp1.L)                                 | Xenopus laevis                 |
+| Q6ZQQ6            | WD repeat domain 87(WDR87)                                                                               | Homo sapiens                   |
+| Q68CP9            | AT-rich interaction domain 2(ARID2)                                                                      | Homo sapiens                   |
+| Q8MT80            | CG45068 gene product from transcript CG45068-RA(CG45068)                                                 | Drosophila melanogaster        |
+| Q9QXL2            | kinesin family member 21A(Kif21a)                                                                        | Mus musculus                   |
+| F1MRW8            | ring finger protein 169(RNF169)                                                                          | Bos taurus                     |
+| B1AYB6            | methyl-CpG binding domain protein 5(Mbd5)                                                                | Mus musculus                   |
+| Q96N11            | chromosome 7 open reading frame 26(C7orf26)                                                              | Homo sapiens                   |
+| P16621            | Leukocyte-antigen-related-like(Lar)                                                                      | Drosophila melanogaster        |
+| Q2EMV9            | poly (ADP-ribose) polymerase family, member 14(Parp14)                                                   | Mus musculus                   |
+| Q12986            | nuclear transcription factor, X-box binding 1(NFX1)                                                      | Homo sapiens                   |
+| Q56A24            | kelch-like family member 24(Klhl24)                                                                      | Rattus norvegicus              |
+| Q9TZM3            | Leucine-rich repeat serine/threonine-protein kinase 1(lrk-1)                                             | Caenorhabditis elegans         |
+| Q9H0F5            | ring finger protein 38(RNF38)                                                                            | Homo sapiens                   |
+| Q8VHN7            | adhesion G protein-coupled receptor V1(Adgrv1)                                                           | Mus musculus                   |
+| A2A791            | zinc finger, MYM-type 4(Zmym4)                                                                           | Mus musculus                   |
+| Q8K2Z4            | non-SMC condensin I complex, subunit D2(Ncapd2)                                                          | Mus musculus                   |
+| Q8BFY9            | transportin 1(Tnpo1)                                                                                     | Mus musculus                   |
+| A4QNN3            | ubiquitin specific peptidase 30(usp30)                                                                   | Xenopus tropicalis             |
+| Q5ZLG9            | WD repeat domain 59(WDR59)                                                                               | Gallus gallus                  |
+| Q6VNB8            | WD repeat and FYVE domain containing 3(Wdfy3)                                                            | Mus musculus                   |
+| Q9C0D2            | centrosomal protein 295(CEP295)                                                                          | Homo sapiens                   |
+| Q9VT28            | furry(fry)                                                                                               | Drosophila melanogaster        |
+| Q05941            | cholinergic receptor nicotinic alpha 7 subunit(Chrna7)                                                   | Rattus norvegicus              |
+| O16277            | Putative histone H1.6(hil-6)                                                                             | Caenorhabditis elegans         |
+| Q5U2N3            | phosphatidylinositol transfer protein, membrane-associated 1(Pitpnm1)                                    | Rattus norvegicus              |
+| O18973            | RAB guanine nucleotide exchange factor 1(RABGEF1)                                                        | Bos taurus                     |
+| P51592            | hyperplastic discs(hyd)                                                                                  | Drosophila melanogaster        |
+| G4SLH0            | Titin homolog(ttn-1)                                                                                     | Caenorhabditis elegans         |
+| P84060            | dystrobrevin, beta(Dtnb)                                                                                 | Rattus norvegicus              |
+| P55094            | nuclear receptor subfamily 2, group C, member 2(Nr2c2)                                                   | Rattus norvegicus              |
+| Q7KHG2            | CG9397 gene product from transcript CG9397-RI(jing)                                                      | Drosophila melanogaster        |
+| Q96DR7            | Rho guanine nucleotide exchange factor 26(ARHGEF26)                                                      | Homo sapiens                   |
+| P31689            | DnaJ heat shock protein family (Hsp40) member A1(DNAJA1)                                                 | Homo sapiens                   |
+| Q9ULT8            | HECT domain E3 ubiquitin protein ligase 1(HECTD1)                                                        | Homo sapiens                   |
+| E9PVA8            | GCN1 general control of amino-acid synthesis 1-like 1 (yeast)(Gcn1l1)                                    | Mus musculus                   |
+| Q9P2D8            | unc-79 homolog (C. elegans)(UNC79)                                                                       | Homo sapiens                   |
+| P06795            | ATP-binding cassette, sub-family B (MDR/TAP), member 1B(Abcb1b)                                          | Mus musculus                   |
+| Q6NS45            | coiled-coil domain containing 66(Ccdc66)                                                                 | Mus musculus                   |
+| O57683            | splicing factor 3b subunit 1 S homeolog(sf3b1.S)                                                         | Xenopus laevis                 |
+| Q3UTY6            | thrombospondin, type I, domain containing 4(Thsd4)                                                       | Mus musculus                   |
+| Q92805            | golgin A1(GOLGA1)                                                                                        | Homo sapiens                   |
+| O15075            | doublecortin like kinase 1(DCLK1)                                                                        | Homo sapiens                   |
+| A4IF63            | tripartite motif containing 2(TRIM2)                                                                     | Bos taurus                     |
+| O95980            | reversion inducing cysteine rich protein with kazal motifs(RECK)                                         | Homo sapiens                   |
+| Q13439            | golgin A4(GOLGA4)                                                                                        | Homo sapiens                   |
+| Q9HAR2            | adhesion G protein-coupled receptor L3(ADGRL3)                                                           | Homo sapiens                   |
+| Q503Q1            | spermatogenesis associated 18(spata18)                                                                   | Danio rerio                    |
+| Q5ZKG2            | bromodomain containing 7(BRD7)                                                                           | Gallus gallus                  |
+| Q04721            | notch 2(NOTCH2)                                                                                          | Homo sapiens                   |
+| D3ZQG6            | tripartite motif-containing 2(Trim2)                                                                     | Rattus norvegicus              |
+| Q9H0C1            | zinc finger MYND-type containing 12(ZMYND12)                                                             | Homo sapiens                   |
+| G5EBU4            | Zinc finger E-box-binding homeobox protein zag-1(zag-1)                                                  | Caenorhabditis elegans         |
+| Q96JH7            | valosin containing protein interacting protein 1(VCPIP1)                                                 | Homo sapiens                   |
+| Q00341            | high density lipoprotein binding protein(HDLBP)                                                          | Homo sapiens                   |
+| O35501            | heat shock protein family A (Hsp70) member 9(Hspa9)                                                      | Cricetulus griseus             |
+| P52292            | karyopherin subunit alpha 2(KPNA2)                                                                       | Homo sapiens                   |
+| Q587J7            | tudor domain containing 12(TDRD12)                                                                       | Homo sapiens                   |
+|                   | P40821                                                                                                   |                                |
+|                   | Q9U639                                                                                                   |                                |
+|                   | Q4UMH6                                                                                                   |                                |
+|                   | B3EWZ6                                                                                                   |                                |
+|                   | P59669                                                                                                   |                                |
+|                   | P56649                                                                                                   |                                |
+|                   | B3EWZ5                                                                                                   |                                |
+|                   | Q04786                                                                                                   |                                |
 
 ### Barplots showing % methylation of DMGs by population 
 
 ```{r}
+
 results_2kbslop %>%
-left_join(DMGresults_genes[c("gene", "uniprotID", "Note")], by="gene") %>%
-  filter(uniprotID=="O43301") %>% View()
+left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
+  filter(SPID=="Q6ZQQ6") %>% View()
 
 # For all DMGs, calculate mean and sd percent methylation across samples by population 
 results_2kbslop %>% 
@@ -453,10 +466,10 @@ results_2kbslop %>%
   dplyr::summarise(mean_percMeth = mean(percMeth, na.rm=TRUE), 
                    sd_percMeth=sd(percMeth, na.rm=TRUE), n_distinct(start), n()) %>% 
   #add uniprot IDs to gene dataframe 
-  left_join(DMGresults_genes[c("gene", "uniprotID", "Note")], by="gene") %>%
+  left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
 
 # use this to call specific genes using Uniprot ID 
-    filter(uniprotID=="O43301") %>%
+    filter(SPID=="Q6ZQQ6") %>%
 
 # generate bar plot of mean % methylation +SD by population 
   ggplot(aes(x = population, y = mean_percMeth, fill = population, 
@@ -995,7 +1008,7 @@ DMGresults_genes_4loci <-
   mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>% 
   
   #add uniprot IDs to gene dataframe 
-  left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
+  #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
 ```
 
 ### Here is the number of differentially methylated genes (with min. 5 loci per gene): 

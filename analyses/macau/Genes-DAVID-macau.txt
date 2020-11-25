@@ -1,0 +1,13 @@
+UNIPROT_ACCESSION	Name	Species
+Q5W0Q7	ubiquitin specific peptidase like 1(USPL1)	Homo sapiens
+Q15937	zinc finger protein 79(ZNF79)	Homo sapiens
+Q9QXV3	inhibitor of growth family, member 1(Ing1)	Mus musculus
+Q23551	Twitchin(unc-22)	Caenorhabditis elegans
+A4II09	eukaryotic translation initiation factor 3 subunit A(eif3a)	Xenopus tropicalis
+Q3UCV8	OTU deubiquitinase with linear linkage specificity(Otulin)	Mus musculus
+Q28I85	POC1 centriolar protein A(poc1a)	Xenopus tropicalis
+Q8BGS3	zinc finger with KRAB and SCAN domains 1(Zkscan1)	Mus musculus
+Q8BFY9	transportin 1(Tnpo1)	Mus musculus
+H2QII6	RAN binding protein 2(RANBP2)	Pan troglodytes
+Q14315	filamin C(FLNC)	Homo sapiens
+	SPID		
