@@ -438,7 +438,7 @@ The null hypothesis is that loci distributions in the genome are the same betwee
 ### Is distribution of total CpGs vs. methylated CpGs the same? 
 
 ```{r}
-meth.chisq <- methdata.summary %>% filter(feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
+meth.chisq <- methdata.summary %>% filter(feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
 
 meth.chisq #no, they are different. P-value very low. 
 
@@ -504,7 +504,7 @@ scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs
   ggtitle("% of all CpG loci and methylated loci that fall within genome features") +
   labs(y="% of Loci", x=NULL) +
   theme_minimal() + theme(legend.position ="bottom") + 
-  geom_text(aes(label=percent(percent, accuracy = 0.1)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
+    geom_text(aes(label=percent(percent, accuracy = 0.01)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
   scale_x_discrete(
     labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="5' flanking\nregion (-2kb)", 
              `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement",
@@ -522,12 +522,203 @@ ggplot(data=subset(methdata.summary.long, analysis!="all5x" &
   #prettyNum(count, big.mark = ",")
   geom_bar(stat="identity", position = "dodge", width = .5) +
 scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
-                  values=c("#a6cee3", "#1f78b4")) +
+                  values=c("#969696", "#636363")) +
   ggtitle("% of all CpG loci and methylated loci that fall within genes with various # isoforms") +
   labs(y="% of Loci", x=NULL) +
-    geom_text(aes(label=percent(percent, accuracy = 0.1)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
-  theme_minimal() + theme(legend.position ="bottom") #+ 
+    geom_text(aes(label=percent(percent, accuracy = 0.01)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
+  theme_minimal() + theme(legend.position ="bottom") + 
+  scale_x_discrete(
+    labels=c(`1 isoform`="no variants\n(1.84)", `2-5 isoforms`="2-5 isoforms\n(2.14)", `6-10 isoforms`="6-10 isoforms\n(2.77)", `11-20 isoforms`="11-20 isoforms\n(3.18)", `21-70 isoforms`="21-70 isoforms\n(3.5)"))
 ```
+
+## Methylation islands functional analysis 
+
+Here I will find methylation islands, measure their length, then bin them into short islands & long islands, identify genes that overlap with the islands, then see whether short/long islands are enriched for certain biological functions or molecular processes. I will use [Yaamini's script](https://github.com/fish546-2018/yaamini-virginica/blob/master/notebooks/2019-03-18-Characterizing-CpG-Methylation.ipynb), and the script from [Jeong et al. 2018 code](https://github.com/soojinyilab/Methylation-Islands/raw/master/methyl_island_sliding_window.pl), which I saved in the resources/ subdirectory of this repo. See also the [Jeong et al. paper](https://doi.org/10.1093/gbe/evy203), and [this GitHub issue](https://github.com/RobertsLab/resources/issues/834) where Yaamini & Steven discuss the optimal settings to use when running the script. 
+
+Usage of the script:
+  - ./methyl_island_sliding_window.pl <window size> <mCpG fraction> <step size> <sorted mCpG File>  
+  - window size - starting size of the methylation island window. _I will use 500 bp, as per Yaamini & Steven's analysis._  
+  - mCpG fraction - the minimum fraction of methylated CpGs required within the window to be accepted. _I will use 0.02, aka 2%_  
+  - step size - base pairs to extend an accepted window by (continues extending by the step size as long as the mCpG fraction is met). _I will use 50 bp_  
+  - mCpG File - input file with a list of all methylated CpGs in the genome, sorted by scaffold/chromosome and position 
+
+### Create input file - methylated loci 
+File needs to have chromosome and locus (aka start bp) 
+```{bash}
+awk '{print $1"\t"$2}' ../analyses/methylation-characteristics/all_methylated_5x.bed > ../analyses/methylation-characteristics/methylation-islands/all_methylated_5x-reduced.bed
+head ../analyses/methylation-characteristics/methylation-islands/all_methylated_5x-reduced.bed
+```
+
+### Run Methylation Island Analysis 
+
+```{bash}
+../analyses/methylation-characteristics/methylation-islands/methyl_island_sliding_window.pl 500 0.02 50 \ ../analyses/methylation-characteristics/methylation-islands/all_methylated_5x-reduced.bed > \
+../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50.tab
+```
+
+Resulting file structure and number of methylation islands 
+```{bash}
+# chr, star, end, number mCpG
+head ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50.tab
+# Number of methylation islands
+wc -l ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50.tab
+```
+### Filter by MI length (>500 bp) and include MI length in a new column
+```{bash}
+awk '{if ($3-$2 >= 500) { print $1"\t"$2"\t"$3"\t"$4"\t"$3-$2}}' ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50.tab \
+> ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+
+#preview resulting file, and count how many MI remain 
+head ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+wc -l ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+```
+
+### Count max & min mCpG in an island
+```{bash}
+awk 'NR==1{max = $4 + 0; next} {if ($4 > max) max = $4;} END {print max}' \
+../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+awk 'NR==1{min = $4 + 0; next} {if ($4 < min) min = $4;} END {print min}' \
+../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+```
+
+### Find average length of islands 
+```{bash}
+awk '{ total += $2 } END { print total/NR }' ../analyses/methylation-characteristics/methylation-islands/methylation-islands_500-02-50_filtered.tab
+```
+
+### Inspect results of Methylation Island analysis 
+
+```{r}
+meth.islands <- read_delim(file=here::here("analyses", "methylation-characteristics", "methylation-islands", "methylation-islands_500-02-50_filtered.tab"), delim = "\t", col_names=FALSE) %>% 
+  setNames(c("contig_island", "start_island", "end_island", "n_mCpG_island", "length_island"))
+
+hist(log(meth.islands$length_island))
+
+# See distribution of LONG methylated islands, count and save as .bed 
+hist(subset(meth.islands, length_island>1000)$length_island, breaks = 200)
+nrow(subset(meth.islands, length_island>1000))
+write_delim(subset(meth.islands, length_island>1000), here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-long.bed"), delim = '\t', col_names = F)
+
+# See distribution of SHORT methylated islands, count and save as .bed 
+hist(subset(meth.islands, length_island<1000)$length_island, breaks = 200)
+nrow(subset(meth.islands, length_island<1000))
+write_delim(subset(meth.islands, length_island<1000), here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-short.bed"), delim = '\t', col_names = F)
+
+# Save ALL methylated islands to .bed file (for gene enrichment analysis)
+write_delim(meth.islands, here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all.bed"), delim = '\t', col_names = F)
+```
+
+Find genes located within methylated islands 
+```{bash}
+# LONG methylated islands (MI)
+bedtools intersect -wb -a "../analyses/methylation-characteristics/methylation-islands/meth-island-long.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylation-islands/meth-island-long-genes.bed
+
+# SHORT methylated islands (MI)
+bedtools intersect -wb -a "../analyses/methylation-characteristics/methylation-islands/meth-island-short.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylation-islands/meth-island-short-genes.bed
+
+# ALL methylated islands (MI)
+bedtools intersect -wb -a "../analyses/methylation-characteristics/methylation-islands/meth-island-all.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-characteristics/methylation-islands/meth-island-all-genes.bed
+```
+
+## Read in genes within methylated island, split "Notes" column and extract Uniprot ID 
+
+```{r}
+# Copy Uniprot SPID of genes overlapping with LONG meth islands 
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-long-genes.bed"), delim = "\t", col_names = FALSE) %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+  mutate(SPID=str_extract(notes_gene, "SPID=(.*?);")) %>% 
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  select(SPID) %>%   na.omit() %>% as.vector() %>% write_clip()
+
+# Copy Uniprot SPID of genes overlapping with SHORT meth islands 
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-short-genes.bed"), delim = "\t", col_names = FALSE) %>% select(X14) %>%
+  mutate(SPID=str_extract(X14, "SPID=(.*?);")) %>% 
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  select(SPID) %>%   na.omit() %>% as.vector() %>% write_clip()
+
+# Copy Uniprot SPID of genes overlapping with ALL meth islands (my background list)
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE) %>% select(X14) %>%
+  mutate(SPID=str_extract(X14, "SPID=(.*?);")) %>% 
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  select(SPID) %>%   na.omit() %>% as.vector() %>% write_clip()
+
+# Question: many genes contain multiple "short" methylation islands. Do I include those genes multiple times in enrichment analysis? Or do I only include them once? 
+```
+
+###  Merge enriched GO terms with GO Slims 
+
+```{r}
+# Read in the GO Slim table  
+GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', col_names = FALSE) %>% 
+  setNames(c("GO", "term", "slim", "category")) %>% 
+  mutate_at(vars(category, slim), as.factor)
+
+GO.enriched.MI.short <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-short-enriched-BF.txt"), delim = '\t', col_names = TRUE) %>% 
+   separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
+   left_join(GOSlim, by=c("GO", "term")) #add slim 
+
+GO.enriched.MI.long <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-long-enriched-BF.txt"), delim = '\t', col_names = TRUE) %>% 
+   separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
+   left_join(GOSlim, by=c("GO", "term")) #add slim 
+```
+## Enrichment Analysis using GO MWU 
+
+### Make input files for GO_MWU 
+
+Save loci IDS and GO TERMS for All GENES that were identified that overlap with methylated islands (including +/- 2kb) 
+
+```{r}
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE) %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+  mutate(island_bps=paste(contig_island, start_island, end_island, sep="_")) %>%
+  mutate(GO=str_extract(notes_gene, "Ontology_term=(.*?);")) %>% 
+mutate(GO = str_replace(GO, pattern="Ontology_term=",replacement = "")) %>%
+  mutate(GO = str_replace(GO, pattern=";",replacement = "")) %>%  
+  mutate(GO = str_replace_all(GO, pattern=",",replacement = ";")) %>%
+  select(island_bps, GO) %>% drop_na(GO) %>%
+  write.table(here::here("analyses", "GO_MWU", "GO_MWU_GO-terms_meth-islands"),sep="\t",quote = F,row.names = F, col.names=F)
+```
+
+### Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for SHORT methylated islands 
+
+```{r}
+# Create a dataframe of "contig_bps" for all genes that overlap with methylation islands (aka the background list of genes), and add a column to indicate significance. Start by adding "1" to all.  
+go.mwu.islands.all <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE) %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+  mutate(island_bps=paste(contig_island, start_island, end_island, sep="_")) %>% 
+  select(island_bps) %>% add_column(sig = c(1)) 
+
+# Generate vector of genes that overlap with long methylated islands, then short islands 
+long <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-long-genes.bed"), delim = "\t", col_names = FALSE) %>% 
+  mutate(island_bps=paste(X1, X2, X3, sep="_")) %>% select(island_bps) %>% unlist() %>% as.vector()
+short <- read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-short-genes.bed"), delim = "\t", col_names = FALSE) %>% 
+  mutate(island_bps=paste(X1, X2, X3, sep="_")) %>% select(island_bps) %>% unlist() %>% as.vector()
+
+# Replace 0's in the significance column for any "contig_bps" that was a LONG meth island, then with a SHORT one 
+go.mwu.islands.long <- go.mwu.islands.all
+go.mwu.islands.long[which(go.mwu.islands.long$island_bps %in% long),]$sig <- 0
+
+go.mwu.islands.short <- go.mwu.islands.all
+go.mwu.islands.short[which(go.mwu.islands.short$island_bps %in% short),]$sig <- 0
+
+# Save significance files for GO MWU 
+write.csv(go.mwu.islands.long, here::here("analyses", "GO_MWU", "GO_MWU_signif_meth-islands-long"),quote = F,row.names = F)
+write.csv(go.mwu.islands.short, here::here("analyses", "GO_MWU", "GO_MWU_signif_meth-islands-short"),quote = F,row.names = F)
+```
+
+### To run GO MWU analysis, open the R file "GO_MWU-islands.R" and follow prompt. 
+
+### RESULTS of GO MWU analysis: No significantly enriched GO terms 
+
+
+
+
 
 
 
@@ -536,6 +727,7 @@ scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs
 
 
 # Boneyard 
+
 
 
 ### Summary STACKED barplot showing where methylated loci and all loci overlap with known gene features (and unknown)

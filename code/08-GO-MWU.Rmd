@@ -43,7 +43,7 @@ write.table(GO.MWU.GOterms.DML, here::here("analyses", "GO_MWU", "GO_MWU_GO-term
 ### Save loci IDS and SIGNIFICANCE (0=significant, 1=not significant) for All LOCI that were identified in the GENE feature file
 
 ```{r}
-# Creare a vector of "contig_locus"" for loci that are DMLs and located in gene bodies 
+# Creare a vector of "contig_locus" for loci that are DMLs and located in gene bodies 
 load(here::here("analyses/", "DMLs", "R-objects", "DML.features.df"))
 
 GO.MWU.DML.loci <- DML.features.df %>% filter(feature == "gene2kb") %>%
@@ -67,7 +67,7 @@ nrow(GO.MWU.DML.loci)
 
 # QUESTION - there are 255 DMLs located within genes, why do I only have 110 in this list? 
 
-write.table(GO.MWU.signif.DML, here::here("analyses", "GO_MWU", "GO_MWU_signif_DML"),sep="\t",quote = F,row.names = F, col.names=F)
+write.csv(GO.MWU.signif.DML, here::here("analyses", "GO_MWU", "GO_MWU_signif_DML"),quote = F,row.names = F)
 ```
 
 #### Size-associated loci (MACAU)
@@ -110,7 +110,7 @@ nrow(GO.MWU.signif.macau)
 table(GO.MWU.signif.macau$sig) 
 nrow(GO.MWU.MACAU.loci) 
 
-write.table(GO.MWU.signif.macau, here::here("analyses", "GO_MWU", "GO_MWU_signif_macau"),sep="\t",quote = F,row.names = F, col.names=F)
+write.csv(GO.MWU.signif.macau, here::here("analyses", "GO_MWU", "GO_MWU_signif_macau"),quote = F,row.names = F)
 ```
 
 ### Run GO_MWU  
