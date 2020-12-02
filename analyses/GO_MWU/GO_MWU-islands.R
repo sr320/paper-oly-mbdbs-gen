@@ -35,10 +35,10 @@ goDatabase="go.obo"
 goDivision="BP" # either MF, or BP, or CC
 
 # # Uncomment the next 4 lines to run SHORT methyaltion islands 
-# input="GO_MWU_signif_meth-islands-short"
-# goAnnotations="GO_MWU_GO-terms_meth-islands"
-# goDatabase="go.obo"
-# goDivision="BP" # either MF, or BP, or CC
+input="GO_MWU_signif_meth-islands-short"
+goAnnotations="GO_MWU_GO-terms_meth-islands"
+goDatabase="go.obo"
+goDivision="BP" # either MF, or BP, or CC
 
 
 source("gomwu.functions.R")

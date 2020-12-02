@@ -130,7 +130,7 @@ save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
 DMGresults_genes <- 
   
   # return only 1 row per gene+/-2kb 
-  results_2kbslop[!duplicated(results_2kbslop$gene), c("gene", "contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
+  results_2kbslop[!duplicated(f$gene), c("gene", "contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
   
   # Split giant gene "Notes" column into separate columns 
   mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
@@ -270,9 +270,9 @@ GO.enriched.DMG <- read_delim(here::here("analyses", "DMGs", "Enriched-BioFunc-D
 
 ```{r}
 # Code to look at data for a gene 
-# results_2kbslop %>%
-# left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
-#   filter(SPID=="Q6ZQQ6") %>% View()
+results_2kbslop %>%
+left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
+  filter(SPID=="Q7TMY8") %>% View()
 
 # For all DMGs, calculate mean and sd percent methylation across samples by population 
 results_2kbslop %>% 
@@ -283,8 +283,8 @@ results_2kbslop %>%
   #add uniprot IDs to gene dataframe 
   left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
 
-# use this to call specific genes using Uniprot ID 
-    filter(SPID=="Q8WXG9") %>%
+# use this to call specific genes using Uniprot ID
+    filter(SPID=="Q04721") %>%
 
 # generate bar plot of mean % methylation +SD by population 
   ggplot(aes(x = population, y = mean_percMeth, fill = population, 
@@ -294,8 +294,11 @@ results_2kbslop %>%
       geom_pointrange(aes(ymin=mean_percMeth,
                         ymax=mean_percMeth+sd_percMeth)) +
       geom_text(size=3, vjust=-0.5, hjust=1.25) +
-      theme_light() + ggtitle("Add gene name here") +
-    scale_fill_manual(values=c("firebrick3","dodgerblue3"))
+      theme_light() + 
+    scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
+  
+  # some genes hit multiple loci 
+  facet_wrap(~gene) 
 ```
 
 
