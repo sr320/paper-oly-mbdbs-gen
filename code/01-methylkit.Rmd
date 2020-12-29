@@ -211,6 +211,12 @@ mydiff.all <-  mutate(myDiff, start = start -1, end = end + 1) %>% dplyr::select
   mutate_if(is.numeric, as.integer)
 write_delim(mydiff.all, "../analyses/DMLs/mydiff-all.bed",  delim = '\t', col_names = TRUE)
 save(mydiff.all, file="../analyses/DMLs/R-objects/mydiff.all")
+
+# Save DML bed files with hypermethylated loci in each population 
+#in the df "dml25", (-) values = hypermethylated in HC, and (+) = hypermethylated in SS
+
+write_delim(dml25 %>%filter(meth.diff<0), "../analyses/DMLs/dml25-hypermethHC.bed",  delim = '\t', col_names = TRUE) 
+write_delim(dml25 %>%filter(meth.diff>0), "../analyses/DMLs/dml25-hypermethSS.bed",  delim = '\t', col_names = TRUE) 
 ```
 
 ### This is the number of loci that are differentially methylated among populations (DMLs)
@@ -660,6 +666,22 @@ readr::write_delim(meth_filter_reshaped, here::here("analyses", "methylation-fil
 save(meth_filter_reshaped, file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
 ```
 
+## Check out overall distribution of filtered methylation data by population 
+Any trends? Looks like HC has more instances of ~100% methylation with a lower second peak at around ~92%. Compared to SS that has a lower peak at ~100% and a second around 95%. 
+
+```{r}
+ggplotly(meth_filter_reshaped %>% 
+  ggplot(aes(x=percMeth, fill=population)) +
+  geom_density(alpha=0.2))
+
+ggplotly(meth_filter_reshaped %>% 
+  ggplot(aes(x=population, y=percMeth, fill=population)) +
+  geom_violin(alpha=0.2))
+
+nrow(meth_filter_reshaped) # number of loci
+```
+
+
 ### Calculations of % methylation by population 
 
 ```{r}
@@ -672,12 +694,13 @@ DML.ratios <- meth_filter_reshaped %>%
   mutate(chr_start=paste(chr, start, sep="_")) %>%
   filter(chr_start %in% dml25_counts_unique$chr_start) %>% 
   group_by(population, chr, start) %>%
-  summarise(mean_percentMeth = mean(percMeth, na.rm = TRUE)) %>% #could instead use ... allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+  summarise(median_percentMeth = median(percMeth, na.rm = TRUE)) %>% #mean_percentMeth = mean(percMeth, na.rm = TRUE), 
   dcast(chr + start ~ population) %>% 
   mutate(ratio_HC.SS = HC/SS,  #in this ratio column, values <1 = HC hypomethylated, values >1 = SS hypomethylated 
-         chr_start=paste(chr, start, sep="_")) 
+         chr_start=paste(chr, start, sep="_"),
+         diff_HC.SS = HC-SS)   #this is the difference between HC & SS (HC - SS) 
 
-nrow(DML.ratios)==nrow(dml25_counts_unique) #confirm same # loci; should=0
+nrow(DML.ratios)==nrow(dml25_counts_unique) #confirm same # loci; should=TRUE
 save(DML.ratios, file="../analyses/DMLs/R-objects/DML.ratios")
 
 # For all loci, calculate mean and sd percent methylation across samples by population 
@@ -690,6 +713,58 @@ DML.calcs <- meth_filter_reshaped %>%
   filter(chr %in% c(DML.ratios$chr) & 
            start %in% c(DML.ratios$start))
 ```
+
+Divergent Bar plot of DMLs 
+
+```{r}
+ggplotly(
+  DML.ratios %>% 
+           mutate(hypermethylated=ifelse(diff_HC.SS>0, "HC", "SS")) %>%
+  ggplot(aes(x = chr_start, y = diff_HC.SS, fill=hypermethylated))+
+  geom_bar(stat = "identity") +
+    scale_x_discrete(limits=(DML.ratios[order(DML.ratios$diff_HC.SS),]$chr_start)) + 
+  coord_flip() + 
+    theme(axis.title.x=element_blank(),
+          axis.title.y=element_blank(),
+        axis.text.y=element_blank()) +
+    ggtitle("DMLs, showing % methylation difference among populations"))
+
+# For DMLs, any difference? nah.  
+ggplotly(
+  DML.ratios %>% 
+pivot_longer(cols = c(HC, SS),
+   names_to = "population",
+   values_to = "mean_meth") %>%
+  ggplot(aes(x=population, y=mean_meth, fill=population)) +
+  geom_violin(alpha=0.2) + geom_boxplot(alpha=0.4))
+```
+
+# For ALL loci, calculate difference between mean % methylation in Hood Canal : South Sound for divergent bar plot 
+
+```{r}
+#Calculate ratio between mean % methylation in Hood Canal : South Sound 
+all.loci.ratios <- meth_filter_reshaped %>% 
+  mutate(chr_start=paste(chr, start, sep="_")) %>%
+  group_by(population, chr, start) %>%
+  summarise(mean_percentMeth = mean(percMeth, na.rm = TRUE)) %>% #could instead use ... allCs_percent = 100*(sum(numCs)/sum(coverage)), 
+  dcast(chr + start ~ population) %>% 
+  mutate(ratio_HC.SS = HC/SS,  #in this ratio column, values <1 = HC hypomethylated, values >1 = SS hypomethylated 
+         chr_start=paste(chr, start, sep="_"),
+         diff_HC.SS = HC-SS)   #this is the difference between HC & SS (HC - SS) 
+
+# Any differences in global methylatin among the populations? Here are summarys tats of % methylation across all shared loci: No. 
+summary(all.loci.ratios$HC) 
+summary(all.loci.ratios$SS)
+
+# Do %methylation (all loci) distributions differ among population? No. 
+ggplotly(all.loci.ratios %>% 
+pivot_longer(cols = c(HC, SS),
+   names_to = "population",
+   values_to = "mean_meth") %>%
+  ggplot(aes(x=mean_meth, fill=population)) +
+  geom_density(alpha=0.2))
+```
+
 
 ### Heatmap
 
@@ -745,6 +820,7 @@ for (i in 1:3) {
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
 }
 ```
+
 
 ## Generate list of methylated loci that were sequenced/found in each population separately, and for all populations combined 
 

@@ -531,6 +531,34 @@ scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs
     labels=c(`1 isoform`="no variants\n(1.84)", `2-5 isoforms`="2-5 isoforms\n(2.14)", `6-10 isoforms`="6-10 isoforms\n(2.77)", `11-20 isoforms`="11-20 isoforms\n(3.18)", `21-70 isoforms`="21-70 isoforms\n(3.5)"))
 ```
 
+### Plot % of CpGs in a gene methylated, by gene length. Are longer genes more methylated? 
+Wang et al. 2014 found a positive association between gene length and methylation rate. Do I? Could that relate to the isoform relationship?
+
+NOTE: coverage is probably an issue here (longer genes less likely to be fully sequenced). Need to figure out how to do this in MethylKit  
+
+```{r}
+library(data.table)
+
+left_join(
+  fread(here::here("analyses", "methylation-characteristics", "methylated-gene2kb.bed"), sep = "\t", select=c(5,8,9)) %>% 
+  count(V5, V8, V9) %>%  setNames(c("contig_gene", "start_gene", "end_gene", "n_mCpG")),
+  
+  fread(here::here("analyses", "methylation-characteristics", "CpGs-gene2kb.bed"), select=c(10,13,14)) %>% 
+  count(V10, V13, V14) %>%  setNames(c("contig_gene", "start_gene", "end_gene", "n_CpG")),
+  
+  by=c("contig_gene", "start_gene", "end_gene")) %>%
+  
+  mutate(length_gene=end_gene-start_gene, perc_meth=100*(n_mCpG/n_CpG)) %>%
+  na.omit(perc_meth) %>%
+  ggplot(aes(x=length_gene, y=perc_meth)) + geom_point() +
+  geom_smooth(method="lm")
+
+```
+
+
+
+
+
 ## Methylation islands functional analysis 
 
 Here I will find methylation islands, measure their length, then bin them into short islands & long islands, identify genes that overlap with the islands, then see whether short/long islands are enriched for certain biological functions or molecular processes. I will use [Yaamini's script](https://github.com/fish546-2018/yaamini-virginica/blob/master/notebooks/2019-03-18-Characterizing-CpG-Methylation.ipynb), and the script from [Jeong et al. 2018 code](https://github.com/soojinyilab/Methylation-Islands/raw/master/methyl_island_sliding_window.pl), which I saved in the resources/ subdirectory of this repo. See also the [Jeong et al. paper](https://doi.org/10.1093/gbe/evy203), and [this GitHub issue](https://github.com/RobertsLab/resources/issues/834) where Yaamini & Steven discuss the optimal settings to use when running the script. 
@@ -592,10 +620,35 @@ meth.islands <- read_delim(file=here::here("analyses", "methylation-characterist
 
 # Save ALL methylated islands to .bed file (for gene enrichment analysis)
 write_delim(meth.islands, here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all.bed"), delim = '\t', col_names = F)
-
-# Check out length distribution 
-hist(log(meth.islands$length_island))
 ```
+#### How shall we divide "short" vs. "long" methylated islands? 
+
+```{r}
+# Check out length distribution 
+ggplotly(ggplot(meth.islands, aes(x=length_island)) + 
+  geom_histogram(binwidth=100, color="black", fill="white") + 
+  scale_x_continuous(breaks= seq(0,max(meth.islands$length_island), 2000)))
+# Distribution suggests that a cutoff of somewhere between ~1000 bp and 1400 bp  
+```
+Consider dividing methlyation islands based on whether they are outliers 
+
+```{r}
+# Since most islands are short, what if I were to designate all the outliers as "long"? 
+# Identify outliers 
+out <- boxplot.stats(meth.islands$length_island)$out
+out_ind <- which(meth.islands$length_island %in% c(out))
+
+# These are all the outliers, aka "long" methylated islands 
+meth.islands[out_ind,] %>% select(length_island) %>% summary()
+meth.islands[out_ind,]$length_island %>% hist()
+
+# These are all the non-outliers, aka "short" methylated islands 
+meth.islands[-out_ind,] %>% select(length_island) %>% summary()
+meth.islands[-out_ind,]$length_island %>% hist()
+
+# Outlier cutoff is 1770 bp 
+```
+
 
 #### See distribution of LONG methylated islands, count and save as .bed 
 ```{r}
@@ -773,14 +826,81 @@ write.csv(go.mwu.islands.short, here::here("analyses", "GO_MWU", "GO_MWU_signif_
 
 ### RESULTS of GO MWU analysis: 1 significant GO term in the SHORT methylation islands = **cell adhesion (p-adjusted=0.001192251)**
 
+### What about GO enrichment using this package? https://github.com/asishallab/goEnrichment
+https://www.rdocumentation.org/packages/goseq/versions/1.24.0/topics/goseq
+
+To Do 
+- Look a relationship between gene length and methylation rate. % of all CpGs that are methylated in a gene on & axis, and the gene length on X axis by 1kb (boxplots)   
+- Look at distribution of long and short methylation islands by gene feature 
+- See 
+
+### Look for stress-response genes overlapping with MI, then see if those islands are small or large.  
+I need an unbiased/objectve way of investigating the relationship between island length and function. Here, I find all stress-response genes that contain meth islands, then find the median/average size of those islands, and size of those genes. Do those sizes differ from the rest of the islands/genes? Are there other GO terms that represent "housekeeping" functions? 
+
+```{r}
+# Copy Uniprot SPID of genes overlapping with ALL meth islands (my background list)
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE)  %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+    mutate(Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+         SPID=str_extract(notes_gene, "SPID=(.*?);")) %>% 
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  mutate(Ontology_term=str_remove(Ontology_term, "Ontology_term=")) %>% mutate(Ontology_term=str_remove(Ontology_term, ";")) %>%  
+  mutate(GO = strsplit(as.character(Ontology_term), ",")) %>% 
+    unnest(GO) %>% left_join(GOSlim, by=c("GO")) %>% filter(grepl("stress", slim)) %>% select(length_island) %>%
+  summary()
+
+GOSlim %>% select(slim) %>% distinct()
+
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE)  %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+    mutate(Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
+         SPID=str_extract(notes_gene, "SPID=(.*?);")) %>% 
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  mutate(Ontology_term=str_remove(Ontology_term, "Ontology_term=")) %>% mutate(Ontology_term=str_remove(Ontology_term, ";")) %>%  
+  mutate(GO = strsplit(as.character(Ontology_term), ",")) %>% 
+    unnest(GO) %>% left_join(GOSlim, by=c("GO")) %>% filter(!grepl("stress", slim)) %>% select(length_island) %>%
+  summary()
+```
+Length of islands overlapping with genes with STRESS RESPONSE slim term: 
+ length_island   
+ Min.   : 504.0  
+ 1st Qu.: 588.0  
+ Median : 714.5  
+ Mean   :1018.2  
+ 3rd Qu.: 925.2  
+ Max.   :6472.0  
+
+Length of islands overlapping with genes with non-stress response slim terms: 
+ length_island  
+ Min.   :  500  
+ 1st Qu.:  598  
+ Median :  769  
+ Mean   : 1106  
+ 3rd Qu.: 1168  
+ Max.   :32076
+
+Interesting - the max size of islands is much smaller in stress-response genes. Also, the mean length is ~1000 bp in stress repsonse, while it's 1100 in the non-stress response. 
+NEXT: see if I can get a list of go terms that are "housekeeping", or a broader 'inducible' set of GO terms. 
 
 
+### Look for regions of genome where methylation islands cluster.  
+Can I do that with the existing genome structure? Maybe only look at the largest genes?  Largest contigs? 
 
+Decision - I can't explore places in the genome where methylation islands cluster, since our O. lurida genome assembly is so coarse - we don't have chromosomes, let alone scaffolds. Do not pursue. 
 
+```{r}
+# Copy Uniprot SPID of genes overlapping with ALL meth islands (my background list)
+read_delim(here::here("analyses", "methylation-characteristics", "methylation-islands", "meth-island-all-genes.bed"), delim = "\t", col_names = FALSE)  %>% 
+  setNames(c(colnames(meth.islands), 
+             "contig_gene", "source", "feature", "start_gene", "end_gene", 
+             "unknown1", "strand", "unknown2", "notes_gene")) %>% 
+  mutate(length_gene=end_gene-start_gene) %>% filter(length_gene>50000) %>% select(contig_gene) %>% distinct()
 
-
-
-
+```
 
 
 # Boneyard 

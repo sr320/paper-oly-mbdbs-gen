@@ -119,18 +119,6 @@ bedtools intersect -wb -a "../analyses/macau/macau-all-loci.bed" -b "../genome-f
 bedtools intersect -v -a "../analyses/macau/macau-all-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" >  ../analyses/macau/AllLociMACAU-unknown.bed
 ```
 
-## 3. Population-specific loci that are highly- and lowly-methylated overlapping with genes 
-
-```{bash}
-bedtools intersect -wb -a "../analyses/methylation-filtered/HC-highmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/HC-highmeth-gene.bed
-
-bedtools intersect -wb -a "../analyses/methylation-filtered/HC-lowmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/HC-lowmeth-gene.bed
-
-bedtools intersect -wb -a "../analyses/methylation-filtered/SS-highmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/SS-highmeth-gene.bed
-
-bedtools intersect -wb -a "../analyses/methylation-filtered/SS-lowmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.gff" >  ../analyses/methylation-filtered/SS-lowmeth-gene.bed
-```
-
 # Summarizing Annotations 
 
 ## 1. DMLs - where are differentially methylated loci located? 
@@ -423,14 +411,19 @@ allLociDML.features[["allLociDML.gene2kb"]] %>%
 
 ## Enriched biological function, DMLs 
 
-| Category         | Term                                          | Count | %     | PValue  | Genes                                                                                          | List Total | Pop Hits | Pop Total | Fold Enrichment | Bonferroni   | Benjamini | FDR |
-|------------------|-----------------------------------------------|-------|-------|---------|------------------------------------------------------------------------------------------------|------------|----------|-----------|-----------------|--------------|-----------|-----|
-| GOTERM_BP_DIRECT | GO:0045214~sarcomere organization             | 4     | 2.817 | 0.00989 | Q5DTJ9, G4SLH0, Q2V2M9, Q8WZ42                                                                 | 122        | 8        | 1984      | 8.13            | 0.999        | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0051693~actin filament capping             | 3     | 2.113 | 0.0106  | P13395, Q13813, P16546                                                                         | 122        | 3        | 1984      | 16.26           | 0.999        | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0006513~protein monoubiquitination         | 4     | 2.817 | 0.0142  | Q80Z37, Q7Z6Z7, Q7TMY8, E1B932                                                                 | 122        | 9        | 1984      | 7.23            | 0.9999       | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0006284~base-excision repair               | 4     | 2.817 | 0.0142  | Q13569, Q7Z6Z7, Q9U221, Q7TMY8                                                                 | 122        | 9        | 1984      | 7.23            | 0.9999       | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0007275~multicellular organism development | 12    | 8.451 | 0.0171  | Q8R508, Q62513, Q8BNA6, A0JMF8, Q58EK5, Q60636, Q0V989, Q13535, Q6ZQ88, Q2QCI8, Q9P203, Q80TZ9 | 122        | 89       | 1984      | 2.19            | 0.99999      | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0010842~retina layer formation             | 3     | 2.113 | 0.0327  | Q8R508, Q8BNA6, P28828                                                                         | 122        | 5        | 1984      | 9.76            | 0.9999999999 | 1.0       | 1.0 |
+| Category         | Term                                                | Count | %    | PValue | Genes                                                                                          | List Total | Pop Hits | Pop Total | Fold Enrichment | Bonferroni | Benjamini | FDR |
+|------------------|-----------------------------------------------------|-------|------|--------|------------------------------------------------------------------------------------------------|------------|----------|-----------|-----------------|------------|-----------|-----|
+| GOTERM_BP_DIRECT | GO:0045214~sarcomere organization                   | 4     | 2.82 | 0.0099 | Q5DTJ9, G4SLH0, Q2V2M9, Q8WZ42                                                                 | 122        | 8        | 1984      | 8.13            | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0051693~actin filament capping                   | 3     | 2.11 | 0.011  | P13395, Q13813, P16546                                                                         | 122        | 3        | 1984      | 16.26           | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0006513~protein monoubiquitination               | 4     | 2.82 | 0.014  | Q80Z37, Q7Z6Z7, Q7TMY8, E1B932                                                                 | 122        | 9        | 1984      | 7.23            | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0006284~base-excision repair                     | 4     | 2.82 | 0.014  | Q13569, Q7Z6Z7, Q9U221, Q7TMY8                                                                 | 122        | 9        | 1984      | 7.23            | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0007275~multicellular organism development       | 12    | 8.45 | 0.017  | Q8R508, Q62513, Q8BNA6, A0JMF8, Q58EK5, Q60636, Q0V989, Q13535, Q6ZQ88, Q2QCI8, Q9P203, Q80TZ9 | 122        | 89       | 1984      | 2.19            | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0010842~retina layer formation                   | 3     | 2.11 | 0.033  | Q8R508, Q8BNA6, P28828                                                                         | 122        | 5        | 1984      | 9.76            | 0.999      | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0008104~protein localization                     | 4     | 2.82 | 0.069  | Q9W4E2, P0C5Y8, Q8CJ40, P29503                                                                 | 122        | 16       | 1984      | 4.066           | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0042493~response to drug                         | 5     | 3.52 | 0.069  | O95477, P28828, P08183, Q13535, Q99758                                                         | 122        | 26       | 1984      | 3.13            | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0008152~metabolic process                        | 5     | 3.52 | 0.087  | Q66PG2, P13086, Q9U221, P58058, O17732                                                         | 122        | 28       | 1984      | 2.90            | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0006974~cellular response to DNA damage stimulus | 8     | 5.63 | 0.091  | Q9CPR8, Q80Z37, Q13535, Q9U221, Q7TMY8, F1MRW8, Q2NL57, Q8IW19                                 | 122        | 64       | 1984      | 2.033           | 1.0        | 1.0       | 1.0 |
+| GOTERM_BP_DIRECT | GO:0034220~ion transmembrane transport              | 4     | 2.82 | 0.092  | Q6Q760, Q9HCE9, Q18297, Q9P2D8                                                                 | 122        | 18       | 1984      | 3.61            | 1.0        | 1.0       | 1.0 |
 
 ### Size Associated Soci (SALs, identified via MACAU) 
 
@@ -472,7 +465,7 @@ GO.enriched.DML <- read_delim(here::here("analyses", "DMLs", "Enriched-BioFunc-D
    separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
    left_join(GOSlim, by=c("GO", "term")) #add slim 
 
-GO.enriched.DML %>% select(GO, term, slim, FDR)
+GO.enriched.DML %>% select(GO, term, slim, FDR) %>% View()
 
 GO.enriched.SAL <- read_delim(here::here("analyses", "macau", "EnrichBioFunc-DAVID-macau.txt"), delim = '\t', col_names = TRUE) %>% 
    separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
@@ -480,6 +473,72 @@ GO.enriched.SAL <- read_delim(here::here("analyses", "macau", "EnrichBioFunc-DAV
 
 GO.enriched.SAL %>% select(GO, slim, FDR)
 ```
+Extract GO terms for SAL genes and merge with GO SLIM 
+
+```{r}
+macau.features[["macau.gene2kb"]] %>%
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>% 
+  mutate(Ontology_term=str_remove(Ontology_term, "Ontology_term=")) %>% mutate(Ontology_term=str_remove(Ontology_term, ";")) %>%  
+  select(SPID, Ontology_term) %>% na.omit() %>% mutate(GO = strsplit(as.character(Ontology_term), ",")) %>% 
+    unnest(GO) %>% select(SPID, GO) %>% left_join(GOSlim, by=c("GO")) %>% arrange(slim)
+```
+### Plot SALS by oyster size 
+
+```{r, warning=FALSE, message=FALSE}
+load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+load(file="../analyses/macau/size.macau")
+
+# Plot all SAL % meth against oyster size in one plot 
+meth_filter_reshaped %>% 
+      filter(chr %in% macau.features[["macau.gene2kb"]]$contig.macau &
+           start %in% macau.features[["macau.gene2kb"]]$start.macau) %>%
+  mutate(sample=as.integer(sample)) %>%
+  left_join(size.macau,  by = c("sample" = "y.MBD.FILENAME")) %>%
+ggplot(aes(x=y.Length, y=percMeth)) +
+  geom_point() + theme_minimal() + geom_smooth(method="lm")  #+
+  facet_wrap(~chr+start)
+
+# Separate scatter plots for SAL % meth ~ oyster size 
+temp <-  meth_filter_reshaped %>% 
+      filter(chr %in% macau.features[["macau.gene2kb"]]$contig.macau &
+           start %in% macau.features[["macau.gene2kb"]]$start.macau) %>%
+  mutate(sample=as.integer(sample)) %>%
+  left_join(size.macau,  by = c("sample" = "y.MBD.FILENAME")) %>%
+  left_join(macau.features[["macau.gene2kb"]][c("contig.macau", "start.macau", "SPID", "Note")], 
+            c("chr" = "contig.macau", "start" = "start.macau")) %>%
+mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%
+  mutate(Note=str_remove(Note, "Note=")) %>% mutate(Note=gsub("(.*)\\(.*", "\\1", Note)) %>% 
+   mutate(Note=str_remove(Note, ";"))
+
+SAL.loci <- temp %>% dplyr::select(chr, start) %>% distinct()
+
+for (i in 1:nrow(SAL.loci)) {
+  print(ggplot(data= temp %>% filter(chr==SAL.loci[i,1]), aes(x=`y.Length`, y=percMeth), color=population) +
+  theme_minimal(base_size = 15) + geom_smooth(method="gam", col="gray70") + geom_point(size=2.8, aes(col=population)) + 
+    scale_color_manual(values=c("firebrick3", "dodgerblue3")) +
+  ggtitle(label = paste("SAL: ", SAL.loci[i,1], "-", SAL.loci[i,2], sep=""),
+              subtitle = paste("Gene: ", unique(temp[temp$chr==SAL.loci[i,1], "SPID"]), " - ",
+            unique(temp[temp$chr==SAL.loci[i,1], "Note"]), sep="")) +
+    xlab("Oyster length (mm)") + ylab("% Methylated") + theme(legend.position = c(0.9, 0.15)) + 
+    labs(color = "Population") +
+    guides(colour = guide_legend(override.aes = list(size=4)))
+  )
+}  
+
+```
+
+```{r}
+temp %>% filter(SPID=="Q23551")
+temp %>% str()
+
+ggplotly(ggplot(data= temp %>% filter(SPID=="Q23551"), aes(x=y.Length, y=percMeth), color=population) +
+  geom_point() + theme_minimal() + geom_smooth(method="lm") + geom_point(aes(col=population, label=sample)))
+```
+
+
+
+
+
 
 ## Extract GO terms - (what is this for, exactly?)
 
@@ -571,14 +630,106 @@ read_delim(here::here("analyses", "methylation-filtered", "DAVID_enriched-methyl
   write.table(here::here("analyses", "methylation-filtered", "GO-terms_enriched-methylated-genes-SS.txt"), col.names = FALSE, row.names = FALSE, quote = FALSE)
 
 ```
+### Annotate DMLs separately by those that are hypermethylated in each population 
+
+```{bash}
+bedtools intersect -wb -a "../analyses/DMLs/dml25-hypermethSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/DMLs/DML-hypermethSS.gene2kb.bed
+bedtools intersect -wb -a "../analyses/DMLs/dml25-hypermethHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/DMLs/DML-hypermethHC.gene2kb.bed
+```
+
+### DAVID GO enrichment with DMLs that are hypermeth in SS and HC, respectively 
+
+```{r}
+# Create DF with DMLs that are hypermethylated in SS that are located in annotated gene regions  
+DML.hyperSS <- read_delim(here::here("analyses","DMLs", "DML-hypermethSS.gene2kb.bed"), delim = '\t', col_names = FALSE) %>% as_tibble() %>%
+mutate(Name=str_extract(X13, "Name=(.*?);"),
+       SPID=str_extract(X13, "SPID=(.*?);")) %>%
+  #remove extraneous info from Olur gene ID and Uniprot species ID ("SPID")
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";"))
+
+# Copy Uniprot IDs for Hypermethylated DMLs in SS to clipboard 
+DML.hyperSS %>% 
+  dplyr::select(SPID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard    
+```
+
+### Enriched Biological Functinos in the SS hypermethylated DMLs
+
+| Term | Count | % | PValue | Genes | List Total | Pop Hits | Pop Total | Fold Enrichment | Benjamini | FDR |
+|-|-|-|-|-|-|-|-|-|-|-|
+| GO:0045214~sarcomere organization | 3 | 4.0 | 0.025 | Q5DTJ9, Q2V2M9, Q8WZ42 | 64 | 8 | 1984 | 11.63 | 1.0 | 1.0 |
+| GO:0006284~base-excision repair | 3 | 4.0 | 0.031 | Q7Z6Z7, Q9U221, Q7TMY8 | 64 | 9 | 1984 | 10.33 | 1.0 | 1.0 |
+| GO:0006513~protein monoubiquitination | 3 | 4.0 | 0.031 | Q7Z6Z7, Q7TMY8, E1B932 | 64 | 9 | 1984 | 10.33 | 1.0 | 1.0 |
+| GO:0030837~negative regulation of actin filament polymerization | 2 | 2.67 | 0.063 | Q6NN85, Q2V2M9 | 64 | 2 | 1984 | 31.0 | 1.0 | 1.0 |
+| GO:0051693~actin filament capping | 2 | 2.67 | 0.09 | P13395, Q13813 | 64 | 3 | 1984 | 20.67 | 1.0 | 1.0 |
+| GO:0055003~cardiac myofibril assembly | 2 | 2.67 | 0.09 | Q2V2M9, Q8WZ42 | 64 | 3 | 1984 | 20.67 | 1.0 | 1.0 |
+
+```{r}
+# Now do the same for the HC hypermethylated DMLs 
+DML.hyperHC <- read_delim(here::here("analyses","DMLs", "DML-hypermethHC.gene2kb.bed"), delim = '\t', col_names = FALSE) %>% as_tibble() %>%
+mutate(Name=str_extract(X13, "Name=(.*?);"),
+       SPID=str_extract(X13, "SPID=(.*?);")) %>%
+  #remove extraneous info from Olur gene ID and Uniprot species ID ("SPID")
+  mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";"))
+
+  # Copy Uniprot IDs for Hypermethylated DMLs in SS to clipboard 
+DML.hyperHC %>% 
+  dplyr::select(SPID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard    
+```
+
+### Enriched Biological Functions in the HC hypermethylated DMLs 
+
+| Term | Count | % | PValue | Genes | List Total | Pop Hits | Pop Total | Fold Enrichment | FDR |
+|-|-|-|-|-|-|-|-|-|-|
+| GO:0007275~multicellular organism development | 8 | 10.53 | 0.024 | Q8R508, Q62513, Q8BNA6, A0JMF8, Q60636, Q13535, Q2QCI8, Q80TZ9 | 66 | 89 | 1984 | 2.70 | 1.0 |
+| GO:0006974~cellular response to DNA damage stimulus | 6 | 7.89 | 0.056 | Q80Z37, Q13535, Q7TMY8, F1MRW8, Q2NL57, Q8IW19 | 66 | 64 | 1984 | 2.82 | 1.0 |
+| GO:2000171~negative regulation of dendrite development | 2 | 2.63 | 0.064 | Q8R508, Q8BNA6 | 66 | 2 | 1984 | 30.06 | 1.0 |
+| GO:0010629~negative regulation of gene expression | 3 | 3.95 | 0.065 | Q62655, Q60636, P08941 | 66 | 13 | 1984 | 6.94 | 1.0 |
+| GO:0006816~calcium ion transport | 3 | 3.95 | 0.065 | Q6Q760, O08852, Q24270 | 66 | 13 | 1984 | 6.94 | 1.0 |
+| GO:0008104~protein localization | 3 | 3.95 | 0.094 | Q9W4E2, P0C5Y8, Q8CJ40 | 66 | 16 | 1984 | 5.64 | 1.0 |
+| GO:0051693~actin filament capping | 2 | 2.63 | 0.095 | P13395, P16546 | 66 | 3 | 1984 | 20.04 | 1.0 |
+| GO:0001892~embryonic placenta development | 2 | 2.63 | 0.095 | O08852, Q60636 | 66 | 3 | 1984 | 20.04 | 1.0 |
+
+```{r}
+### Copy Uniprot accession numbers for all loci assessed for DMLs that are annotated 
+allLociDML.features[["allLociDML.gene2kb"]] %>%
+  mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  dplyr::select(SPID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
+  write_clip() #copy to clipboard      
+```
 
 
 
 
 
 
-# BONEYARD
 
+
+
+
+
+
+
+
+
+
+## Supplemental materials 
+
+## Population-specific loci that are highly- and lowly-methylated overlapping with genes+2kbslop
+
+```{bash}
+bedtools intersect -wb -a "../analyses/methylation-filtered/HC-highmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-filtered/HC-highmeth-gene.bed
+
+bedtools intersect -wb -a "../analyses/methylation-filtered/HC-lowmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-filtered/HC-lowmeth-gene.bed
+
+bedtools intersect -wb -a "../analyses/methylation-filtered/SS-highmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-filtered/SS-highmeth-gene.bed
+
+bedtools intersect -wb -a "../analyses/methylation-filtered/SS-lowmeth-loci.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation-filtered/SS-lowmeth-gene.bed
+```
 
 ### Compare all highly- and lowly-methylated genes in HC samples to all genes genome, then all genes in SS to all genes in genome. 
 
@@ -591,53 +742,49 @@ read_delim(here::here("analyses", "methylation-filtered", "DAVID_enriched-methyl
 ```{r}
 # List of background genes for DAVID  
 # Copy UniprotIDs for all genes in O. lurida genome- this is our background list for DAVID Enrichment Analyses 
-Olurida_gene_uniprot %>% 
-  select(uniprotID) %>% na.omit() %>% as.vector() %>%
-  write_clip()
+read_delim(here::here("genome-features", "Olurida_v081-20190709.gene.gff"), delim = '\t', col_names = FALSE, skip = 1) %>%
+  mutate(SPID=str_extract(X9, "SPID=(.*?);")) %>% mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #extracr UniprotID
+  select(SPID) %>% na.omit() %>% as.vector() %>% write_clip() #copy Uniprot IDs to clipboard to paste into DAVID 
 
 # -------------- 
 
 # Highly methylated loci (mean meth >=75%), HC 
 # Copy UniprotIDs for all genes that contain 5 or greater highly methylated loci in the Hood Canal 
 read_delim(here::here("analyses", "methylation-filtered", "HC-highmeth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
-mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
-  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  mutate(SPID=str_extract(X12, "SPID=(.*?);")) %>% mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  select(SPID) %>% count(SPID) %>%  #Select only gene ID column, count number of methylated loci in each gene 
   filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
-  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
-  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+  select(SPID) %>% na.omit() %>% as.vector() %>% write_clip() #copy Uniprot IDs to clipboard to paste into DAVID 
+
 
 # -------------- 
 
 # Lowly methylated loci (mean meth <= 25%), HC 
 # Copy UniprotIDs for all genes that contain 1 or more lowly methylated loci in the Hood Canal 
 read_delim(here::here("analyses", "methylation-filtered", "HC-lowmeth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
-mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
-  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
-  #filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
-  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
-  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+  mutate(SPID=str_extract(X12, "SPID=(.*?);")) %>% mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  select(SPID) %>% count(SPID) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  select(SPID) %>% na.omit() %>% as.vector() %>% write_clip() #copy Uniprot IDs to clipboard to paste into DAVID 
 
 # -------------- 
 
 # Highly methylated loci (mean meth >=75%), SS 
 # Copy UniprotIDs for all genes that contain 5 or greater methylated loci in the South Sound 
 read_delim(here::here("analyses", "methylation-filtered", "SS-highmeth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
-mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
-  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  mutate(SPID=str_extract(X12, "SPID=(.*?);")) %>% mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  select(SPID) %>% count(SPID) %>%  #Select only gene ID column, count number of methylated loci in each gene 
   filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
-  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
-  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+  select(SPID) %>% na.omit() %>% as.vector() %>% write_clip() #copy Uniprot IDs to clipboard to paste into DAVID 
 
 # -------------- 
 
 # Lowly methylated loci (mean meth <=25%), SS 
 # Copy UniprotIDs for all genes that contain 1 or more methylated loci in the South Sound 
 read_delim(here::here("analyses", "methylation-filtered", "SS-lowmeth-gene.bed"), delim = '\t', col_names = FALSE) %>% #read in list of methylated loci in HC population that fall within genes
-mutate(Gene=str_extract(X12, "ID=(.*?);")) %>% mutate(Gene=str_remove(Gene, "ID=")) %>% mutate(Gene=str_remove(Gene, ";")) %>% #extract only O. lurida gene ID 
-  select(Gene) %>% count(Gene) %>%  #Select only gene ID column, count number of methylated loci in each gene 
-  #filter(n>4) %>% #filter for only genes that contain 5 or more methylated loci 
-  left_join(Olurida_gene_uniprot, by=c("Gene" = "geneID")) %>% #join the UniprotID information to the list of O.lurida gene IDs 
-  select(uniprotID) %>% na.omit() %>% as.vector() %>% write_clip()
+  mutate(SPID=str_extract(X12, "SPID=(.*?);")) %>% mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  select(SPID) %>% count(SPID) %>%  #Select only gene ID column, count number of methylated loci in each gene 
+  select(SPID) %>% na.omit() %>% as.vector() %>% write_clip() #copy Uniprot IDs to clipboard to paste into DAVID 
+
 ```
 
 DAVID results saved here (Enriched GO terms and the uploaded gene sets): 
@@ -645,7 +792,6 @@ DAVID results saved here (Enriched GO terms and the uploaded gene sets):
 - Highly methylated genes, enriched biological functions in South Sound, methylated genes: analyses/methylation-filtered/GO-terms_enriched-highlymethylated-genes-SS  
 - Lowly methylated genes, enriched biological functions in Hood Canal, methylated genes: analyses/methylation-filtered/GO-terms_enriched-lowlymethylated-genes-HC  
 - Lowly methylated genes, enriched biological functions in South Sound, methylated genes: analyses/methylation-filtered/GO-terms_enriched-lowlymethylated-genes-SS  
-
 
 ### Convert GO terms to GO Slim, highly and lowly methylated genes per population, and compare among populations 
 
@@ -658,38 +804,32 @@ GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', 
   mutate_at(vars(category, slim), as.factor)
 
 GO.highmeth.HC <- read_delim(here::here("analyses", "methylation-filtered", "GO-terms_enriched-highlymethylated-genes-HC.txt"), delim = '\t', col_names = TRUE) %>% 
-  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
-  left_join(GOSlim, by=c("GO", "term")) #add slim 
+  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") 
 
 GO.highmeth.SS <- read_delim(here::here("analyses", "methylation-filtered", "GO-terms_enriched-highlymethylated-genes-SS.txt"), delim = '\t', col_names = TRUE) %>% 
-  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
-  left_join(GOSlim, by=c("GO", "term")) #add slim 
+  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") 
 
 GO.lowmeth.HC <- read_delim(here::here("analyses", "methylation-filtered", "GO-terms_enriched-lowlymethylated-genes-HC.txt"), delim = '\t', col_names = TRUE) %>% 
-  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
-  left_join(GOSlim, by=c("GO", "term")) #add slim 
+  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") 
 
 GO.lowmeth.SS <- read_delim(here::here("analyses", "methylation-filtered", "GO-terms_enriched-lowlymethylated-genes-SS.txt"), delim = '\t', col_names = TRUE) %>% 
-  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
-  left_join(GOSlim, by=c("GO", "term")) #add slim 
+  separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") 
  
 # Identify unique GO terms in the highly methylated loci (i.e. those not enriched in both pops)
-GO.highmeth.HC %>% anti_join(GO.highmeth.SS, by = c("GO", "term")) %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct() 
-GO.highmeth.SS %>% anti_join(GO.highmeth.HC, by = c("GO", "term")) %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct()
+GO.highmeth.HC %>% anti_join(GO.highmeth.SS, by = "GO") %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct() %>% left_join(GOSlim, by=c("GO", "term")) %>% arrange(slim, GO) #add slim  
+GO.highmeth.SS %>% anti_join(GO.highmeth.HC, by = "GO") %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct() %>% left_join(GOSlim, by=c("GO", "term")) %>% arrange(slim, GO) #add slim  
 
 # Identify unique GO terms in the lowly methylated loci
-GO.lowmeth.HC %>% anti_join(GO.lowmeth.SS, by = c("GO", "term")) %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct()
-GO.lowmeth.SS %>% anti_join(GO.lowmeth.HC, by = c("GO", "term")) %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct()
-
-# Identify unique GO SLIM terms in the highly methylated loci
-GO.highmeth.HC %>% anti_join(GO.highmeth.SS, by = "slim") %>% select(GO, term, slim, FDR, `Fold Enrichment`)
-GO.highmeth.SS %>% anti_join(GO.highmeth.HC, by = "slim") %>% select(GO, term, slim, FDR, `Fold Enrichment`)
-
-# Identify unique GO SLIM terms in the lowly methylated loci
-GO.lowmeth.HC %>% anti_join(GO.lowmeth.SS, by = "slim") %>% select(GO, term, slim, FDR, `Fold Enrichment`)
-GO.lowmeth.SS %>% anti_join(GO.lowmeth.HC, by = "slim") %>% select(GO, term, slim, FDR, `Fold Enrichment`)
+GO.lowmeth.HC %>% anti_join(GO.lowmeth.SS, by = "GO") %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct()  %>% left_join(GOSlim, by=c("GO", "term")) %>% arrange(slim, GO) #add slim  
+GO.lowmeth.SS %>% anti_join(GO.lowmeth.HC, by = "GO") %>% select(GO, term, FDR, `Fold Enrichment`) %>% distinct()  %>% left_join(GOSlim, by=c("GO", "term")) %>% arrange(slim, GO) #add slim  
 ```
 
+
+
+
+
+
+# Boneyard 
 
 ## Create separate dataframes with annotation information for all hypomethylated loci in Hood Canal & South Sound, separately 
 

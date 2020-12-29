@@ -220,4 +220,14 @@ write_delim(ASV.per.gene %>%
               mutate_if(is.numeric, as.integer),
   "../genome-features/Olurida_v081_genes.21-70isoforms.bed",  delim = '\t', col_names = FALSE)
 ```
+#### Question: Does gene length ~ # isoforms? 
+If so, a CpG could be more likely since it's longer. Could therfore be a weird artifacts of transcriptome assembly could lead to genes having multiple isoforms - e.g. long.
+
+```{r}
+#ggplotly(
+  ASV.per.gene %>% mutate(length_gene=stop_gene-start_gene) %>%
+  ggplot() + geom_boxplot(aes(x=as.factor(isoform_count), y=length_gene))
+  #)
+
+```
 

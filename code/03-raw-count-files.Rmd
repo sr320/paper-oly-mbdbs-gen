@@ -68,6 +68,7 @@ meth_united_alldf <- methylKit::unite(myobj_18, destrand=TRUE, min.per.group=1L)
 meth_united_alldf$siteID <- with(meth_united_alldf, paste(chr, start, sep="_"))  #merge id columns into 1
 meth_united_alldf <- subset(meth_united_alldf, select=c(59,1:58)) #move siteID to first  column
 save(meth_united_alldf, file="../analyses/meth_united_alldf")
+#load(file="../analyses/meth_united_alldf")
 
 # Select loci from the full dataset that are only contained within the filtered dataset 
 meth_filter.df.noNA <- meth_united_alldf %>%
@@ -84,6 +85,8 @@ meth_filter.df.noNA.final <- meth_filter.df.noNA[complete.cases(meth_filter.df.n
 sapply(meth_filter.df.noNA.final[, grep(c("coverage"), colnames(meth_filter.df.noNA.final))], function(x) sum(is.na(x))) #nope!  
 # See how many loci were dropped 
 nrow(meth_filter.df.noNA) - nrow(meth_filter.df.noNA.final) # 454 loci dropped 
+
+save(meth_filter.df.noNA.final, file="../analyses/macau/meth_filter.df.noNA.final")
 ```
 
 Create separate objects for total counts (coverage) and for methylated counts (numCs)
@@ -130,6 +133,7 @@ Merge size and sample key, making sure that the size data is ordered from sample
 
 ```{r}
 print(size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")))
+save(size.macau, file="../analyses/macau/size.macau")
 ```
 
 Save 3 text files for MACAU. Don't include rownames or column names.  
