@@ -4,6 +4,11 @@ author: "Laura H Spencer"
 date: "7/13/2020"
 output: html_document
 ---
+```{r}
+library(ggplot2)
+library(spaa) #list2dist
+library(ggpubr) #add correlation to plot
+```
 
 ```{r}
 library(tidyverse)
@@ -181,3 +186,126 @@ meth_filter_reshaped %>%
   scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
 ```
 
+## Correlation of Epigenetic/Genetic Distance  
+```{r}
+#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+gen <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_mbd.dist", row.names = 1, header=T)
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+sp <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance")  +
+  scale_y_continuous(breaks = c(275000,325000),labels = c("275","325"))+
+   stat_cor(method = "pearson", label.x = 0.12, label.y = 330000,size=5)
+  
+sp
+```
+
+## Correlation of Epigenetic/Genetic Distance (DML) 
+```{r}
+#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+sp <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance (DMLs)")  +
+  scale_y_continuous(breaks = c(9000,15000),labels = c("9","15"))+
+   stat_cor(method = "pearson", label.x = 0.12, label.y = 15000,size=5,p.digits = 0.001)
+  
+sp
+```
+
+## Correlation of Fst and Pst (10kb bins)  
+```{r}
+fst <- read.csv("../analyses/2bRAD/HCSS_sfsm70_Per10kbFst.csv")
+id <- paste(fst$contig,fst$start,fst$end, sep = "_")
+fst <- cbind(id,fst)
+
+pst10kb <- read.csv("../analyses/methylation-filtered/Pst_bins_10kb.tab", sep="\t",header=T,stringsAsFactors = F)
+colnames(pst10kb) <- c("id","contig","start","end","pst","pst.lowCI","pst.highCI")
+
+both = merge(pst10kb,fst, by ="id")
+
+sp <- ggplot(both, aes(x=fst01,y=pst)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Fst") + ylab("Pst")  +
+  #scale_y_continuous(breaks = c(9000,15000),labels = c("9","15"))+
+   stat_cor(method = "pearson", label.x = 0.35, label.y = 0.8,size=5,p.digits = 0.001)
+  
+sp
+```
+
+## Correlation of methylation PC2 and SNP PC1
+```{r}
+ep <- read.table("../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",
+                 header=T, sep="\t",row.names = "sample")
+#add sample names
+key = read.csv("../data/sample-key.csv",colClasses = c("character","character"))
+samples = rownames(ep)
+mapdf <- data.frame(old=key$MBD.FILENAME,new=key$SAMPLE)
+rownames(ep) <- mapdf$new[match(samples,mapdf$old)]
+
+gen <- read.table("../analyses/2bRAD/PCA_MBD.tab")
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+rownames(gen) <- mbdorder
+#make sure ep and gen in same order
+ep <- ep[mbdorder,]
+
+both <- merge(ep[,"PC2"],gen[,"Axis1"],by="row.names",sort=F)
+Pop <- as.factor(c(rep("Hood Canal",9),rep("South Sound",9)))
+both <- cbind(both,Pop)
+sp <- ggplot(both, aes(x=y,y=x)) + 
+  geom_point(aes(shape=Pop,color=Pop),size=3) +
+  scale_shape_manual(values=c(16,17)) + 
+  scale_color_manual(values=c("firebrick3", "blue3")) +
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("PC1 SNPs") + ylab("PC2 Methylation")  +
+   stat_cor(method = "pearson", label.x = 15, label.y = 20,size=4,p.digits = 0.001)
+  
+sp
+ggsave(sp, file = "../analyses/2bRAD/MethGen/methPC2_SNPPC1.png", dpi = 800)
+```
