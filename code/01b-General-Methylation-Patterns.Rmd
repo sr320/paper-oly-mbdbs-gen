@@ -554,6 +554,42 @@ left_join(
   geom_smooth(method="lm")
 
 ```
+## Methylated loci enrichment analysis compared to all genome CpGs 
+Of genes that had methylated loci in general (using concatenated file) - were they enriched for something compared to all genes in genome with CpG loci? 
+
+```{r}
+# Read in file with genes containing methylated loci in genome, and retain only those with SPID for enrichment analysis 
+methylated.genes <- read_delim(here::here("analyses", "methylation-characteristics", "methylated-gene.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% 
+      setNames(c("contig.meth","start.meth","end.meth","percent.meth","contig.gene", "source.gene","feature","start.gene","end.gene","unknown1","strand","unknown2","attribute")) %>%
+      mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)) %>% filter(!is.na(SPID))
+  
+# ### Copy Uniprot accession numbers for genes that are annotated 
+methylated.genes %>% select(SPID) %>%
+  na.omit() %>% as.vector() %>% unique() %>%   # when genes contain multiple loci, only keep one instance of gene
+  write_clip() #copy to clipboard
+  
+CpGs.genes <- read_delim(here::here("analyses", "methylation-characteristics", "CpGs-gene.bed"), delim = '\t', col_names = F) %>% as_tibble() %>%
+      setNames(c("contig.CpG", "source.CpG", "feature.CpG", "start.meth","end.meth", "unknown1", "strand.CpG", "unknown2", "unknown3","contig.gene", "source.gene","feature","start.gene","end.gene","unknown4","strand.gene","unknown5","attribute")) %>%
+      mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)) %>% filter(!is.na(SPID)) 
+
+# ### Copy Uniprot accession numbers for all annotated genes that contain at least one CpG 
+CpGs.genes %>% select(SPID) %>%
+  na.omit() %>% as.vector() %>% unique() %>%   # when genes contain multiple loci, only keep one instance of gene
+  write_clip() #copy to clipboard
+
+# copy go terms and p-values for Revigo 
+read_delim(file="../analyses/methylation-characteristics/methylated-loci-enriched-BP.txt", delim = "\t") %>% 
+  mutate(GO = str_extract(Term, "GO(.*?)~")) %>% 
+  mutate(GO = gsub("~", "", GO)) %>% dplyr::select(GO, PValue) %>% na.omit() %>% write_clip()
+```
 
 
 

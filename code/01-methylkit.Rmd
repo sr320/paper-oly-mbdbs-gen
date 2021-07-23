@@ -237,7 +237,7 @@ perc.meth.withdata %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% separate(locus, se
   write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
 ```
 
-Which of these loci are located within a gene (+/- 2kb)
+##### Which of these loci are located within a gene (+/- 2kb around genes)
 
 ```{bash}
 bedtools intersect -wb -a "../analyses/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highSS-nodataHC-genes.bed
@@ -263,15 +263,15 @@ meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-noda
   mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID))
 write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highHC.nodataSS.genes.csv")
 
-### Copy Uniprot accession numbers for genes that are annotated 
-meth.highSS.nodataHC.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
-  na.omit() %>% as.vector() %>% unique() %>% 
-  write_clip() #copy to clipboard 
-
-### Copy Uniprot accession numbers for genes that are annotated 
-meth.highHC.nodataSS.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
-  na.omit() %>% as.vector() %>% unique() %>% 
-  write_clip() #copy to clipboard 
+# ### Copy Uniprot accession numbers for genes that are annotated 
+# meth.highSS.nodataHC.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
+#   na.omit() %>% as.vector() %>% unique() %>% 
+#   write_clip() #copy to clipboard 
+# 
+# ### Copy Uniprot accession numbers for genes that are annotated 
+# meth.highHC.nodataSS.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
+#   na.omit() %>% as.vector() %>% unique() %>% 
+#   write_clip() #copy to clipboard 
 ```
 
 
