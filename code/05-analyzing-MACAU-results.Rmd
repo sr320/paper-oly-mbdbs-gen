@@ -90,6 +90,8 @@ macau.FDR.length <- cbind(MACAU.results.length.c, do.call(cbind.data.frame, MACA
 
 #plot macau p-values against pvalues in the qvalue results - should all fall on 1:1 line (double check that pvalues are in same order) 
 plot(macau.FDR.length$pvalue, macau.FDR.length$pvalues) # looks good! 
+
+
 ```
 
 ### Extract IDs for loci where MACAU indicates DML, FDR test (at 10%) deemed loci significantt 

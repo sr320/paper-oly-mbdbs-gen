@@ -10,6 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ### Load libraries
 
 ```{r message=FALSE, warning=FALSE, results=FALSE}
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#     install.packages("BiocManager")
+# 
+# BiocManager::install("methylKit")
+
 list.of.packages <- c("tidyverse", "reshape2", "here", "methylKit", "ggforce", "matrixStats", "Pstat", "viridis", "plotly", "readr", "GenomicRanges", "vegan", "factoextra") #add new libraries here 
 
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -113,6 +118,7 @@ load("../analyses/myobj_18")
 ```{r}
 getMethylationStats(myobj_18[[2]],plot=F,both.strands=TRUE)
 head(myobj_18[[5]])
+str(myobj_18)
 ```
 
 ```{r}
@@ -136,6 +142,185 @@ save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.m
 
 meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
 save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
+```
+
+### Examine raw data by population - how many loci have data in some population but not the other? 
+
+```{r}
+# Unite data that has the same minimum coverage (10x - 100x) used in full analysis - but no min. per population  
+united0L=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=0L)
+
+# This code counts up the number of samples that have data (given our filtering - 10x-100x coverage)
+# getData(united0L)[1:100,] %>%
+#   select(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$")) %>%
+#   mutate(HCnumNA=apply(., MARGIN = 1, function(x) sum(!is.na(x)))) 
+# 
+# getData(united0L)[1:100,] %>%
+#   select(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18")) %>%
+#   mutate(SSnumNA=apply(., MARGIN = 1, function(x) sum(!is.na(x)))) 
+
+# Do the above for both populations then plot
+getData(united0L) %>%
+  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  select(c("chr", "start", "end", matches("HC|SS"))) %>% 
+  pivot_longer(names_to = "population", cols = c("HC", "SS")) %>% mutate(population=as.factor(population)) %>% 
+  ggplot(aes(x=value, fill=population)) +
+  geom_histogram(alpha=0.5) + 
+  scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8,9), labels=c(0,1,2,3,4,5,6,7,8,9)) +
+  facet_wrap(~population) + xlab("No. of individuals with data") + ylab("No. of loci") + 
+  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\n10x min coverage for all")
+
+# Create a new filtered object and unite data that has no additional minimum coverage (apart from the 2x min set previously) but omits super high coverage loci 
+filtered.myobj.nolow=filterByCoverage(myobj_18,lo.count=NULL,hi.count=NULL,lo.perc=NULL,hi.perc=99.9) #only filter out loci that are extremely high coverage (probably pcr issues)
+united0L.nolow=methylKit::unite(filtered.myobj.nolow, destrand=TRUE, min.per.group=0L)
+
+getData(united0L.nolow) %>%
+  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  select(c("chr", "start", "end", matches("HC|SS"))) %>% 
+  pivot_longer(names_to = "population", cols = c("HC", "SS")) %>% mutate(population=as.factor(population)) %>% 
+  ggplot(aes(x=value, fill=population)) +
+  geom_histogram(alpha=0.5) + 
+  scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8,9), labels=c(0,1,2,3,4,5,6,7,8,9)) +
+  facet_wrap(~population) + xlab("No. of individuals with data") + ylab("No. of loci") + 
+  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\n2x min coverage for all")
+```
+### How many loci are 75% (or 100%) methylated in one population and have NO data in the other population? USING THE 10X-100X COVERAGE CRITERIA. 
+
+```{r}
+#First, save dataframe with % methyation information. Create column with locus information (contig, start, end) to merge with other dataframe 
+perc.meth0L <- methylKit::percMethylation(united0L, rowids=T) %>% as.data.frame() %>%
+  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
+  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
+  rownames_to_column(var = "locus")
+
+# Next, count number of samples that have data for each population, then merge with the average % methylation dataframe 
+samples.withdata <- getData(united0L) %>%
+  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
+  mutate(locus=paste(chr, start, end, sep=".")) %>%
+  select(c("locus", matches("HC|SS"))) 
+
+# Here's a dataframe showing how many samples have data in each population for each locus, and the average % methylation for each locus. 
+perc.meth.withdata <- samples.withdata %>% left_join(perc.meth0L%>%select(locus,HC.mean, SS.mean), by = "locus")
+
+paste("No. of loci with no data in Hood Canal, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with no data in South Sound, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% nrow())
+
+paste("No. of loci with data in 1 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(HC<=1 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with data in 1 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(SS<=1 & HC>=7 & HC.mean>75) %>% nrow())
+
+paste("No. of loci with data in 2 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(HC<=2 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with data in 2 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata %>% filter(SS<=2 & HC>=7 & HC.mean>75) %>% nrow())
+
+# Save bed file 
+perc.meth.withdata %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+  write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
+
+perc.meth.withdata %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+  write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
+```
+
+Which of these loci are located within a gene (+/- 2kb)
+
+```{bash}
+bedtools intersect -wb -a "../analyses/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highSS-nodataHC-genes.bed
+bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highHC-nodataSS-genes.bed
+```
+
+```{r}
+meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-8:-15)) %>%
+  setNames(c("contig","start","end","HCwithdata","SSwithdata", "HCmeanmeth","SSmeanmeth","attribute")) %>%
+      mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID))
+write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highSS.nodataHC.genes.csv")
+  
+meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-8:-15)) %>%
+  setNames(c("contig","start","end","HCwithdata","SSwithdata", "HCmeanmeth","SSmeanmeth","attribute")) %>%
+      mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID))
+write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highHC.nodataSS.genes.csv")
+
+### Copy Uniprot accession numbers for genes that are annotated 
+meth.highSS.nodataHC.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
+  na.omit() %>% as.vector() %>% unique() %>% 
+  write_clip() #copy to clipboard 
+
+### Copy Uniprot accession numbers for genes that are annotated 
+meth.highHC.nodataSS.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
+  na.omit() %>% as.vector() %>% unique() %>% 
+  write_clip() #copy to clipboard 
+```
+
+
+### How many loci are 75% (or 100%) methylated in one population and have NO data in the other population? USING THE 2X - 99.9% COVERAGE CRITERIA. 
+
+```{r}
+#First, save dataframe with % methyation information. Create column with locus information (contig, start, end) to merge with other dataframe 
+perc.meth0L.nolow <- methylKit::percMethylation(united0L.nolow, rowids=T) %>% as.data.frame() %>%
+  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
+  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
+  rownames_to_column(var = "locus")
+
+# Next, count number of samples that have data for each population, then merge with the average % methylation dataframe 
+samples.withdata.nolow <- getData(united0L.nolow) %>%
+  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
+  mutate(locus=paste(chr, start, end, sep=".")) %>%
+  select(c("locus", matches("HC|SS"))) 
+
+# Here's a dataframe showing how many samples have data in each population for each locus, and the average % methylation for each locus. 
+perc.meth.withdata.nolow <- samples.withdata.nolow %>% left_join(perc.meth0L.nolow%>%select(locus,HC.mean, SS.mean), by = "locus")
+
+paste("No. of loci with no data in Hood Canal, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with no data in South Sound, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% nrow())
+
+paste("No. of loci with data in 1 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(HC<=1 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with data in 1 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(SS<=1 & HC>=7 & HC.mean>75) %>% nrow())
+
+paste("No. of loci with data in 2 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(HC<=2 & SS>=7 & SS.mean>75) %>% nrow())
+
+paste("No. of loci with data in 2 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
+  perc.meth.withdata.nolow %>% filter(SS<=2 & HC>=7 & HC.mean>75) %>% nrow())
+
+```
+
+
+
+## load "meth_filter" object if needed.
+```{r}
+load(file = "../analyses/methylation-filtered/R-objects/meth_filter") 
 ```
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
@@ -170,6 +355,9 @@ for (i in 1:18) {
 }
 mean(perc.meth.summ[1:9,"mean.perc"])
 mean(perc.meth.summ[10:18,"mean.perc"])
+
+paste("No. of loci in filtered dataset:", nrow(perc.meth))
+paste("No. of samples:", ncol(perc.meth))
 ```
 
 
@@ -192,6 +380,7 @@ myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
 ```{r}
 write.table(myDiff25p, file = "../analyses/DMLs/myDiff25p.tab", sep = "\t", col.names = TRUE)
 save(myDiff25p, file="../analyses/DMLs/myDiff25p")
+load(file="../analyses/DMLs/myDiff25p")
 ```
 
 ---
@@ -222,7 +411,8 @@ write_delim(dml25 %>%filter(meth.diff>0), "../analyses/DMLs/dml25-hypermethSS.be
 ### This is the number of loci that are differentially methylated among populations (DMLs)
 
 ```{r}
-nrow(dml25)
+paste("No. of DMLs:", nrow(dml25))
+paste("Percent of loci (filtered for 10-100x for 7 of 9 samples per pop) that are DMLs: ", round(nrow(dml25)/nrow(perc.meth)*100, digits=3), "%", sep="")
 ```
 
 ###  Subset the filtered methylation count dataframe for only those that are differentially methylated. Save object to file. 
@@ -350,7 +540,7 @@ plotCustomization <- data.frame(sample = 1:18, population=c(
                                 symbol=c(rep(16, times=9),
                                 rep(17, times=9))) 
 PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-summary(PCA.filtered) #Look at summary statistics. The first PC explains 21.9% of variation, the second PC explains 18.3% of variation
+summary(PCA.filtered) #Look at summary statistics. The first PC explains 12.25% of variation, the second PC explains 8.5% of variation
 ```
 
 ### PCA Figure, all methylated loci after filtering 
@@ -370,12 +560,12 @@ box(col = "white")
 box(col = "white")
 box(col = "white")
 box(col = "white")
-ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
+#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
+#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
 axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (21.9%)", line = 3, cex = 1.5) #Add x-axis label
+mtext(side = 1, text = "PC 1 (12.3%)", line = 3, cex = 1.5) #Add x-axis label
 axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (18.3%)", line = 3, cex = 1.5) #Add y-axis label
+mtext(side = 2, text = "PC 2 (8.5%)", line = 3, cex = 1.5) #Add y-axis label
 legend("topleft", 
        pch = c(16, 17), 
        legend = c("Hood Canal", "South Sound"), 
@@ -391,6 +581,42 @@ NOTE: this PCA was run with _all_ methylated loci data after filtering for 10-10
 save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered")
 write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
 ```
+
+## permANOVA and dispersion test, % methylation by population 
+
+```{r}
+perc.meth.d<-vegdist(data.frame(t(perc.meth)),"euclidean", na.rm = TRUE)
+print(meth.perm <- adonis(data.frame(t(perc.meth)) ~ population, data=plotCustomization, 
+                          permutations=1000, method='euclidean', na.rm = TRUE)) #yes, global population difference 
+
+hist(meth.perm$f.perms, main="Histogram of pseudo-F values under the null model", 
+     xlab="pseudo=F values", col="gray", xlim=c(0.5,2.5))
+abline(v=1.9743, col="red") # indicates F-value is significant. 
+
+source("../resources/biostats.R")
+pca.eigenval(PCA.filtered) #The Proporation of Variance = %variance explained 
+screeplot(PCA.filtered, bstick=TRUE) # first 6 PC appear sign. 
+
+# check sign. of PCs - can't get this to work, though. 
+#ordi.monte(PCA.filtered, ord="pca", dim=2, perm = 1000, scale = F, plot = F) 
+
+anova(meth.bdp<-betadisper(perc.meth.d,plotCustomization$population)) #no sign. difference in dispersion, which is good 
+boxplot(meth.bdp)
+
+
+# perform PCoA just for fun on distance matrix 
+meth.pcoa<-cmdscale(perc.meth.d, eig=TRUE, add=T)
+ordiplot(meth.pcoa, choices = c(1, 2), type="text", display="sites", xlab="PC 1", ylab="PC 2")
+```
+
+
+
+
+```{r}
+perc.meth %>% as.data.frame() %>% ncol()
+```
+
+
 
 ### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
 
@@ -664,21 +890,97 @@ meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, 
 meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
 readr::write_delim(meth_filter_reshaped, here::here("analyses", "methylation-filtered", "meth_filter_long.tab"),  delim = '\t', col_names = FALSE)
 save(meth_filter_reshaped, file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+#load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
 ```
 
 ## Check out overall distribution of filtered methylation data by population 
 Any trends? Looks like HC has more instances of ~100% methylation with a lower second peak at around ~92%. Compared to SS that has a lower peak at ~100% and a second around 95%. 
 
 ```{r}
-ggplotly(meth_filter_reshaped %>% 
-  ggplot(aes(x=percMeth, fill=population)) +
-  geom_density(alpha=0.2))
-
-ggplotly(meth_filter_reshaped %>% 
+meth_filter_reshaped %>% 
   ggplot(aes(x=population, y=percMeth, fill=population)) +
-  geom_violin(alpha=0.2))
+  geom_violin(width=1.1, alpha=0.8) + theme_minimal() +
+  ylab("% CpG Methylation") + theme(axis.title.x = element_blank(), legend.position = "none",
+                                    text = element_text(size=18)) +
+  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
+  scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
+```
+View distributions in density plot 
 
-nrow(meth_filter_reshaped) # number of loci
+```{r}
+ggplotly(meth_filter_reshaped %>% 
+  ggplot(aes(x=percMeth, fill=population, color=population)) +
+  geom_density(alpha=0.5) + 
+  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
+  scale_color_manual(values=c("firebrick3", "dodgerblue3")) + 
+  scale_fill_manual(values=c("firebrick3", "dodgerblue3")) +
+  theme_minimal() +
+  ylab("Density") + xlab("% CpG Methylation") + 
+  theme(text = element_text(size=18), legend.position = "none"))
+```
+Find location of peaks in each population. Used this as a reference: http://ianmadd.github.io/pages/PeakDensityDistribution.html
+
+```{r}
+## Find largest peak 
+
+# Find largest peak for HC 
+density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth) # Y maximum is 0.203
+
+# Find where that maximum lies (this gives the index #)
+which.max(density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth)$y) #answer = index #501
+
+# Find the x value where the largest Y value is
+density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth)$x[501] #HC max (0.203) is @ 99.96%
+
+##--------------
+
+# Find largest peak for SS
+density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth) # Y maximum is 0.149
+
+which.max(density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth)$y) #answer = 502
+
+density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth)$x[502] #SS max (0.149) is 100%
+
+## Find 2nd largest peak. NOTE: I looked at the ggplotly density figure above and noted that the 2nd peaks end before ~98%, so I subset the percMeth data to retain only those <98%, then find the peak 
+
+# Find 2nd largest peak for HC 
+density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth) # Y maximum is 0.0889
+
+# Find where that maximum lies (this gives the index #)
+which.max(density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth)$y) #answer = index #474
+
+# Find the x value where the largest Y value is
+density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth)$x[474] #HC max (0.0889) is @ 92.57
+
+#---
+# Find 2nd largest peak for SS
+density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth) # Y maximum is 0.0849
+
+# Find where that maximum lies (this gives the index #)
+which.max(density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth)$y) #answer = index #488
+
+# Find the x value where the largest Y value is
+density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth)$x[488] #SS max (0.0889) is @ 95.08%
+
+#----- # of loci 
+meth_filter_reshaped %>%
+  filter(population=="HC" & percMeth!="NA") %>%
+  select(chr, start) %>% unique() %>% nrow() #33,738
+
+meth_filter_reshaped %>%
+  filter(population=="SS" & percMeth!="NA") %>%
+  select(chr, start) %>% unique() %>% nrow() #33,738 (good they are the same)
+
+#----- average % meth by pop
+meth_filter_reshaped %>%
+  filter(population=="SS" & percMeth!="NA") %>%
+  select(percMeth) %>% summary()
+
+```
+
+
+```{r}
+
 ```
 
 
@@ -713,22 +1015,7 @@ DML.calcs <- meth_filter_reshaped %>%
   filter(chr %in% c(DML.ratios$chr) & 
            start %in% c(DML.ratios$start))
 ```
-
-Divergent Bar plot of DMLs 
-
 ```{r}
-ggplotly(
-  DML.ratios %>% 
-           mutate(hypermethylated=ifelse(diff_HC.SS>0, "HC", "SS")) %>%
-  ggplot(aes(x = chr_start, y = diff_HC.SS, fill=hypermethylated))+
-  geom_bar(stat = "identity") +
-    scale_x_discrete(limits=(DML.ratios[order(DML.ratios$diff_HC.SS),]$chr_start)) + 
-  coord_flip() + 
-    theme(axis.title.x=element_blank(),
-          axis.title.y=element_blank(),
-        axis.text.y=element_blank()) +
-    ggtitle("DMLs, showing % methylation difference among populations"))
-
 # For DMLs, any difference? nah.  
 ggplotly(
   DML.ratios %>% 
@@ -737,6 +1024,31 @@ pivot_longer(cols = c(HC, SS),
    values_to = "mean_meth") %>%
   ggplot(aes(x=population, y=mean_meth, fill=population)) +
   geom_violin(alpha=0.2) + geom_boxplot(alpha=0.4))
+```
+
+
+Divergent Bar plot of DMLs 
+
+```{r}
+DML.ratios %>% 
+           mutate(hypermethylated=ifelse(diff_HC.SS>0, "HC", "SS")) %>%
+  ggplot(aes(x = chr_start, y = diff_HC.SS, fill=hypermethylated)) +
+  geom_bar(stat = "identity", width=0.41) +
+    scale_x_discrete(limits=(DML.ratios[order(DML.ratios$diff_HC.SS),]$chr_start)) + 
+  scale_y_continuous(limits=c(-80,80), breaks=c(-75, -50, -25, 0),
+                       labels=c("-75"="75%", "-50"="50%", "-25"="25%", "0"="0%"),
+                     sec.axis = sec_axis(trans=~.*1, breaks=c(75, 25, 50, 0),
+                       labels=c("-75"="75%", "-50"="50%", "-25"="25%", "0"="0%")))  +
+    theme(axis.text.y=element_blank(), axis.ticks.y = element_blank(), 
+          legend.position = "none", text = element_text(size=14, color="gray30"),
+          panel.background = element_blank(),
+          panel.border = element_rect(colour = "gray30", fill=NA, size=.4)) +
+    #ggtitle("DMLs, showing % methylation difference among populations") +
+    scale_fill_manual(values=c("firebrick3", "dodgerblue3")) +
+    annotate(geom="text", x=120, y=-60, label="Loci hypermethylated in\nSouth Sound", color="dodgerblue3") +
+    annotate(geom="text", x=260, y=62, label="Loci hypermethylated in\nHood Canal", color="firebrick3") + 
+  ylab("% methylation difference among populations") + xlab("Locus") + coord_flip()
+ggsave(filename = "../analyses/DMLs/DMLs-diff-barplot.pdf", width=7, height=5)
 ```
 
 # For ALL loci, calculate difference between mean % methylation in Hood Canal : South Sound for divergent bar plot 
@@ -908,7 +1220,42 @@ write_delim(
 #   "../analyses/methylation-filtered/all-meth-loci.bed",  delim = '\t', col_names = FALSE)
 ```
 
+### Venn Diagram of loci sequenced in each population
 
+```{r}
+HC <- percMethylation(meth_filter_HC, rowids=T) %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>% 
+  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) 
+
+SS <- percMethylation(meth_filter_SS, rowids=T) %>% 
+  as.data.frame() %>%
+  rownames_to_column() %>% 
+  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) 
+
+a <- full_join(HC, SS, by="rowname")
+
+b <- a %>% filter(rowname %in% HC$rowname) %>% select(rowname) %>% unlist() %>% as.vector() #HC seq. loci
+c <- a %>% filter(rowname %in% SS$rowname) %>% select(rowname) %>% unlist() %>% as.vector() #SS seq. loci
+d <- a %>% filter(mean.x>50) %>% select(rowname) %>% unlist() %>% as.vector() #HC meth loci
+e <- a %>% filter(mean.y>50) %>% select(rowname) %>% unlist() %>% as.vector() #SS meth loci
+f <- a %>% filter(mean.x<50) %>% select(rowname) %>% unlist() %>% as.vector() #HC unmeth loci 
+g <- a %>% filter(mean.y<50) %>% select(rowname) %>% unlist() %>% as.vector() #SS unmeth loci
+  
+library(VennDiagram)
+# methylated 
+venn.diagram(
+  x=list(d,e),
+  category.names = c("meth HC", "meth SS"),
+  filename = "../analyses/methylation-characteristics/venn-test.png",
+  output=F)
+
+venn.diagram(
+  x=list(f,g),
+  category.names = c("unmeth HC", "unmeth SS"),
+  filename = "../analyses/methylation-characteristics/venn-test1.png",
+  output=F)
+```
 
 
 
