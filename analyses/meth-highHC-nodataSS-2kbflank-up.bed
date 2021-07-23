@@ -1,0 +1,10 @@
+Contig1201	3890	3890	7	0	94.9681746824604	NA	Contig1201	maker	gene	3519	5518	.	+	.	ID=OLUR_00006754;Name=OLUR_00006754;Alias=maker-Contig1201-snap-gene-0.2;Note=Protein of unknown function;
+Contig16788	3392	3392	7	0	92.89265706282512	NA	Contig16788	maker	gene	2437	4436	.	-	.	ID=OLUR_00000928;Name=OLUR_00000928;Alias=maker-Contig16788-snap-gene-0.6;Note=Similar to ctnA: Countin-1 (Dictyostelium discoideum OX%3D44689);SPID=Q86IV5;
+Contig176072	61	61	7	0	89.21758942811574	NA	Contig176072	maker	gene	1	97	.	+	.	ID=OLUR_00032176;Name=OLUR_00032176;Alias=maker-Contig176072-snap-gene-0.1;Note=Protein of unknown function;Dbxref=MobiDBLite:mobidb-lite;
+Contig42553	8917	8917	8	0	93.64073426573427	NA	Contig42553	maker	gene	7728	9727	.	-	.	ID=OLUR_00017953;Name=OLUR_00017953;Alias=maker-Contig42553-snap-gene-0.2;Note=Protein of unknown function;Dbxref=MobiDBLite:mobidb-lite;
+Contig4280	45	45	8	0	94.68137254901961	NA	Contig4280	maker	gene	1	274	.	+	.	ID=OLUR_00023545;Name=OLUR_00023545;Alias=snap_masked-Contig4280-processed-gene-0.0;Note=Protein of unknown function;Dbxref=MobiDBLite:mobidb-lite;
+Contig5373	127	127	7	0	87.711795593569	NA	Contig5373	maker	gene	1	294	.	+	.	ID=OLUR_00029601;Name=OLUR_00029601;Alias=maker-Contig5373-snap-gene-0.2;Note=Protein of unknown function;
+Contig54268	288	288	7	0	94.17580365479526	NA	Contig54268	maker	gene	1	376	.	+	.	ID=OLUR_00031298;Name=OLUR_00031298;Alias=maker-Contig54268-snap-gene-0.2;Note=Protein of unknown function;Dbxref=Coils:Coil;
+Contig54268	334	334	7	0	96.30671560109666	NA	Contig54268	maker	gene	1	376	.	+	.	ID=OLUR_00031298;Name=OLUR_00031298;Alias=maker-Contig54268-snap-gene-0.2;Note=Protein of unknown function;Dbxref=Coils:Coil;
+Contig54268	338	338	7	0	94.84489298514484	NA	Contig54268	maker	gene	1	376	.	+	.	ID=OLUR_00031298;Name=OLUR_00031298;Alias=maker-Contig54268-snap-gene-0.2;Note=Protein of unknown function;Dbxref=Coils:Coil;
+Contig54268	340	340	7	0	97.71981721981722	NA	Contig54268	maker	gene	1	376	.	+	.	ID=OLUR_00031298;Name=OLUR_00031298;Alias=maker-Contig54268-snap-gene-0.2;Note=Protein of unknown function;Dbxref=Coils:Coil;
