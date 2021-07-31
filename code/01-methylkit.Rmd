@@ -67,31 +67,33 @@ https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_18
 
 
 ```{r}
-file.list_18=list("/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_2_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_3_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_4_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_5_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_6_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_7_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_8_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_9_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_10_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_11_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_12_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_13_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_14_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_15_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_16_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
-"/Volumes/Peach\ Backup/oly-mbdseq-bismark-files_sorted/zr1394_18_s456_trimmed_bismark_bt2.deduplicated.sorted.bam")
+file.list_18=list(
+  "/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_1_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_2_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_3_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_4_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_5_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_6_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_7_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_8_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_9_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_10_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_11_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_12_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_13_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_14_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_15_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_16_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_17_s456_trimmed_bismark_bt2.deduplicated.sorted.bam",
+"/Volumes/Bumblebee/paper-oly-mbdbs-gen/data/MBD-BAM-files/zr1394_18_s456_trimmed_bismark_bt2.deduplicated.sorted.bam")
 ```
 
 ### The following command reads sorted BAM files and calls methylation percentage per base, and creates a methylRaw object for CpG methylation.
 It also assigns minimum coverage of 2x and the treatments (in this case, the Olympia oyster population)
 
+# JULY 23RD - CHANGED FROM MIN COV=2 TO MINCOV=1
 ```{r, eval = FALSE}
-myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18"), assembly = "v071", read.context="CpG", mincov=2, treatment = c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1))
+myobj_18 = processBismarkAln(location = file.list_18, sample.id = list("1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18"), assembly = "v081", read.context="CpG", mincov=1, treatment = c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1))
 ```
 
 ### Save the MethylKit object; re-doing the previous step is memory/time intensive, so best to use the saved object moving forward. 
@@ -133,33 +135,20 @@ getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=TRUE)
 getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=TRUE)
 ```
 
-### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
-
-```{r}
-filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
-                                      hi.count=100,hi.perc=NULL)
-save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
-
-meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
-save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
-```
-
 ### Examine raw data by population - how many loci have data in some population but not the other? 
 
 ```{r}
-# Unite data that has the same minimum coverage (10x - 100x) used in full analysis - but no min. per population  
-united0L=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=0L)
+# Unite data that has has no minimum coverage for either meth calling or for uniting
+# THIS IS TO GET LOCI WITH LITTLE DATA IN ONE POP, BUT LOTS OF DATA IN THE OTHER 
+united0L=methylKit::unite(myobj_18, destrand=TRUE, min.per.group=0L)
+```
 
-# This code counts up the number of samples that have data (given our filtering - 10x-100x coverage)
-# getData(united0L)[1:100,] %>%
-#   select(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$")) %>%
-#   mutate(HCnumNA=apply(., MARGIN = 1, function(x) sum(!is.na(x)))) 
-# 
-# getData(united0L)[1:100,] %>%
-#   select(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18")) %>%
-#   mutate(SSnumNA=apply(., MARGIN = 1, function(x) sum(!is.na(x)))) 
+```{r}
+head(united0L)
+```
 
-# Do the above for both populations then plot
+```{r}
+# This code counts up the number of samples that have data and plots 
 getData(united0L) %>%
   mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
@@ -171,69 +160,94 @@ getData(united0L) %>%
   geom_histogram(alpha=0.5) + 
   scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8,9), labels=c(0,1,2,3,4,5,6,7,8,9)) +
   facet_wrap(~population) + xlab("No. of individuals with data") + ylab("No. of loci") + 
-  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\n10x min coverage for all")
-
-# Create a new filtered object and unite data that has no additional minimum coverage (apart from the 2x min set previously) but omits super high coverage loci 
-filtered.myobj.nolow=filterByCoverage(myobj_18,lo.count=NULL,hi.count=NULL,lo.perc=NULL,hi.perc=99.9) #only filter out loci that are extremely high coverage (probably pcr issues)
-united0L.nolow=methylKit::unite(filtered.myobj.nolow, destrand=TRUE, min.per.group=0L)
-
-getData(united0L.nolow) %>%
-  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  select(c("chr", "start", "end", matches("HC|SS"))) %>% 
-  pivot_longer(names_to = "population", cols = c("HC", "SS")) %>% mutate(population=as.factor(population)) %>% 
-  ggplot(aes(x=value, fill=population)) +
-  geom_histogram(alpha=0.5) + 
-  scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8,9), labels=c(0,1,2,3,4,5,6,7,8,9)) +
-  facet_wrap(~population) + xlab("No. of individuals with data") + ylab("No. of loci") + 
-  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\n2x min coverage for all")
+  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\nNo min coverage for all")
 ```
+
+
+```{r}
+# Unite data that has 5x coverage minimum, and throw out super high coverage loci.
+# THIS IS TO IDENTIFY LOCI THAT HAVE HIGH METHYLATION PERCENTAGE (>75%) IN ONE POPULATION 
+filtered.5x=filterByCoverage(myobj_18,lo.count=5,lo.perc=NULL,
+                                      hi.count=NULL,hi.perc=99.9)
+united5x=methylKit::unite(filtered.5x, destrand=TRUE, min.per.group=0L)
+
+#Save dataframe with % methyation information, and # of samples with 5x coverage. 
+#Also create column with locus information (contig, start, end) to merge with other dataframe 
+perc.meth5x <- methylKit::percMethylation(united5x, rowids=T) %>% as.data.frame() %>%
+  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
+  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
+  rownames_to_column(var = "locus") %>%
+  mutate(HC.5x.count=apply(select(., c(matches("^1$|^2$|^3$|^4$|^5$|^6$|^7$|^8$|^9$"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
+  mutate(SS.5x.count=apply(select(., c(matches("10|11|12|13|14|15|16|17|18"))), 
+                      MARGIN = 1, function(x) sum(!is.na(x)))) 
+```
+
 ### How many loci are 75% (or 100%) methylated in one population and have NO data in the other population? USING THE 10X-100X COVERAGE CRITERIA. 
 
 ```{r}
-#First, save dataframe with % methyation information. Create column with locus information (contig, start, end) to merge with other dataframe 
-perc.meth0L <- methylKit::percMethylation(united0L, rowids=T) %>% as.data.frame() %>%
-  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
-  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
-  rownames_to_column(var = "locus")
-
-# Next, count number of samples that have data for each population, then merge with the average % methylation dataframe 
+#Count number of samples that have data for each population, then merge with the average % methylation dataframe 
 samples.withdata <- getData(united0L) %>%
-  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+  mutate(HC.1x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+  mutate(SS.1x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
   mutate(locus=paste(chr, start, end, sep=".")) %>%
   select(c("locus", matches("HC|SS"))) 
 
-# Here's a dataframe showing how many samples have data in each population for each locus, and the average % methylation for each locus. 
-perc.meth.withdata <- samples.withdata %>% left_join(perc.meth0L%>%select(locus,HC.mean, SS.mean), by = "locus")
+# HERE IS THE RESULTING DATAFRAME TO USE FOR ANALYSIS OF DATA/NO DATA LOCI 
+# Join the dataframe that has the # of samples with data at each loci (using no min. coverage), with the average % methylation for each loci and # of samples with sufficient coverage for that % (using 5x min. coverage) 
+(perc.meth.withdata <- samples.withdata %>% left_join(perc.meth5x%>%select(locus,HC.mean, SS.mean,HC.5x.count,HC.5x.count,SS.5x.count), by = "locus"))
+```
 
-paste("No. of loci with no data in Hood Canal, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% nrow())
+# Here I summarize how many loci have no data in one population, lots of data & high methylation rate in the other
 
-paste("No. of loci with no data in South Sound, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% nrow())
+```{r}
+paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 9/9 samples in South Sound that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count==9 & SS.mean>75) %>% nrow())
 
-paste("No. of loci with data in 1 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(HC<=1 & SS>=7 & SS.mean>75) %>% nrow())
+paste("Number of loci with no data in any South Sound sample, in 9/9 samples in Hood Canal that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9 & HC.mean>75) %>% nrow())
 
-paste("No. of loci with data in 1 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(SS<=1 & HC>=7 & HC.mean>75) %>% nrow())
+paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
 
-paste("No. of loci with data in 2 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(HC<=2 & SS>=7 & SS.mean>75) %>% nrow())
+paste("Number of loci with no data in any South Sound sample, 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
 
-paste("No. of loci with data in 2 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata %>% filter(SS<=2 & HC>=7 & HC.mean>75) %>% nrow())
+paste("Number of loci with data in 1 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
 
-# Save bed file 
-perc.meth.withdata %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+paste("Number of loci with data in 1 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
+
+paste("Number of loci with data in 2 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=2 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
+
+paste("Number of loci with data in 2 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=2 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
+```
+
+```{r}
+# Spot check to make sure calculations and filtering are correctly done 
+perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7 & SS.mean>75)
+getData(united0L) %>% filter(chr=="Contig90845", start=="5809")
+
+perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9 & HC.mean>75)
+getData(united0L) %>% filter(chr=="Contig36240", start=="57782")
+```
+
+```{r}
+# Save bed files 
+
+# Here I allow one sample in the "no data" population to have some data (any coverage), and the "high data/methylation" population must have 5x coverage in 7/9 samples
+
+# loci with NO data in any Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples with a mean % methylation >75% 
+perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7 & SS.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
 
-perc.meth.withdata %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+# loci with NO data in any South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples with a mean % methylation >75% 
+perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7 & HC.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
 ```
 
@@ -245,22 +259,22 @@ bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-f
 ```
 
 ```{r}
-meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-8:-15)) %>%
-  setNames(c("contig","start","end","HCwithdata","SSwithdata", "HCmeanmeth","SSmeanmeth","attribute")) %>%
+(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
+  setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
        Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
        SPID=str_extract(attribute, "SPID=(.*?);")) %>%
-  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID))
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
 write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highSS.nodataHC.genes.csv")
   
-meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-8:-15)) %>%
-  setNames(c("contig","start","end","HCwithdata","SSwithdata", "HCmeanmeth","SSmeanmeth","attribute")) %>%
+(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
+  setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
        Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
        SPID=str_extract(attribute, "SPID=(.*?);")) %>%
-  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID))
+  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
 write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highHC.nodataSS.genes.csv")
 
 # ### Copy Uniprot accession numbers for genes that are annotated 
@@ -274,49 +288,18 @@ write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyse
 #   write_clip() #copy to clipboard 
 ```
 
+# Back to main analysis 
 
-### How many loci are 75% (or 100%) methylated in one population and have NO data in the other population? USING THE 2X - 99.9% COVERAGE CRITERIA. 
+### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
 
 ```{r}
-#First, save dataframe with % methyation information. Create column with locus information (contig, start, end) to merge with other dataframe 
-perc.meth0L.nolow <- methylKit::percMethylation(united0L.nolow, rowids=T) %>% as.data.frame() %>%
-  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
-  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
-  rownames_to_column(var = "locus")
+filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
+                                      hi.count=100,hi.perc=NULL)
+save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
 
-# Next, count number of samples that have data for each population, then merge with the average % methylation dataframe 
-samples.withdata.nolow <- getData(united0L.nolow) %>%
-  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
-  mutate(locus=paste(chr, start, end, sep=".")) %>%
-  select(c("locus", matches("HC|SS"))) 
-
-# Here's a dataframe showing how many samples have data in each population for each locus, and the average % methylation for each locus. 
-perc.meth.withdata.nolow <- samples.withdata.nolow %>% left_join(perc.meth0L.nolow%>%select(locus,HC.mean, SS.mean), by = "locus")
-
-paste("No. of loci with no data in Hood Canal, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(HC<=0 & SS>=7 & SS.mean>75) %>% nrow())
-
-paste("No. of loci with no data in South Sound, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(SS<=0 & HC>=7 & HC.mean>75) %>% nrow())
-
-paste("No. of loci with data in 1 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(HC<=1 & SS>=7 & SS.mean>75) %>% nrow())
-
-paste("No. of loci with data in 1 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(SS<=1 & HC>=7 & HC.mean>75) %>% nrow())
-
-paste("No. of loci with data in 2 Hood Canal sample, data in 7/9 samples in South Sound that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(HC<=2 & SS>=7 & SS.mean>75) %>% nrow())
-
-paste("No. of loci with data in 2 South Sound sample, data in 7/9 samples in Hood Canal that averages 75% or greater: ",
-  perc.meth.withdata.nolow %>% filter(SS<=2 & HC>=7 & HC.mean>75) %>% nrow())
-
+meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
+save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
 ```
-
-
 
 ## load "meth_filter" object if needed.
 ```{r}
@@ -375,6 +358,12 @@ myDiff25p.hypo=getMethylDiff(myDiff,difference=25,qvalue=0.01,type="hypo")
 #
 # get all differentially methylated bases
 myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
+
+# get  deferentially methylated bases using 12% difference and save to files 
+myDiff12p=getMethylDiff(myDiff,difference=12,qvalue=0.01)
+write.table(myDiff12p, file = "../analyses/DMLs/myDiff12p.tab", sep = "\t", col.names = TRUE)
+write_delim(getData(myDiff12p) %>%  mutate(start = start-1, end = end+1) %>% dplyr::select(chr, start, end, meth.diff),
+            "../analyses/DMLs/dml12.bed",  delim = '\t', col_names = TRUE) 
 ```
 
 ```{r}
