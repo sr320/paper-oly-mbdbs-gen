@@ -183,7 +183,7 @@ perc.meth5x <- methylKit::percMethylation(united5x, rowids=T) %>% as.data.frame(
                       MARGIN = 1, function(x) sum(!is.na(x)))) 
 ```
 
-### How many loci are 75% (or 100%) methylated in one population and have NO data in the other population? USING THE 10X-100X COVERAGE CRITERIA. 
+### How many loci have data in one population and have NO data in the other population? 
 
 ```{r}
 #Count number of samples that have data for each population, then merge with the average % methylation dataframe 
@@ -199,55 +199,54 @@ samples.withdata <- getData(united0L) %>%
 # Join the dataframe that has the # of samples with data at each loci (using no min. coverage), with the average % methylation for each loci and # of samples with sufficient coverage for that % (using 5x min. coverage) 
 (perc.meth.withdata <- samples.withdata %>% left_join(perc.meth5x%>%select(locus,HC.mean, SS.mean,HC.5x.count,HC.5x.count,SS.5x.count), by = "locus"))
 ```
-
 # Here I summarize how many loci have no data in one population, lots of data & high methylation rate in the other
 
 ```{r}
-paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 9/9 samples in South Sound that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count==9 & SS.mean>75) %>% nrow())
+paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 9/9 samples in South Sound: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count==9) %>% nrow()) #add  "& SS.mean>0" for %min
 
-paste("Number of loci with no data in any South Sound sample, in 9/9 samples in Hood Canal that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9 & HC.mean>75) %>% nrow())
+paste("Number of loci with no data in any South Sound sample, in 9/9 samples in Hood Canal: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9) %>% nrow())
 
-paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
+paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 7/9 samples in South Sound: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7) %>% nrow())
 
-paste("Number of loci with no data in any South Sound sample, 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
+paste("Number of loci with no data in any South Sound sample, 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count>=7) %>% nrow())
 
-paste("Number of loci with data in 1 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
+paste("Number of loci with data in 1 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% nrow())
 
-paste("Number of loci with data in 1 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
+paste("Number of loci with data in 1 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% nrow())
 
-paste("Number of loci with data in 2 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=2 & SS.5x.count>=7 & SS.mean>75) %>% nrow())
+paste("Number of loci with data in 2 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound: ",
+  perc.meth.withdata %>% filter(HC.1x.count<=2 & SS.5x.count>=7) %>% nrow())
 
-paste("Number of loci with data in 2 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal that averages 75% methylation or greater: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=2 & HC.5x.count>=7 & HC.mean>75) %>% nrow())
+paste("Number of loci with data in 2 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
+  perc.meth.withdata %>% filter(SS.1x.count<=2 & HC.5x.count>=7) %>% nrow())
 ```
 
 ```{r}
 # Spot check to make sure calculations and filtering are correctly done 
-perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7 & SS.mean>75)
-getData(united0L) %>% filter(chr=="Contig90845", start=="5809")
+perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7)
+getData(united0L) %>% filter(chr=="Contig1", start=="2396")
 
-perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9 & HC.mean>75)
-getData(united0L) %>% filter(chr=="Contig36240", start=="57782")
+perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7)
+getData(united0L) %>% filter(chr=="Contig137318", start=="3905")
 ```
 
 ```{r}
 # Save bed files 
 
-# Here I allow one sample in the "no data" population to have some data (any coverage), and the "high data/methylation" population must have 5x coverage in 7/9 samples
+# Here I allow two sample in the "no data" population to have some data (any coverage), and the "high data/methylation" population must have 5x coverage in 7/9 samples
 
 # loci with NO data in any Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples with a mean % methylation >75% 
-perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7 & SS.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+ perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
 
 # loci with NO data in any South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples with a mean % methylation >75% 
-perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7 & HC.mean>75) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
 ```
 
@@ -288,18 +287,134 @@ write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyse
 #   write_clip() #copy to clipboard 
 ```
 
-# Back to main analysis 
-
-### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
+# NEW ANALYSIS 8/19/2021 
+# Here I replace these instances of "no data" with zeros 
 
 ```{r}
-filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
-                                      hi.count=100,hi.perc=NULL)
-save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
+# Create dataframe object of all united samples and loci with new "locus" column that I need in next code chunk
+(united0L.df <- united0L %>% getData() %>% mutate(locus=paste(chr,start,end, sep = ".")))
+```
 
-meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
+```{r}
+# FILL IN THE NO-DATA IN HOOD CANAL 
+
+# Create a dataframe that only includes the :no data" loci I want to fill in for Hood Canal 
+(nodata.HC <- perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7)) 
+
+for (i in 1:nrow(nodata.HC)) {
+
+print(i) #show progress
+  
+## STEP 1 
+### Replace "Coverage" columns with 5  
+united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$", names(united0L.df))] %>%
+  replace(., is.na(.), 5)
+
+## STEP 2
+## REPLACE "NumCs" column with zeros (indicating none were methylated)
+# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
+united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numCs1$|numCs2$|numCs3$|numCs4$|numCs5$|numCs6$|numCs7$|numCs8$|numCs9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numCs1$|numCs2$|numCs3$|numCs4$|numCs5$|numCs6$|numCs7$|numCs8$|numCs9$", names(united0L.df))] %>%
+  replace(., is.na(.), 0)
+
+## STEP 3
+## REPLACE "NumTs" column with five (indicating all reads were converted)
+# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
+united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numTs1$|numTs2$|numTs3$|numTs4$|numTs5$|numTs6$|numTs7$|numTs8$|numTs9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numTs1$|numTs2$|numTs3$|numTs4$|numTs5$|numTs6$|numTs7$|numTs8$|numTs9$", names(united0L.df))] %>%
+  replace(., is.na(.), 5) 
+}
+```
+
+```{r}
+# FILL IN THE NO-DATA IN SOUTH SOUND
+
+# Create a dataframe that only includes the :no data" loci I want to fill in for Hood Canal 
+(nodata.SS <- perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7))
+
+for (i in 1:nrow(nodata.SS)) {
+
+print(i) #show progress
+  
+## STEP 1 
+### Replace "Coverage" columns with 5  
+united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18", names(united0L.df))] %>%
+  replace(., is.na(.), 5)
+
+## STEP 2
+## REPLACE "NumCs" column with zeros (indicating none were methylated)
+# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
+united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numCs10|numCs11|numCs12|numCs13|numCs14|numCs15|numCs16|numCs17|numCs18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numCs10|numCs11|numCs12|numCs13|numCs14|numCs15|numCs16|numCs17|numCs18", names(united0L.df))] %>%
+  replace(., is.na(.), 0)
+
+## STEP 3
+## REPLACE "NumTs" column with five (indicating all reads were converted)
+# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
+united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numTs10|numTs11|numTs12|numTs13|numTs14|numTs15|numTs16|numTs17|numTs18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numTs10|numTs11|numTs12|numTs13|numTs14|numTs15|numTs16|numTs17|numTs18", names(united0L.df))] %>%
+  replace(., is.na(.), 5) 
+}
+```
+```{r}
+# confirm that i did it corrrectly 
+united0L.df[united0L.df$locus %in% nodata.HC$locus,]
+
+# confirm that i did it correctly 
+united0L.df[united0L.df$locus %in% nodata.SS$locus,]
+
+
+# and that other loci didn't also get changed 
+united0L.df[1:100,]
+```
+## Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
+
+```{r}
+united0L.df.filtered <- united0L.df %>%
+  mutate(HC.5x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>%
+  mutate(SS.5x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>% 
+  filter(HC.5x.count>=7 & SS.5x.count>=7) %>%
+  select(-HC.5x.count, -SS.5x.count)
+```
+## Double check that the "no data" loci are included in the filtered dataframe 
+
+```{r}
+# confirm that i did it corrrectly 
+united0L.df.filtered[united0L.df.filtered$locus %in% nodata.HC$locus,] #yes
+
+# confirm that i did it correctly 
+united0L.df.filtered[united0L.df.filtered$locus %in% nodata.SS$locus,] #yes 
+```
+
+# Create a methylBase object that includes data replaced for zeros in some instances. These instances include ... loci with data in 1 Hood Canal sample (any coverage) & 5x coverage (or greater) in 7/9 samples in South Sound, and visa ersa. 
+
+```{r}
+meth_filter=new("methylBase",
+                    dplyr::select(united0L.df.filtered, -locus),
+        sample.ids=united0L@sample.ids,
+        assembly=united0L@assembly, 
+        context=united0L@context,
+        treatment=united0L@treatment, 
+        coverage.index=united0L@coverage.index,
+        numCs.index=united0L@numCs.index,
+        numTs.index=united0L@numTs.index,
+        destranded=united0L@destranded,
+        resolution=united0L@resolution,
+        names=united0L@names)
+
+meth_filter
 save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
 ```
+
+# OLD ANALYSIS - DOES NOT INCLUDE THE "NO DATA" LOCI 
+### Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
+
+```{r}
+# filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
+#                                       hi.count=100,hi.perc=NULL)
+# save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
+# 
+# meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
+# save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
+```
+
+# Back to main analysis 
 
 ## load "meth_filter" object if needed.
 ```{r}
@@ -313,6 +428,9 @@ Here I create % methylation matrices from the filtered object, and use it to do 
 ```{r}
 perc.meth=percMethylation(meth_filter, rowids=T)
 hist(perc.meth, col="gray50" )
+
+# Make sure that the perc.meth includes the no-data loci 
+perc.meth
 
 # Save % methylation df to object and .tab file 
 save(perc.meth, file = "../analyses/methylation-filtered/R-objects/perc.meth") #save object to file 
@@ -342,7 +460,6 @@ mean(perc.meth.summ[10:18,"mean.perc"])
 paste("No. of loci in filtered dataset:", nrow(perc.meth))
 paste("No. of samples:", ncol(perc.meth))
 ```
-
 
 ```{r}
 myDiff=calculateDiffMeth(meth_filter,mc.cores=4)
@@ -377,7 +494,7 @@ load(file="../analyses/DMLs/myDiff25p")
 
 ```{r}
 # Write out bedfile for DMLs 
-dml25 <- myDiff25p %>% 
+dml25 <- myDiff25p %>% getData() %>% 
   mutate(start = start-1, end = end+1) %>% 
   dplyr::select(chr, start, end, meth.diff)
 write_delim(dml25, "../analyses/DMLs/dml25.bed",  delim = '\t', col_names = TRUE) 
@@ -385,8 +502,7 @@ write_delim(dml25, "../analyses/DMLs/dml25_forIGV.bed",  delim = '\t', col_names
 save(dml25, file="../analyses/DMLs/R-objects/dml25")
 
 # Write out bedfile for all loci fed into DML analysis, to use as background for enrichment 
-mydiff.all <-  mutate(myDiff, start = start -1, end = end + 1) %>% dplyr::select(chr, start, end, meth.diff) %>%
-  mutate_if(is.numeric, as.integer)
+mydiff.all <-  mutate(getData(myDiff), start = start -1, end = end + 1) %>% dplyr::select(chr, start, end, meth.diff) %>% mutate_if(is.numeric, as.integer)
 write_delim(mydiff.all, "../analyses/DMLs/mydiff-all.bed",  delim = '\t', col_names = TRUE)
 save(mydiff.all, file="../analyses/DMLs/R-objects/mydiff.all")
 
@@ -401,7 +517,7 @@ write_delim(dml25 %>%filter(meth.diff>0), "../analyses/DMLs/dml25-hypermethSS.be
 
 ```{r}
 paste("No. of DMLs:", nrow(dml25))
-paste("Percent of loci (filtered for 10-100x for 7 of 9 samples per pop) that are DMLs: ", round(nrow(dml25)/nrow(perc.meth)*100, digits=3), "%", sep="")
+paste("Percent of loci (filtered for 5x for 7 of 9 samples per pop) that are DMLs: ", round(nrow(dml25)/nrow(perc.meth)*100, digits=3), "%", sep="")
 ```
 
 ###  Subset the filtered methylation count dataframe for only those that are differentially methylated. Save object to file. 
