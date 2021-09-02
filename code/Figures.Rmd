@@ -10,6 +10,11 @@ library(spaa) #list2dist
 library(ggpubr) #add correlation to plot
 ```
 
+```{r}
+library(tidyverse)
+```
+
+
 ## PCA Figure, genetic data for only MBD samples 
 
 ```{r, fig.show='hide'}
@@ -23,7 +28,7 @@ plotCustomization <- data.frame(sample = 1:18, population=c(
                                 rep(17, times=9))) 
 
 # Check out genetic PCA axes 
-load("analyses/2bRAD/PCA_MBD.Robj") 
+load("../analyses/2bRAD/PCA_MBD.Robj") 
 ordiplot(pcaM) #x=(-100,100), y=(-40,60) 
 
 # calculate % variance explained by each PC axis (order from 1+): 
@@ -42,6 +47,39 @@ legend("topleft",
        legend = c("Hood Canal", "South Sound"), 
        col = c(c("firebrick3", "dodgerblue3")), 
        cex = 1.2, bty = "n") #Add legend 
+```
+
+
+## PCA Figure, genetic data for all samples 
+
+```{r, fig.show='hide'}
+# Load DF with PCA axis info 
+PCA.allgen <- read.table(file = "../analyses/2bRAD/PCA_allHCSS.tab")
+
+# Find min and max for PC axes 1 and 2
+summary(PCA.allgen$Axis1) #min= -38.39, max=36.03 
+summary(PCA.allgen$Axis2) #min= -40.90, max=51.41
+
+# Generate a DF to define color and shape of each point 
+plotCustomization <- rownames(PCA.allgen) %>% str_extract(c("HC|SS")) %>% as.tibble() %>% 
+  rename(population = value) %>%
+  mutate(color=ifelse(population=="HC", "firebrick3", "dodgerblue3")) %>%
+  mutate(symbol=ifelse(population=="HC", 16, 17)) 
+
+# Generate figure 
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+plot(1, type="n", xlab="", ylab="", xlim=c(-40, 40), ylim=c(-41, 52), axes=FALSE, ann=FALSE)
+points(x=PCA.allgen$Axis1, y=PCA.allgen$Axis2, col = as.character(plotCustomization$color), 
+       pch = plotCustomization$symbol, cex = 1.2) #Add each sample. 
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (6.64%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (5.07%)", line = 3, cex = 1.5) #Add y-axis label
+legend(x = -40, y=45, 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1, bty = "n") #Add legend 
 ```
 
 ## PCA Figure, all methylated loci after filtering 
@@ -129,6 +167,23 @@ ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + 
         axis.ticks.y=element_blank()) + 
   scale_fill_distiller(palette = "YlGnBu", direction = 1) #)
   #scale_fill_gradient(low="gray5", high="white")
+```
+
+
+```
+
+## Check out overall distribution of filtered methylation data by population 
+Any trends? Looks like HC has more instances of ~100% methylation with a lower second peak at around ~92%. Compared to SS that has a lower peak at ~100% and a second around 95%. 
+
+```{r}
+load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+meth_filter_reshaped %>% 
+  ggplot(aes(x=population, y=percMeth, fill=population)) +
+  geom_violin(width=1.1, alpha=0.8) + theme_minimal() +
+  ylab("% CpG Methylation") + theme(axis.title.x = element_blank(), legend.position = "none",
+                                    text = element_text(size=18)) +
+  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
+  scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
 ```
 
 ## Correlation of Epigenetic/Genetic Distance  

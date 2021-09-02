@@ -526,15 +526,64 @@ for (i in 1:nrow(SAL.loci)) {
 }  
 
 ```
+### For SALS, run GLMs to see if % meth differs by population 
 
-```{r}
-temp %>% filter(SPID=="Q23551")
-temp %>% str()
+```{r, warning=FALSE, message=FALSE}
+library(car)
 
-ggplotly(ggplot(data= temp %>% filter(SPID=="Q23551"), aes(x=y.Length, y=percMeth), color=population) +
-  geom_point() + theme_minimal() + geom_smooth(method="lm") + geom_point(aes(col=population, label=sample)))
+SAL.glm.pop <- vector("list", nrow(SAL.loci))
+for (i in 1:nrow(SAL.loci)) {
+  SAL.glm.pop[[i]] <- Anova(glm(percMeth ~ population, data=temp %>% filter(chr==SAL.loci[i,1])))
+  SAL.glm.pop[[i]] <- setNames(SAL.glm.pop[i], paste(SAL.loci[i,1], "-", SAL.loci[i,2], sep=""))
+}
+
+SAL.glm.size <- vector("list", nrow(SAL.loci))
+for (i in 1:nrow(SAL.loci)) {
+  SAL.glm.size[[i]] <- Anova(glm(percMeth ~ y.Length, data=temp %>% filter(chr==SAL.loci[i,1])))
+  SAL.glm.size[[i]] <- setNames(SAL.glm.size[i], paste(SAL.loci[i,1], "-", SAL.loci[i,2], sep=""))
+}
+
+# These are the SALs in which GLMs also indicate % meth ~ size 
+print(SAL.glm.size[c(1,2,5,6,11)])
+SAL.loci[c(1,2,5,6,11),] 
+
+# plot those 
+for (i in c(1,2,5,6,11)) {
+  print(ggplot(data= temp %>% filter(chr==SAL.loci[i,1]), aes(x=`y.Length`, y=percMeth), color=population) +
+  theme_minimal(base_size = 15) + geom_smooth(method="gam", col="gray70") + geom_point(size=2.8, aes(col=population)) + 
+    scale_color_manual(values=c("firebrick3", "dodgerblue3")) +
+  ggtitle(label = paste("SAL: ", SAL.loci[i,1], "-", SAL.loci[i,2], sep=""),
+              subtitle = paste("Gene: ", unique(temp[temp$chr==SAL.loci[i,1], "SPID"]), " - ",
+            unique(temp[temp$chr==SAL.loci[i,1], "Note"]), sep="")) +
+    xlab("Oyster length (mm)") + ylab("% Methylated") + theme(legend.position = c(0.9, 0.15)) + 
+    labs(color = "Population") +
+    guides(colour = guide_legend(override.aes = list(size=4)))
+  )
+}  
+
+# 4 of the 5 are similar to annotated genes. Let's plot those in a grid 
+# plot those 
+SAL.plots <- vector("list", length(c(2,5,6,11)))
+for (i in c(2,5,6,11)) {
+p <-  ggplot(data= temp %>% filter(chr==SAL.loci[i,1]), 
+             aes(x=`y.Length`, y=percMeth), color=population) +
+  theme_minimal(base_size = 12) + geom_smooth(method="glm", col="gray70") + 
+  geom_point(size=2.8, aes(col=population)) + 
+    scale_color_manual(values=c("firebrick3", "dodgerblue3")) +
+  ggtitle(label = paste("SAL: ", SAL.loci[i,1], "-", SAL.loci[i,2], sep=""),
+              subtitle = paste("Gene: ", unique(temp[temp$chr==SAL.loci[i,1], "SPID"]), " - ",
+            unique(temp[temp$chr==SAL.loci[i,1], "Note"]), sep="")) +
+    xlab("Oyster length (mm)") + ylab("% Methylated") + 
+  theme(legend.position = "bottom") + #c(0.9, 0.15)
+    labs(color = "Population") +
+    guides(colour = guide_legend(override.aes = list(size=4)))
+SAL.plots[[i]] <- p
+}  
+
+library(gridExtra)
+grid.arrange(SAL.plots[[2]], SAL.plots[[5]], SAL.plots[[6]], SAL.plots[[11]], nrow = 2)
+
 ```
-
 
 
 
