@@ -402,10 +402,10 @@ meth_filter
 save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
 ```
 
+```{r}
 # OLD ANALYSIS - DOES NOT INCLUDE THE "NO DATA" LOCI 
 ### Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
 
-```{r}
 # filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
 #                                       hi.count=100,hi.perc=NULL)
 # save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
@@ -434,17 +434,18 @@ perc.meth
 
 # Save % methylation df to object and .tab file 
 save(perc.meth, file = "../analyses/methylation-filtered/R-objects/perc.meth") #save object to file 
+load(file = "../analyses/methylation-filtered/R-objects/perc.meth") #load object if needed
 write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "methylation-filtered", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 
 # What percentage of loci have ZERO methylation? 
-100*table(perc.meth==0)[2]/table(perc.meth==0)[1] # Only 0.8% of loci unmethylated, averaged across all samples
+100*table(perc.meth==0)[2]/table(perc.meth==0)[1] # Only 0.8% of loci unmethylated, averaged across all samples #new filtering= 1.4%
 
 # Mean % methylation across all samples 
-mean(perc.meth, na.rm=TRUE) # 89.6%
+mean(perc.meth, na.rm=TRUE) # 89.6%  #new filtering = 88.5%
 
 # Mean % methylation for each populaiton 
-mean(perc.meth[,1:9], na.rm=TRUE) # 89.6% <-- Hood Canal 
-mean(perc.meth[,10:18], na.rm=TRUE) # 89.6%  <-- South Sound 
+mean(perc.meth[,1:9], na.rm=TRUE) # 89.6% <-- Hood Canal #new filtering= 88.5%
+mean(perc.meth[,10:18], na.rm=TRUE) # 89.6%  <-- South Sound #new filtering=88.6%
 
 perc.meth.summ <- data.frame(sample=1:18, methylated=1:18, coverage=1:18, mean.perc=1:18)
 for (i in 1:18) {
@@ -457,8 +458,8 @@ for (i in 1:18) {
 mean(perc.meth.summ[1:9,"mean.perc"])
 mean(perc.meth.summ[10:18,"mean.perc"])
 
-paste("No. of loci in filtered dataset:", nrow(perc.meth))
-paste("No. of samples:", ncol(perc.meth))
+paste("No. of loci in filtered dataset:", nrow(perc.meth)) #new filtering = 252,366 loci 
+paste("No. of samples:", ncol(perc.meth)) #new filtering=18 samples 
 ```
 
 ```{r}
@@ -582,7 +583,7 @@ apply(perc.meth.Pst, 2, function(x) any(is.na(x))) #any NA values?
 perc.meth.Pst2 <- perc.meth.Pst[c(complete.cases(perc.meth.Pst)),]
 apply(perc.meth.Pst2, 2, function(x) any(is.na(x))) #confirm no more NA values 
 
-#I also removed rows that had a mean methylation value of 0 as these throw off the calculation
+#I also removed rows that had a mean methylation value of 0 as these throw off the calculation (these are loci with 0's for all samples)
 perc.meth.Pst2 <- perc.meth.Pst2[c(rowMeans(perc.meth.Pst2[-1] )>0),]
 
 #If you want to see how this influences the Pst.hc vs Pst.ss comparison run the next line:
@@ -601,7 +602,7 @@ perc.meth.Pst2$Population <- c("HC","HC","HC","HC","HC","HC","HC","HC","HC","SS"
 ncol(perc.meth.Pst2)
 
 #reorder these columns so that population is the first column
-perc.meth.Pst2 <- perc.meth.Pst2[,c(7826,1:7825)]
+perc.meth.Pst2 <- perc.meth.Pst2[,c(ncol(perc.meth.Pst2),1:(ncol(perc.meth.Pst2)-1))]
 
 require(Pstat)
 
