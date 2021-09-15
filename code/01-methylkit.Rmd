@@ -133,7 +133,6 @@ getCoverageStats(myobj_18[[5]],plot=TRUE,both.strands=TRUE)
 
 ```{r}
 getCoverageStats(myobj_18[[13]],plot=TRUE,both.strands=TRUE)
-<<<<<<< HEAD
 ```
 
 ### Examine raw data by population - how many loci have data in some population but not the other? 
@@ -260,14 +259,11 @@ separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
 ```{bash}
 bedtools intersect -wb -a "../analyses/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highSS-nodataHC-genes.bed
 bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highHC-nodataSS-genes.bed
-=======
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```
 
 ### Examine raw data by population - how many loci have data in some population but not the other? 
 
 ```{r}
-<<<<<<< HEAD
 (meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
   setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
@@ -295,18 +291,12 @@ write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyse
 # meth.highHC.nodataSS.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
 #   na.omit() %>% as.vector() %>% unique() %>% 
 #   write_clip() #copy to clipboard 
-=======
-# Unite data that has has no minimum coverage for either meth calling or for uniting
-# THIS IS TO GET LOCI WITH LITTLE DATA IN ONE POP, BUT LOTS OF DATA IN THE OTHER 
-united0L=methylKit::unite(myobj_18, destrand=TRUE, min.per.group=0L)
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```
 
 # NEW ANALYSIS 8/19/2021 
 # Here I replace these instances of "no data" with zeros 
 
 ```{r}
-<<<<<<< HEAD
 # First, create dataframe object of all united samples and loci with new "locus" column that I need in next code chunk
 (united0L.df <- united0L %>% getData() %>% mutate(locus=paste(chr,start,end, sep = ".")))
 ```
@@ -421,267 +411,6 @@ save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter
 ```
 
 ```{r}
-=======
-head(united0L)
-```
-
-```{r}
-# This code counts up the number of samples that have data and plots 
-getData(united0L) %>%
-  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  select(c("chr", "start", "end", matches("HC|SS"))) %>% 
-  pivot_longer(names_to = "population", cols = c("HC", "SS")) %>% mutate(population=as.factor(population)) %>% 
-  ggplot(aes(x=value, fill=population)) +
-  geom_histogram(alpha=0.5) + 
-  scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8,9), labels=c(0,1,2,3,4,5,6,7,8,9)) +
-  facet_wrap(~population) + xlab("No. of individuals with data") + ylab("No. of loci") + 
-  theme_minimal() + theme(legend.position = "bottom") + ggtitle("Distribution of the loci that have data in X no. of samples\nNo min coverage for all")
-```
-
-
-```{r}
-# Unite data that has 5x coverage minimum, and throw out super high coverage loci.
-# THIS IS TO IDENTIFY LOCI THAT HAVE HIGH METHYLATION PERCENTAGE (>75%) IN ONE POPULATION 
-filtered.5x=filterByCoverage(myobj_18,lo.count=5,lo.perc=NULL,
-                                      hi.count=NULL,hi.perc=99.9)
-united5x=methylKit::unite(filtered.5x, destrand=TRUE, min.per.group=0L)
-
-#Save dataframe with % methyation information, and # of samples with 5x coverage. 
-#Also create column with locus information (contig, start, end) to merge with other dataframe 
-perc.meth5x <- methylKit::percMethylation(united5x, rowids=T) %>% as.data.frame() %>%
-  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
-  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
-  rownames_to_column(var = "locus") %>%
-  mutate(HC.5x.count=apply(select(., c(matches("^1$|^2$|^3$|^4$|^5$|^6$|^7$|^8$|^9$"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS.5x.count=apply(select(., c(matches("10|11|12|13|14|15|16|17|18"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) 
-```
-
-### How many loci have data in one population and have NO data in the other population? 
-
-```{r}
-#Count number of samples that have data for each population, then merge with the average % methylation dataframe 
-samples.withdata <- getData(united0L) %>%
-  mutate(HC.1x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS.1x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
-                      MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
-  mutate(locus=paste(chr, start, end, sep=".")) %>%
-  select(c("locus", matches("HC|SS"))) 
-
-# HERE IS THE RESULTING DATAFRAME TO USE FOR ANALYSIS OF DATA/NO DATA LOCI 
-# Join the dataframe that has the # of samples with data at each loci (using no min. coverage), with the average % methylation for each loci and # of samples with sufficient coverage for that % (using 5x min. coverage) 
-(perc.meth.withdata <- samples.withdata %>% left_join(perc.meth5x%>%select(locus,HC.mean, SS.mean,HC.5x.count,HC.5x.count,SS.5x.count), by = "locus"))
-```
-# Here I summarize how many loci have no data in one population, lots of data & high methylation rate in the other
-
-```{r}
-paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 9/9 samples in South Sound: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count==9) %>% nrow()) #add  "& SS.mean>0" for %min
-
-paste("Number of loci with no data in any South Sound sample, in 9/9 samples in Hood Canal: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count==9) %>% nrow())
-
-paste("Number of loci with no data in any Hood Canal sample, 5x coverage (or greater) in 7/9 samples in South Sound: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=0 & SS.5x.count>=7) %>% nrow())
-
-paste("Number of loci with no data in any South Sound sample, 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=0 & HC.5x.count>=7) %>% nrow())
-
-paste("Number of loci with data in 1 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% nrow())
-
-paste("Number of loci with data in 1 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% nrow())
-
-paste("Number of loci with data in 2 Hood Canal sample (any coverage), 5x coverage (or greater) in 7/9 samples in South Sound: ",
-  perc.meth.withdata %>% filter(HC.1x.count<=2 & SS.5x.count>=7) %>% nrow())
-
-paste("Number of loci with data in 2 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
-  perc.meth.withdata %>% filter(SS.1x.count<=2 & HC.5x.count>=7) %>% nrow())
-```
-
-```{r}
-# Spot check to make sure calculations and filtering are correctly done 
-perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7)
-getData(united0L) %>% filter(chr=="Contig1", start=="2396")
-
-perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7)
-getData(united0L) %>% filter(chr=="Contig137318", start=="3905")
-```
-
-```{r}
-# Save bed files 
-
-# Here I allow two sample in the "no data" population to have some data (any coverage), and the "high data/methylation" population must have 5x coverage in 7/9 samples
-
-# loci with NO data in any Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples with a mean % methylation >75% 
- perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
-  write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
-
-# loci with NO data in any South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples with a mean % methylation >75% 
-perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
-  write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
-```
-
-##### Which of these loci are located within a gene (+/- 2kb around genes)
-
-```{bash}
-bedtools intersect -wb -a "../analyses/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highSS-nodataHC-genes.bed
-bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highHC-nodataSS-genes.bed
-```
-
-```{r}
-(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
-  setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
-      mutate(ID=str_extract(attribute, "ID=(.*?);"),
-       Note=str_extract(attribute, "Note=(.*?);"),
-       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
-       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
-  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
-write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highSS.nodataHC.genes.csv")
-  
-(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
-  setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
-      mutate(ID=str_extract(attribute, "ID=(.*?);"),
-       Note=str_extract(attribute, "Note=(.*?);"),
-       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
-       SPID=str_extract(attribute, "SPID=(.*?);")) %>%
-  mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
-write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highHC.nodataSS.genes.csv")
-
-# ### Copy Uniprot accession numbers for genes that are annotated 
-# meth.highSS.nodataHC.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
-#   na.omit() %>% as.vector() %>% unique() %>% 
-#   write_clip() #copy to clipboard 
-# 
-# ### Copy Uniprot accession numbers for genes that are annotated 
-# meth.highHC.nodataSS.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
-#   na.omit() %>% as.vector() %>% unique() %>% 
-#   write_clip() #copy to clipboard 
-```
-
-# NEW ANALYSIS 8/19/2021 
-# Here I replace these instances of "no data" with zeros 
-
-```{r}
-# Create dataframe object of all united samples and loci with new "locus" column that I need in next code chunk
-(united0L.df <- united0L %>% getData() %>% mutate(locus=paste(chr,start,end, sep = ".")))
-```
-
-```{r}
-# FILL IN THE NO-DATA IN HOOD CANAL 
-
-# Create a dataframe that only includes the :no data" loci I want to fill in for Hood Canal 
-(nodata.HC <- perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7)) 
-
-for (i in 1:nrow(nodata.HC)) {
-
-print(i) #show progress
-  
-## STEP 1 
-### Replace "Coverage" columns with 5  
-united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$", names(united0L.df))] %>%
-  replace(., is.na(.), 5)
-
-## STEP 2
-## REPLACE "NumCs" column with zeros (indicating none were methylated)
-# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
-united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numCs1$|numCs2$|numCs3$|numCs4$|numCs5$|numCs6$|numCs7$|numCs8$|numCs9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numCs1$|numCs2$|numCs3$|numCs4$|numCs5$|numCs6$|numCs7$|numCs8$|numCs9$", names(united0L.df))] %>%
-  replace(., is.na(.), 0)
-
-## STEP 3
-## REPLACE "NumTs" column with five (indicating all reads were converted)
-# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
-united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numTs1$|numTs2$|numTs3$|numTs4$|numTs5$|numTs6$|numTs7$|numTs8$|numTs9$", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.HC$locus)[i], grep("numTs1$|numTs2$|numTs3$|numTs4$|numTs5$|numTs6$|numTs7$|numTs8$|numTs9$", names(united0L.df))] %>%
-  replace(., is.na(.), 5) 
-}
-```
-
-```{r}
-# FILL IN THE NO-DATA IN SOUTH SOUND
-
-# Create a dataframe that only includes the :no data" loci I want to fill in for Hood Canal 
-(nodata.SS <- perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7))
-
-for (i in 1:nrow(nodata.SS)) {
-
-print(i) #show progress
-  
-## STEP 1 
-### Replace "Coverage" columns with 5  
-united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18", names(united0L.df))] %>%
-  replace(., is.na(.), 5)
-
-## STEP 2
-## REPLACE "NumCs" column with zeros (indicating none were methylated)
-# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
-united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numCs10|numCs11|numCs12|numCs13|numCs14|numCs15|numCs16|numCs17|numCs18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numCs10|numCs11|numCs12|numCs13|numCs14|numCs15|numCs16|numCs17|numCs18", names(united0L.df))] %>%
-  replace(., is.na(.), 0)
-
-## STEP 3
-## REPLACE "NumTs" column with five (indicating all reads were converted)
-# Extract a single locus, get coverage columns for Hood Canal only, then identify those that have zero coverage in our data and replace with 5x 
-united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numTs10|numTs11|numTs12|numTs13|numTs14|numTs15|numTs16|numTs17|numTs18", names(united0L.df))] <- united0L.df[united0L.df$locus==(nodata.SS$locus)[i], grep("numTs10|numTs11|numTs12|numTs13|numTs14|numTs15|numTs16|numTs17|numTs18", names(united0L.df))] %>%
-  replace(., is.na(.), 5) 
-}
-```
-```{r}
-# confirm that i did it corrrectly 
-united0L.df[united0L.df$locus %in% nodata.HC$locus,]
-
-# confirm that i did it correctly 
-united0L.df[united0L.df$locus %in% nodata.SS$locus,]
-
-
-# and that other loci didn't also get changed 
-united0L.df[1:100,]
-```
-## Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
-
-```{r}
-united0L.df.filtered <- united0L.df %>%
-  mutate(HC.5x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>%
-  mutate(SS.5x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>% 
-  filter(HC.5x.count>=7 & SS.5x.count>=7) %>%
-  select(-HC.5x.count, -SS.5x.count)
-```
-## Double check that the "no data" loci are included in the filtered dataframe 
-
-```{r}
-# confirm that i did it corrrectly 
-united0L.df.filtered[united0L.df.filtered$locus %in% nodata.HC$locus,] #yes
-
-# confirm that i did it correctly 
-united0L.df.filtered[united0L.df.filtered$locus %in% nodata.SS$locus,] #yes 
-```
-
-# Create a methylBase object that includes data replaced for zeros in some instances. These instances include ... loci with data in 1 Hood Canal sample (any coverage) & 5x coverage (or greater) in 7/9 samples in South Sound, and visa ersa. 
-
-```{r}
-meth_filter=new("methylBase",
-                    dplyr::select(united0L.df.filtered, -locus),
-        sample.ids=united0L@sample.ids,
-        assembly=united0L@assembly, 
-        context=united0L@context,
-        treatment=united0L@treatment, 
-        coverage.index=united0L@coverage.index,
-        numCs.index=united0L@numCs.index,
-        numTs.index=united0L@numTs.index,
-        destranded=united0L@destranded,
-        resolution=united0L@resolution,
-        names=united0L@names)
-
-meth_filter
-save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
-```
-
-```{r}
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 # OLD ANALYSIS - DOES NOT INCLUDE THE "NO DATA" LOCI 
 ### Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
 
@@ -697,11 +426,7 @@ save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter
 
 ## load "meth_filter" object if needed.
 ```{r}
-<<<<<<< HEAD
 #load(file = "../analyses/methylation-filtered/R-objects/meth_filter") 
-=======
-load(file = "../analyses/methylation-filtered/R-objects/meth_filter") 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```
 
 Percent methylation matrix (rows=region/base, columns=sample) can be extracted from methylBase object by using percMethylation function. This can be useful for downstream analyses. 
@@ -727,13 +452,8 @@ write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")),
 mean(perc.meth, na.rm=TRUE) # 89.6%  #new filtering = 88.5%
 
 # Mean % methylation for each populaiton 
-<<<<<<< HEAD
 mean(perc.meth[,1:9], na.rm=TRUE) # 89.6% <-- Hood Canal #new filtering= 88.47%
 mean(perc.meth[,10:18], na.rm=TRUE) # 89.6%  <-- South Sound #new filtering=88.60%
-=======
-mean(perc.meth[,1:9], na.rm=TRUE) # 89.6% <-- Hood Canal #new filtering= 88.5%
-mean(perc.meth[,10:18], na.rm=TRUE) # 89.6%  <-- South Sound #new filtering=88.6%
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 perc.meth.summ <- data.frame(sample=1:18, methylated=1:18, coverage=1:18, mean.perc=1:18)
 for (i in 1:18) {
@@ -764,10 +484,7 @@ myDiff25p.hypo=getMethylDiff(myDiff,difference=25,qvalue=0.01,type="hypo")
 #
 # get all differentially methylated bases
 myDiff25p=getMethylDiff(myDiff,difference=25,qvalue=0.01)
-<<<<<<< HEAD
 getData(myDiff25p)
-=======
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 # get  deferentially methylated bases using 12% difference and save to files 
 myDiff12p=getMethylDiff(myDiff,difference=12,qvalue=0.01)
@@ -779,11 +496,7 @@ write_delim(getData(myDiff12p) %>%  mutate(start = start-1, end = end+1) %>% dpl
 ```{r}
 write.table(myDiff25p, file = "../analyses/DMLs/myDiff25p.tab", sep = "\t", col.names = TRUE)
 save(myDiff25p, file="../analyses/DMLs/myDiff25p")
-<<<<<<< HEAD
 #load(file="../analyses/DMLs/myDiff25p") #load if needed
-=======
-load(file="../analyses/DMLs/myDiff25p")
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```
 
 ---
@@ -797,10 +510,7 @@ dml25 <- myDiff25p %>% getData() %>%
 write_delim(dml25, "../analyses/DMLs/dml25.bed",  delim = '\t', col_names = TRUE) 
 write_delim(dml25, "../analyses/DMLs/dml25_forIGV.bed",  delim = '\t', col_names = FALSE) #no column names for IGV
 save(dml25, file="../analyses/DMLs/R-objects/dml25")
-<<<<<<< HEAD
 #load(file="../analyses/DMLs/R-objects/dml25") #load dml25 if needed
-=======
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 # Write out bedfile for all loci fed into DML analysis, to use as background for enrichment 
 mydiff.all <-  mutate(getData(myDiff), start = start -1, end = end + 1) %>% dplyr::select(chr, start, end, meth.diff) %>% mutate_if(is.numeric, as.integer)
@@ -810,14 +520,11 @@ save(mydiff.all, file="../analyses/DMLs/R-objects/mydiff.all")
 # Save DML bed files with hypermethylated loci in each population 
 #in the df "dml25", (-) values = hypermethylated in HC, and (+) = hypermethylated in SS
 
-<<<<<<< HEAD
 paste("No. of DMLs that had higher methylation in HC= ", dml25 %>%filter(meth.diff<0)%>%nrow()) 
 1809/nrow(dml25)
 paste("No. of DMLs that had higher methylation in SS= ", dml25 %>%filter(meth.diff>0)%>%nrow())
 2154/nrow(dml25)
 
-=======
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 write_delim(dml25 %>%filter(meth.diff<0), "../analyses/DMLs/dml25-hypermethHC.bed",  delim = '\t', col_names = TRUE) 
 write_delim(dml25 %>%filter(meth.diff>0), "../analyses/DMLs/dml25-hypermethSS.bed",  delim = '\t', col_names = TRUE) 
 ```
@@ -868,13 +575,7 @@ colnames(dist.manhat.DMLs.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "Sam
 write.csv(dist.manhat.DMLs.df, file=here::here("analyses", "methylation-filtered", "dist.manhat.DMLs.csv"), row.names=FALSE)
 ```
 
-<<<<<<< HEAD
 ### Figures
-=======
-### Calculate Pst for all methylated loci (using filtered object)
-
-Pst was defined by [Johnson & Kelly, 2019](https://doi.org/10.1111/eva.12912): 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 ### Hierarchical Clustering using filtered methylation data
 
@@ -886,24 +587,10 @@ clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 
 ### Principal Component Analyses, all loci after filtering 
 
-<<<<<<< HEAD
 Customized `methylKit` biplots from Yaamini Venkataraman's code,  [https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270](https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270)
 
 ```{r, fig.show='hide'}
 #load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object if needed 
-=======
-```{r}
-perc.meth.Pst <- read_delim(file = here::here("analyses",  "methylation-filtered", "percent-methylation-filtered.tab"), delim = "\t", col_names = TRUE) 
-
-apply(perc.meth.Pst, 2, function(x) any(is.na(x))) #any NA values? 
-
-#Here I removed rows with NA values, the Pstat function will work with some NA values, but to speed things up I removed them
-perc.meth.Pst2 <- perc.meth.Pst[c(complete.cases(perc.meth.Pst)),]
-apply(perc.meth.Pst2, 2, function(x) any(is.na(x))) #confirm no more NA values 
-
-#I also removed rows that had a mean methylation value of 0 as these throw off the calculation (these are loci with 0's for all samples)
-perc.meth.Pst2 <- perc.meth.Pst2[c(rowMeans(perc.meth.Pst2[-1] )>0),]
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 #Create dataframe with sample treatment information, color & symbol scheme 
 plotCustomization <- data.frame(sample = 1:18, population=c(
@@ -917,14 +604,7 @@ PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis o
 summary(PCA.filtered) #Look at summary statistics. The first PC explains 9.87% of variation, the second PC explains 8.51% of variation #new analysis: PC1=9.87% PC2=8.51%
 ```
 
-<<<<<<< HEAD
 ### PCA Figure, all methylated loci after filtering 
-=======
-#Now I modify the data a little bit, first setting contig as row name
-#perc.meth.Pst2 <- as.data.frame(perc.meth.Pst)
-perc.meth.Pst2 <- perc.meth.Pst2 %>%
-  column_to_rownames(var = "contig")
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 ```{r}
 # Save size: width=650 height=600
@@ -957,19 +637,13 @@ legend("topleft",
 
 ### Save PC scores and R object for integration with genetic data 
 
-<<<<<<< HEAD
 NOTE: this PCA was run with _all_ methylated loci data after filtering for 5x across 7 of 9 samples per pop. 
-=======
-#reorder these columns so that population is the first column
-perc.meth.Pst2 <- perc.meth.Pst2[,c(ncol(perc.meth.Pst2),1:(ncol(perc.meth.Pst2)-1))]
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 ```{r}
 save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered")
 write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
 ```
 
-<<<<<<< HEAD
 ## permANOVA and dispersion test, % methylation by population 
 
 ```{r}
@@ -987,23 +661,6 @@ screeplot(PCA.filtered, bstick=TRUE)
 
 # check sign. of PCs - can't get this to work, though. 
 #ordi.monte(PCA.filtered, ord="pca", dim=2, perm = 1000, scale = F, plot = F) 
-=======
-#Now run the following line and it will provide Pst estimates for every gene. NOTE: this can take a long time. 
-perc.meth.Pst.done <- Pst(perc.meth.Pst2)
-save(perc.meth.Pst.done, file="../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
-
-# Load Pst dataframe if needed. 
-load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
-hist(perc.meth.Pst.done$Pst_Values, col = "gray50")
-summary(perc.meth.Pst.done$Pst_Values)
-nrow(perc.meth.Pst.done)
-
-# Write out Pst results 
-write.table(perc.meth.Pst.done, file = here::here("analyses", "methylation-filtered", "Pst_locus.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
-```
-
-### Figures
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 anova(meth.bdp<-betadisper(perc.meth.d,plotCustomization$population)) #no sign. difference in dispersion, which is good 
 boxplot(meth.bdp)
@@ -1015,7 +672,6 @@ ordiplot(meth.pcoa, choices = c(1, 2), type="text", display="sites", xlab="PC 1"
 ```
 ### Principal Component Analyses, DMLs only 
 
-<<<<<<< HEAD
 ```{r, fig.show='hide'}
 load("../analyses/DMLs/R-objects/dml25_counts")
 
@@ -1024,32 +680,9 @@ nrow(PCA.DMLs$rotation)
 
 summary(PCA.DMLs) #Look at summary statistics. The first PC explains 36.3% of variation, the second PC explains 8.5% of variation
 ```
-=======
-### Principal Component Analyses, all loci after filtering 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 ### PCA Figure, DMLs only 
 
-<<<<<<< HEAD
-=======
-```{r, fig.show='hide'}
-load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object 
-
-#Create dataframe with sample treatment information, color & symbol scheme 
-plotCustomization <- data.frame(sample = 1:18, population=c(
-                                rep("HC", times=9), 
-                                rep("SS", times=9)),
-                                color=c(rep("firebrick3", times=9),
-                                rep("dodgerblue3", times=9)),
-                                symbol=c(rep(16, times=9),
-                                rep(17, times=9))) 
-PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-summary(PCA.filtered) #Look at summary statistics. The first PC explains 12.25% of variation, the second PC explains 8.5% of variation
-```
-
-### PCA Figure, all methylated loci after filtering 
-
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```{r}
 par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
 PCA.figure <- ordiplot(PCA.DMLs, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
@@ -1065,7 +698,6 @@ box(col = "white")
 box(col = "white")
 box(col = "white")
 box(col = "white")
-<<<<<<< HEAD
 #ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
 #ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
 axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
@@ -1073,161 +705,6 @@ mtext(side = 1, text = "PC 1 (36.3%)", line = 3, cex = 1.5) #Add x-axis label
 axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
 mtext(side = 2, text = "PC 2 (8.5%)", line = 3, cex = 1.5) #Add y-axis label
 legend("topright", 
-=======
-#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (12.3%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (8.5%)", line = 3, cex = 1.5) #Add y-axis label
-legend("topleft", 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
-```
-
-### Save PC scores and R object for integration with genetic data 
-
-<<<<<<< HEAD
-NOTE: this PCA was run with DMLs only 
-
-```{r}
-save(PCA.DMLs, file="../analyses/DMLs/R-objects/PCA.DMLs")
-write_delim(data.frame(PCA.DMLs$x) %>% tibble::rownames_to_column("sample"), "../analyses/DMLs/PC-scores-DMLs.tab",  delim = '\t', col_names = TRUE)
-=======
-NOTE: this PCA was run with _all_ methylated loci data after filtering for 10-100x across 7 of 9 samples per pop. 
-
-```{r}
-save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered")
-write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
-```
-
-## permANOVA and dispersion test, % methylation by population 
-
-```{r}
-perc.meth.d<-vegdist(data.frame(t(perc.meth)),"euclidean", na.rm = TRUE)
-print(meth.perm <- adonis(data.frame(t(perc.meth)) ~ population, data=plotCustomization, 
-                          permutations=1000, method='euclidean', na.rm = TRUE)) #yes, global population difference 
-
-hist(meth.perm$f.perms, main="Histogram of pseudo-F values under the null model", 
-     xlab="pseudo=F values", col="gray", xlim=c(0.5,2.5))
-abline(v=1.9743, col="red") # indicates F-value is significant. 
-
-source("../resources/biostats.R")
-pca.eigenval(PCA.filtered) #The Proporation of Variance = %variance explained 
-screeplot(PCA.filtered, bstick=TRUE) # first 6 PC appear sign. 
-
-# check sign. of PCs - can't get this to work, though. 
-#ordi.monte(PCA.filtered, ord="pca", dim=2, perm = 1000, scale = F, plot = F) 
-
-anova(meth.bdp<-betadisper(perc.meth.d,plotCustomization$population)) #no sign. difference in dispersion, which is good 
-boxplot(meth.bdp)
-
-
-# perform PCoA just for fun on distance matrix 
-meth.pcoa<-cmdscale(perc.meth.d, eig=TRUE, add=T)
-ordiplot(meth.pcoa, choices = c(1, 2), type="text", display="sites", xlab="PC 1", ylab="PC 2")
-```
-
-
-
-
-```{r}
-perc.meth %>% as.data.frame() %>% ncol()
-```
-
-
-
-### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
-
-```{r}
-# load("../analyses/methylation-filtered/R-objects/PCA.filtered")
-
-PCA.var.loadings <- get_pca_var(PCA.filtered)
-
-data.frame(PCA.var.loadings$contrib) # % that each variable (locus) contributes to PCA dimensions. We're interested in Dim1 and Dim2. 
-
-# Subset variable loadings for those that contribute >5% to PC axes 
-subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05) #axis 1 
-subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05) #axis 2 
-
-# Subset original list of loci for those that contribute >5% to PC axes 1 and 2 
-subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.1>0.05))) #PC 1
-subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05))) #PC 2
-```
-
-### calculate Pst of loci that are top contributors to PCA (>5% PC loadings) 
-
-```{r}
-PCA.filtered.top <- subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.var.loadings$contrib), Dim.2>0.05))) 
-
-# Calculate Pst Using the DF previously formated for Pst calcs 
-PCA.filtered.top.Pst <- Pst(
-  perc.meth.Pst2 %>% dplyr::select(
-  c("Population", (PCA.filtered.top %>% mutate(contig.start=paste(chr, start, end, sep=".")))$contig.start))
-  )
-
-hist(PCA.filtered.top.Pst$Pst_Values, col = "gray50")
-summary(PCA.filtered.top.Pst$Pst_Values)
-
-# Write out Pst results - reminder these are for the loci that contribute 5% or greater to PCA (which was run with all loci)
-write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE, quote = F)
-```
-
-### Plot Pst of top-contributors to the all-loci PCA against Fst for top contributors to the SNP PCA 
-
-```{r}
-Fst.SNPs.PCA <- read_delim(file = url("https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/2bRAD/Fst_PCA_allHCSS_95.tab"), delim = "\t", col_names = TRUE) 
-
-inner_join(x=Fst.SNPs.PCA, 
-           y=PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","pos", "end")) %>% dplyr::select("contig", "pos", "Pst_Values") %>%
-             mutate(pos=as.numeric(pos)), by=c("contig")) %>% 
-  # ggplot(aes(x=pos.x, y=pos.y)) + geom_jitter(size=3) + theme_minimal() 
-  ggplot(aes(x=fst, y=Pst_Values)) + geom_point(size=3) + theme_minimal() + 
-  xlab("Fst") + ylab("Pst") + ggtitle("Pst ~ Fst of loci on the same contig that are top contributors to PCAs")
-
-# 6 top contributing methylated loci that are on the same contig as a top contribuing SNP 
-# But no exact matches (none that are the exact same contig+position) 
-```
-
-
-### Principal Component Analyses, DMLs only 
-
-```{r, fig.show='hide'}
-load("../analyses/DMLs/R-objects/dml25_counts")
-
-PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE, sd.filter = T) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-nrow(PCA.DMLs$rotation)
-
-summary(PCA.DMLs) #Look at summary statistics. The first PC explains 3.7% of variation, the second PC explains 1.9% of variation
-```
-
-### PCA Figure, DMLs only 
-
-```{r}
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-PCA.figure <- ordiplot(PCA.DMLs, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
-points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 3) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
-#Add multiple white boxes on top of the default black box to manually change the color
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (3.7%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (1.9%)", line = 3, cex = 1.5) #Add y-axis label
-legend("bottom", 
        pch = c(16, 17), 
        legend = c("Hood Canal", "South Sound"), 
        col = c(c("firebrick3", "dodgerblue3")), 
@@ -1241,164 +718,6 @@ NOTE: this PCA was run with DMLs only
 ```{r}
 save(PCA.DMLs, file="../analyses/DMLs/R-objects/PCA.DMLs")
 write_delim(data.frame(PCA.DMLs$x) %>% tibble::rownames_to_column("sample"), "../analyses/DMLs/PC-scores-DMLs.tab",  delim = '\t', col_names = TRUE)
-```
-
-### Extract variables (loci) that are top contributors to PC 1 (since axis #1 differentiates populations)
-
-```{r}
-PCA.DMLs.var.loadings <- get_pca_var(PCA.DMLs)
-
-# Subset variable loadings for those that contribute >5% to PC axes 
-subset(data.frame(PCA.DMLs.var.loadings$contrib), Dim.1>0.05) #axis 1 
-
-# Subset original list of loci for those that contribute >5% to PC axes 1
-PCA.DMLs.top <- subset(getData(meth_filter), rownames(meth_filter)%in% rownames(subset(data.frame(PCA.DMLs.var.loadings$contrib), Dim.1>0.05)))
-```
-
-### calculate Pst of loci that are top contributors to DML PCA (>5% PC loadings) 
-
-```{r}
-# Calculate Pst Using the DF previously formated for Pst calcs 
-PCA.DMLs.top.Pst <- Pst(
-  perc.meth.Pst2 %>% dplyr::select(
-  c("Population", (PCA.DMLs.top %>% mutate(contig.start=paste(chr, start, end, sep=".")))$contig.start))
-  )
-
-hist(PCA.DMLs.top.Pst$Pst_Values, col = "gray50")
-summary(PCA.DMLs.top.Pst$Pst_Values)
-
-# Write out Pst results - reminder these are for the loci that contribute >5% to PCA (which was run with DMLs only)
-write.table(PCA.DMLs.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "DMLs", "Pst_PCA-DMLs-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
-```
-
-### Plot Pst of top-contributors to the DML PCA against Fst for top contributors to the SNP PCA 
-
-```{r}
-PCA.DMLs.top.Pst
-
-inner_join(x=Fst.SNPs.PCA, 
-           y=PCA.DMLs.top.Pst %>% separate(Quant_Varia, into=c("contig","pos", "end")) %>% dplyr::select("contig", "pos", "Pst_Values") %>%
-             mutate(pos=as.numeric(pos)), by=c("contig", "pos"))
-
-# Unfortunately there are no overlapping loci, i.e. none that were top contributors to both the DML PCA and SNP PCA  
-```
-
-
-### Principal Component Analyses, Loci with highest 100 Pst values 
-
-```{r, fig.show='hide'}
-Pst.100 <- perc.meth.Pst.done %>% 
-  mutate(Quant_Varia=as.character(Quant_Varia)) %>%
-  separate(Quant_Varia, c("contig", "start", "end"), sep = "\\.") %>%
-  mutate_at(vars(start, end), funs(as.integer)) %>%
-  mutate(contig_start=paste(contig, start, sep="_")) %>%
-  top_n(100, Pst_Values)
-
-Pst.100.ranges=GRanges(seqnames=Pst.100$contig,
-               ranges=IRanges(start=Pst.100$start,width=1))
- 
-# Run PCA and simultaneously select methylKit records that lie inside the Pst100 regions
-PCA.Pst100 <- PCASamples(selectByOverlap(meth_filter,Pst.100.ranges), 
-  obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-summary(PCA.Pst100) #The first PC explains 5.1% of variation, the second PC explains 2.1% of variation
-```
-
-### PCA Figure, 100 loci with largest Pst values
-
-```{r}
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-PCA.figure <- ordiplot(PCA.Pst100, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
-points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 3) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
-#Add multiple white boxes on top of the default black box to manually change the color
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-ordiellipse(PCA.Pst100, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-ordiellipse(PCA.Pst100, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (5.1%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (2.1%)", line = 3, cex = 1.5) #Add y-axis label
-legend("top", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
-```
-
-### Save PC scores and R object for integration with genetic data 
-
-NOTE: this PCA was run with loci with 100-highest Pst values only 
-
-```{r}
-save(PCA.Pst100, file="../analyses/methylation-filtered/R-objects/PCA.Pst100")
-write_delim(data.frame(PCA.Pst100$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-Pst100.tab",  delim = '\t', col_names = TRUE)
-```
-
-### Principal Component Analyses, Loci with highest 200 Pst values 
-
-```{r, fig.show='hide'}
-Pst.200 <- perc.meth.Pst.done %>% 
-  mutate(Quant_Varia=as.character(Quant_Varia)) %>%
-  separate(Quant_Varia, c("contig", "start", "end"), sep = "\\.") %>%
-  mutate_at(vars(start, end), funs(as.integer)) %>%
-  mutate(contig_start=paste(contig, start, sep="_")) %>%
-  top_n(200, Pst_Values)
-
-Pst.200.ranges=GRanges(seqnames=Pst.200$contig,
-               ranges=IRanges(start=Pst.200$start,width=1))
- 
-# Run PCA and simultaneously select methylKit records that lie inside the Pst200 regions
-PCA.Pst200 <- PCASamples(selectByOverlap(meth_filter,Pst.200.ranges), 
-  obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-summary(PCA.Pst200) #The first PC explains 6.6% of variation, the second PC explains 2.7% of variation
-```
-
-### PCA Figure, 200 loci with largest Pst values
-
-```{r}
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-PCA.figure <- ordiplot(PCA.Pst200, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
-points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 3) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
-#Add multiple white boxes on top of the default black box to manually change the color
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-ordiellipse(PCA.Pst200, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-ordiellipse(PCA.Pst200, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (6.6%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (2.7%)", line = 3, cex = 1.5) #Add y-axis label
-legend("top", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
-```
-
-### Save PC scores and R object for integration with genetic data 
-
-NOTE: this PCA was run with loci with 200-highest Pst values only 
-
-```{r}
-save(PCA.Pst200, file="../analyses/methylation-filtered/R-objects/PCA.Pst200")
-write_delim(data.frame(PCA.Pst200$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-Pst200.tab",  delim = '\t', col_names = TRUE)
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ```
 
 ### Reshape filtered data to create a new column with sample info, and calculate %methylation for each locus/sample 
@@ -1414,7 +733,6 @@ meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, 
 readr::write_delim(meth_filter_reshaped, here::here("analyses", "methylation-filtered", "meth_filter_long.tab"),  delim = '\t', col_names = FALSE)
 save(meth_filter_reshaped, file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
 #load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
-<<<<<<< HEAD
 ```
 
 ## Check out overall distribution of filtered methylation data by population 
@@ -1503,101 +821,7 @@ meth_filter_reshaped %>%
   select(percMeth) %>% summary()
 
 ```
-=======
-```
 
-## Check out overall distribution of filtered methylation data by population 
-Any trends? Looks like HC has more instances of ~100% methylation with a lower second peak at around ~92%. Compared to SS that has a lower peak at ~100% and a second around 95%. 
-
-```{r}
-meth_filter_reshaped %>% 
-  ggplot(aes(x=population, y=percMeth, fill=population)) +
-  geom_violin(width=1.1, alpha=0.8) + theme_minimal() +
-  ylab("% CpG Methylation") + theme(axis.title.x = element_blank(), legend.position = "none",
-                                    text = element_text(size=18)) +
-  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
-  scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
-```
-View distributions in density plot 
-
-```{r}
-ggplotly(meth_filter_reshaped %>% 
-  ggplot(aes(x=percMeth, fill=population, color=population)) +
-  geom_density(alpha=0.5) + 
-  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
-  scale_color_manual(values=c("firebrick3", "dodgerblue3")) + 
-  scale_fill_manual(values=c("firebrick3", "dodgerblue3")) +
-  theme_minimal() +
-  ylab("Density") + xlab("% CpG Methylation") + 
-  theme(text = element_text(size=18), legend.position = "none"))
-```
-Find location of peaks in each population. Used this as a reference: http://ianmadd.github.io/pages/PeakDensityDistribution.html
-
-```{r}
-## Find largest peak 
-
-# Find largest peak for HC 
-density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth) # Y maximum is 0.203
-
-# Find where that maximum lies (this gives the index #)
-which.max(density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth)$y) #answer = index #501
-
-# Find the x value where the largest Y value is
-density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA")$percMeth)$x[501] #HC max (0.203) is @ 99.96%
-
-##--------------
-
-# Find largest peak for SS
-density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth) # Y maximum is 0.149
-
-which.max(density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth)$y) #answer = 502
-
-density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA")$percMeth)$x[502] #SS max (0.149) is 100%
-
-## Find 2nd largest peak. NOTE: I looked at the ggplotly density figure above and noted that the 2nd peaks end before ~98%, so I subset the percMeth data to retain only those <98%, then find the peak 
-
-# Find 2nd largest peak for HC 
-density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth) # Y maximum is 0.0889
-
-# Find where that maximum lies (this gives the index #)
-which.max(density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth)$y) #answer = index #474
-
-# Find the x value where the largest Y value is
-density(subset(meth_filter_reshaped, population=="HC" & percMeth!="NA" & percMeth<98)$percMeth)$x[474] #HC max (0.0889) is @ 92.57
-
-#---
-# Find 2nd largest peak for SS
-density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth) # Y maximum is 0.0849
-
-# Find where that maximum lies (this gives the index #)
-which.max(density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth)$y) #answer = index #488
-
-# Find the x value where the largest Y value is
-density(subset(meth_filter_reshaped, population=="SS" & percMeth!="NA" & percMeth<98)$percMeth)$x[488] #SS max (0.0889) is @ 95.08%
-
-#----- # of loci 
-meth_filter_reshaped %>%
-  filter(population=="HC" & percMeth!="NA") %>%
-  select(chr, start) %>% unique() %>% nrow() #33,738
-
-meth_filter_reshaped %>%
-  filter(population=="SS" & percMeth!="NA") %>%
-  select(chr, start) %>% unique() %>% nrow() #33,738 (good they are the same)
-
-#----- average % meth by pop
-meth_filter_reshaped %>%
-  filter(population=="SS" & percMeth!="NA") %>%
-  select(percMeth) %>% summary()
-
-```
-
-
-```{r}
-
-```
-
-
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 ### Calculations of % methylation by population 
 
 ```{r}
@@ -1629,68 +853,6 @@ DML.calcs <- meth_filter_reshaped %>%
   filter(chr %in% c(DML.ratios$chr) & 
            start %in% c(DML.ratios$start))
 ```
-```{r}
-# For DMLs, any difference? nah.  
-ggplotly(
-  DML.ratios %>% 
-pivot_longer(cols = c(HC, SS),
-   names_to = "population",
-   values_to = "mean_meth") %>%
-  ggplot(aes(x=population, y=mean_meth, fill=population)) +
-  geom_violin(alpha=0.2) + geom_boxplot(alpha=0.4))
-```
-
-
-Divergent Bar plot of DMLs 
-
-```{r}
-DML.ratios %>% 
-           mutate(hypermethylated=ifelse(diff_HC.SS>0, "HC", "SS")) %>%
-  ggplot(aes(x = chr_start, y = diff_HC.SS, fill=hypermethylated)) +
-  geom_bar(stat = "identity", width=0.41) +
-    scale_x_discrete(limits=(DML.ratios[order(DML.ratios$diff_HC.SS),]$chr_start)) + 
-  scale_y_continuous(limits=c(-80,80), breaks=c(-75, -50, -25, 0),
-                       labels=c("-75"="75%", "-50"="50%", "-25"="25%", "0"="0%"),
-                     sec.axis = sec_axis(trans=~.*1, breaks=c(75, 25, 50, 0),
-                       labels=c("-75"="75%", "-50"="50%", "-25"="25%", "0"="0%")))  +
-    theme(axis.text.y=element_blank(), axis.ticks.y = element_blank(), 
-          legend.position = "none", text = element_text(size=14, color="gray30"),
-          panel.background = element_blank(),
-          panel.border = element_rect(colour = "gray30", fill=NA, size=.4)) +
-    #ggtitle("DMLs, showing % methylation difference among populations") +
-    scale_fill_manual(values=c("firebrick3", "dodgerblue3")) +
-    annotate(geom="text", x=120, y=-60, label="Loci hypermethylated in\nSouth Sound", color="dodgerblue3") +
-    annotate(geom="text", x=260, y=62, label="Loci hypermethylated in\nHood Canal", color="firebrick3") + 
-  ylab("% methylation difference among populations") + xlab("Locus") + coord_flip()
-ggsave(filename = "../analyses/DMLs/DMLs-diff-barplot.pdf", width=7, height=5)
-```
-
-# For ALL loci, calculate difference between mean % methylation in Hood Canal : South Sound for divergent bar plot 
-
-```{r}
-#Calculate ratio between mean % methylation in Hood Canal : South Sound 
-all.loci.ratios <- meth_filter_reshaped %>% 
-  mutate(chr_start=paste(chr, start, sep="_")) %>%
-  group_by(population, chr, start) %>%
-  summarise(mean_percentMeth = mean(percMeth, na.rm = TRUE)) %>% #could instead use ... allCs_percent = 100*(sum(numCs)/sum(coverage)), 
-  dcast(chr + start ~ population) %>% 
-  mutate(ratio_HC.SS = HC/SS,  #in this ratio column, values <1 = HC hypomethylated, values >1 = SS hypomethylated 
-         chr_start=paste(chr, start, sep="_"),
-         diff_HC.SS = HC-SS)   #this is the difference between HC & SS (HC - SS) 
-
-# Any differences in global methylatin among the populations? Here are summarys tats of % methylation across all shared loci: No. 
-summary(all.loci.ratios$HC) 
-summary(all.loci.ratios$SS)
-
-# Do %methylation (all loci) distributions differ among population? No. 
-ggplotly(all.loci.ratios %>% 
-pivot_longer(cols = c(HC, SS),
-   names_to = "population",
-   values_to = "mean_meth") %>%
-  ggplot(aes(x=mean_meth, fill=population)) +
-  geom_density(alpha=0.2))
-```
-
 
 
 ```{r}
@@ -1702,8 +864,6 @@ pivot_longer(cols = c(HC, SS),
    values_to = "mean_meth") %>%
   ggplot(aes(x=population, y=mean_meth, fill=population)) +
   geom_violin(alpha=0.2) + geom_boxplot(alpha=0.4))
-
-
 ```
 
 Divergent Bar plot of DMLs 
@@ -1760,11 +920,7 @@ pivot_longer(cols = c(HC, SS),
 ### Heatmap
 
 ```{r}
-<<<<<<< HEAD
 #load("../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
-=======
-load("../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 DMLs_heatmap <- meth_filter_reshaped %>%
   mutate(sample=factor(sample, levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)), 
@@ -1785,10 +941,6 @@ ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + 
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-<<<<<<< HEAD
-
-
-
 # -------------# Here starts some code that wasn't used 
 
 ### Calculate Pst for all methylated loci (using filtered object)
@@ -1800,15 +952,11 @@ Pst was defined by [Johnson & Kelly, 2019](https://doi.org/10.1111/eva.12912):
 "[Pst is] ... a measurement of epigenetic divergence (st). We defined PST as the methylation analogue of Wrights FST and calculated it for each locus by subtracting the total variance in methylation in all populations from the variance within a single population and divided by the variance in all populations (PST = (VarianceTotal − VarianceSub)/VarianceTotal; Leinonen, McCairns, O’Hara, & Merilä, 2013)."
 
 I looked through their code, and it's not totally clear how they did this calculation. BUT I believe they worked with % methylation data at each locus, so I will do the same. 
-=======
-### Barplots showing % methylation of DMLs by population 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 ```{r}
 head(perc.meth, 3)
 ```
 
-<<<<<<< HEAD
 The following R code was provided by Kevin Johnson
 
 ```{r}
@@ -2068,8 +1216,6 @@ write_delim(data.frame(PCA.Pst200$x) %>% tibble::rownames_to_column("sample"), "
 ```{r}
 # First look at coverage for each DML, by population 
 
-=======
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 # use this to call specific contigs 
 DML.calcs %>% 
     filter(chr=="Contig26041") %>%
@@ -2094,7 +1240,6 @@ for (i in 1:3) {
     theme_light() + ggtitle(paste("Locus = ", dml25_counts_unique[i, "chr"], "_", dml25_counts_unique[i, "start"], sep="")) +
     scale_fill_manual(values=c("firebrick3","dodgerblue3"))))
 }
-<<<<<<< HEAD
 ```
 
 
@@ -2234,138 +1379,6 @@ Old version of dml25 bed file saved at http://gannet.fish.washington.edu/seashel
 FactoMineR::PCA(perc.meth)
 FactoMineR::PCA(perc.methDMLs)
 ```
-=======
-```
-
-
-## Generate list of methylated loci that were sequenced/found in each population separately, and for all populations combined 
-
-
-### Filter out loci where coverage is less than 10x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples for each pop, and 14 of the 18 samples for all samples combined. Also, destrand. 
-
-- Generate lists for each population:
-  1) highly methylated (ave. w/n pop = 75-100%)
-  2) lowly unmethylated (ave. w/n pop = 0-25%)
-
-```{r}
-# Use the reorganize functino from methylKit to subset a MethylRaw object based on sample ID (requires re-establishing treatment levels)
-
-meth_filter_HC=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(1:9),treatment=rep(0, times=9)), destrand=TRUE, min.per.group=7L)
-meth_filter_SS=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(10:18),treatment=rep(1, times=9)), destrand=TRUE, min.per.group=7L)
-meth_filter_all=methylKit::unite(reorganize(filtered.myobj,sample.ids=c(1:18),treatment=rep(2, times=18)), destrand=TRUE, min.per.group=7L)
-
-# HC METHYLATED loci 
-# Subset HC data to include only those with 75% or greater average % methylation, save to .bed file format 
-write_delim(
-  percMethylation(meth_filter_HC, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
-  filter(mean>=75) %>% 
-  separate(rowname, into=c("contig","start", "end")) %>% 
-  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
-  dplyr::select(contig, start, end) %>%
-  mutate_if(is.numeric, as.integer),
-  "../analyses/methylation-filtered/HC-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
-
-# HC UNMETHYLATED loci 
-# Subset HC data to include only those with 25% or less average % methylation, save to .bed file format 
-write_delim(
-  percMethylation(meth_filter_HC, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
-  filter(mean<=25) %>% 
-  separate(rowname, into=c("contig","start", "end")) %>% 
-  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
-  dplyr::select(contig, start, end) %>%
-  mutate_if(is.numeric, as.integer),
-  "../analyses/methylation-filtered/HC-lowmeth-loci.bed",  delim = '\t', col_names = FALSE)
-
-# SS METHYLATED loci 
-# Subset SS data to include only those with 50% or greater average % methylation, save to .bed file format 
-write_delim(
-  percMethylation(meth_filter_SS, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
-  filter(mean>=75) %>% 
-  separate(rowname, into=c("contig","start", "end")) %>% 
-  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
-  dplyr::select(contig, start, end) %>%
-  mutate_if(is.numeric, as.integer),
-  "../analyses/methylation-filtered/SS-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
-
-# SS UNMETHYLATED loci 
-# Subset SS data to include only those with 25% or less average % methylation, save to .bed file format 
-write_delim(
-  percMethylation(meth_filter_SS, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
-  filter(mean<=25) %>% 
-  separate(rowname, into=c("contig","start", "end")) %>% 
-  mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
-  dplyr::select(contig, start, end) %>%
-  mutate_if(is.numeric, as.integer),
-  "../analyses/methylation-filtered/SS-meth-lowloci.bed",  delim = '\t', col_names = FALSE)
-
-# # Subset combined data to include only those with 50% or greater average % methylation, save to .bed file format 
-# write_delim(
-#   percMethylation(meth_filter_all, rowids=T) %>% 
-#   as.data.frame() %>%
-#   rownames_to_column() %>% 
-#   mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) %>% 
-#   filter(mean<25) %>% 
-#   separate(rowname, into=c("contig","start", "end")) %>% 
-#   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
-#   dplyr::select(contig, start, end) %>%
-#   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/all-meth-loci.bed",  delim = '\t', col_names = FALSE)
-```
-
-### Venn Diagram of loci sequenced in each population
-
-```{r}
-HC <- percMethylation(meth_filter_HC, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) 
-
-SS <- percMethylation(meth_filter_SS, rowids=T) %>% 
-  as.data.frame() %>%
-  rownames_to_column() %>% 
-  mutate(mean = rowMeans(select(., -rowname), na.rm=TRUE)) 
-
-a <- full_join(HC, SS, by="rowname")
-
-b <- a %>% filter(rowname %in% HC$rowname) %>% select(rowname) %>% unlist() %>% as.vector() #HC seq. loci
-c <- a %>% filter(rowname %in% SS$rowname) %>% select(rowname) %>% unlist() %>% as.vector() #SS seq. loci
-d <- a %>% filter(mean.x>50) %>% select(rowname) %>% unlist() %>% as.vector() #HC meth loci
-e <- a %>% filter(mean.y>50) %>% select(rowname) %>% unlist() %>% as.vector() #SS meth loci
-f <- a %>% filter(mean.x<50) %>% select(rowname) %>% unlist() %>% as.vector() #HC unmeth loci 
-g <- a %>% filter(mean.y<50) %>% select(rowname) %>% unlist() %>% as.vector() #SS unmeth loci
-  
-library(VennDiagram)
-# methylated 
-venn.diagram(
-  x=list(d,e),
-  category.names = c("meth HC", "meth SS"),
-  filename = "../analyses/methylation-characteristics/venn-test.png",
-  output=F)
-
-venn.diagram(
-  x=list(f,g),
-  category.names = c("unmeth HC", "unmeth SS"),
-  filename = "../analyses/methylation-characteristics/venn-test1.png",
-  output=F)
-```
-
-
-
-
-# BONEYARD 
->>>>>>> 74126974fa4489807d4ac2002161d78cea1ce90a
 
 Old version of dml25 bed file saved at http://gannet.fish.washington.edu/seashell/snaps/dml25.bed
 
