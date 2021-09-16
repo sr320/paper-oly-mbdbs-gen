@@ -27,7 +27,7 @@ lapply(list.of.packages, FUN = function(X) {
 ### Load filtered methylation data object with sample info which was created in the notebook "01-methylkit" 
 
 ```{r}
-load(here::here("analyses", "methylation-filtered", "R-objects", "meth_filter_reshaped")) 
+#load(here::here("analyses", "methylation-filtered", "R-objects", "meth_filter_reshaped")) 
 head(meth_filter_reshaped) 
 ```
 
@@ -49,7 +49,6 @@ meth_filter_genes_2kbslop <-
 
 ```{r}
 length(unique(meth_filter_genes_2kbslop$gene)) 
-View(meth_filter_genes_2kbslop)
 ```
 
 ### Filter for genes with **at minimum 5 methylated loci**
@@ -82,7 +81,8 @@ gs <- unique(sub_meth_table_2kbslop$gene)
 
 #first subset the unique dataframes and second run the GLMs
 for(i in 1:length(gs)){
-  
+  print(i)
+
   #subset the dataframe gene by gene
   sub_meth_table_2kbslop1 <- subset(sub_meth_table_2kbslop, gene ==gs[i])
   
@@ -120,25 +120,25 @@ save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
 ### Edit gene and DMG stats dataframe, add uniprot accession numbers 
 
 ```{r}
-
-# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number 
-# Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olur_gene_UPacc.gff"), delim = "\t", col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "geneID_uniprotID")) %>%
-#   separate(geneID_uniprotID, into=c("geneID","uniprotID"), sep = ";") %>% 
-#   select(geneID, uniprotID)
+# Read in O. lurida gene file that connects OLUR gene ID to uniprot accession number
+# # NOT NEEDED ANYMORE FOR THIS CODE CHUNK 
+# (Olurida_gene_uniprot <- read_delim(file = here::here("genome-features", "Olurida_v081-20190709-UniprotID.gff"), delim = "\t", skip=1, col_names = c("contig", "source", "feature", "start", "end", "unknown1", "strand", "unknown2", "Note")) %>%
+#   mutate(ID=str_extract(Note, "ID=(.*?);"),
+#          SPID=str_extract(Note, "SPID=(.*?);")) %>% 
+#   mutate(ID=gsub("ID=|;", "", ID), SPID=gsub("SPID=|;", "", SPID)) %>%
+#   select(ID, SPID))
 
 # 
 DMGresults_genes <- 
   
   # return only 1 row per gene+/-2kb 
-  results_2kbslop[!duplicated(f$gene), c("gene", "contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
+  results_2kbslop[!duplicated(results_2kbslop$gene), c("gene", "contig_gene", "start_gene_2kb", "end_gene_2kb", "notes_gene", "pval.treatment", "adj.pval.pop")] %>%
   
   # Split giant gene "Notes" column into separate columns 
   mutate(ID=str_extract(notes_gene, "ID=(.*?);"),
-       Parent=str_extract(notes_gene, "Parent=(.*?);"),
        Name=str_extract(notes_gene, "Name=(.*?);"),
        Alias=str_extract(notes_gene, "Alias=(.*?);"),
        AED=str_extract(notes_gene, "AED=(.*?);"),
-       eAED=str_extract(notes_gene, "eAED=(.*?);"),
        Note=str_extract(notes_gene, "Note=(.*?);"),
        Ontology_term=str_extract(notes_gene, "Ontology_term=(.*?);"),
        Dbxref=str_extract(notes_gene, "Dbxref=(.*?);"),
@@ -148,7 +148,8 @@ DMGresults_genes <-
   #remove extraneous info from Olur gene ID and Uniprot species ID ("SPID")
   mutate(Name=str_remove(Name, "Name=")) %>% mutate(Name=str_remove(Name, ";")) %>%
   mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";"))
-  
+
+# NOT NEEDED ANYMORE  
   #add uniprot IDs to gene dataframe 
   #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID"))
 ```
@@ -156,7 +157,7 @@ DMGresults_genes <-
 ### Here is the number of differentially methylated genes (with min. 5 loci per gene): 
 
 ```{r}
-nrow(DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,])
+nrow(DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,]) #1,447
 ```
 
 ### Extract dataframes for DMG function analyses 
@@ -197,14 +198,11 @@ DMGresults_genes$SPID %>%
   na.omit() %>% as.vector())
 ```
 
-## Enriched biological function, DMGs 
-
-| Category         | Term                                                                 | Count | %    | PValue | Genes                                                                  | List Total | Pop Hits | Pop Total | Fold Enrichment | Bonferroni | Benjamini | FDR |
-|------------------|----------------------------------------------------------------------|-------|------|--------|------------------------------------------------------------------------|------------|----------|-----------|-----------------|------------|-----------|-----|
-| GOTERM_BP_DIRECT | GO:0007399~nervous system development                                | 9     | 5.14 | 0.011  | O15075, Q04721, Q7T163, Q8VHN7, B1AYB6, Q8WXG9, P16621, P29503, Q5SNZ0 | 155        | 17       | 756       | 2.58            | 0.9999     | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0045214~sarcomere organization                                    | 4     | 2.29 | 0.060  | G4SLH0, Q2V2M9, A2ASS6, Q8WZ42                                         | 155        | 5        | 756       | 3.90            | 1.0        | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:1903955~positive regulation of protein targeting to mitochondrion | 4     | 2.29 | 0.060  | Q7Z6Z7, Q7TMY8, Q571F8, Q587J7                                         | 155        | 5        | 756       | 3.90            | 1.0        | 1.0       | 1.0 |
-| GOTERM_BP_DIRECT | GO:0008152~metabolic process                                         | 5     | 2.86 | 0.089  | Q66PG2, P13086, O17732, Q99NB1, P07742                                 | 155        | 9        | 756       | 2.71            | 1.0        | 1.0       | 1.0 |
+### Results of DAVID enrichment analysis saved here: 
+- Enriched Biological Processes: analyses/DMGs/Enriched-BioProc-DMGs.txt 
+- Enriched Molecular Functions: analyses/DMGs/Enriched-MolFunc-DMGs.txt
+- Enriched Cellular Componenets: analyses/DMGs/Enriched-CellComp-DMGs.txt 
+- List of DMGs inputted to DAVID (downloaded from DAVID, which also shows the Uniprot IDs that were excluded from the analysis): analyses/DMGs/Genes-DAVID-DMGs.txt 
 
 ### Convert GO terms to GO Slim, 
 
@@ -216,55 +214,11 @@ GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', 
   setNames(c("GO", "term", "slim", "category")) %>% 
   mutate_at(vars(category, slim), as.factor)
 
-GO.enriched.DMG <- read_delim(here::here("analyses", "DMGs", "Enriched-BioFunc-DMGs.txt"), delim = '\t', col_names = TRUE) %>% 
+(GO.enriched.DMG <- read_delim(here::here("analyses", "DMGs", "Enriched-BioProc-DMGs.txt"), delim = '\t', col_names = TRUE) %>% 
    separate(Term, into=c("GO", "term"), remove=TRUE,sep = "~") %>% 
-   left_join(GOSlim, by=c("GO", "term")) #add slim 
+   left_join(GOSlim, by=c("GO", "term"))) #add slim 
 ```
 
-### The 9 genes represented in the "Nervous system development" GO term 
-
-| ID     | Gene Name                                       | Species                 |
-|--------|-------------------------------------------------|-------------------------|
-| P16621 | Leukocyte-antigen-related-like(Lar)             | Drosophila melanogaster |
-| Q8WXG9 | adhesion G protein-coupled receptor V1(ADGRV1)  | Homo sapiens            |
-| Q8VHN7 | adhesion G protein-coupled receptor V1(Adgrv1)  | Mus musculus            |
-| Q5SNZ0 | coiled coil domain containing 88A(Ccdc88a)      | Mus musculus            |
-| O15075 | doublecortin like kinase 1(DCLK1)               | Homo sapiens            |
-| Q7T163 | kinase D-interacting substrate 220b(kidins220b) | Danio rerio             |
-| B1AYB6 | methyl-CpG binding domain protein 5(Mbd5)       | Mus musculus            |
-| P29503 | neuralized(neur)                                | Drosophila melanogaster |
-| Q04721 | notch 2(NOTCH2)                                 | Homo sapiens            |
-
-### The 4 genes represented in the "Sarcomere organization" GO term 
-
-| ID     | Gene Name                                    | Species                |
-|--------|----------------------------------------------|------------------------|
-| G4SLH0 | Titin homolog(ttn-1)                         | Caenorhabditis elegans |
-| Q2V2M9 | formin homology 2 domain containing 3(FHOD3) | Homo sapiens           |
-| Q8WZ42 | titin(TTN)                                   | Homo sapiens           |
-| A2ASS6 | titin(Ttn)                                   | Mus musculus           |
-
-### The 4 genes represented in the "positive regulation of protein targeting to mitochondrion" GO term 
-
-| ID     | Gene Name                                                                 | Species      |
-|--------|---------------------------------------------------------------------------|--------------|
-| Q7TMY8 | HECT, UBA and WWE domain containing 1(Huwe1)                              | Mus musculus |
-| Q7Z6Z7 | HECT, UBA and WWE domain containing 1, E3 ubiquitin protein ligase(HUWE1) | Homo sapiens |
-| Q571F8 | glutaminase 2 (liver, mitochondrial)(Gls2)                                | Mus musculus |
-| Q587J7 | tudor domain containing 12(TDRD12)                                        | Homo sapiens |
-
-### The 5 genes represented in the "metabolic process" GO term 
-
-| ID     | Gene Name                                              | Species                |
-|--------|--------------------------------------------------------|------------------------|
-| O17732 | PYruvate Carboxylase(pyc-1)                            | Caenorhabditis elegans |
-| Q99NB1 | acyl-CoA synthetase short-chain family member 1(Acss1) | Mus musculus           |
-| Q66PG2 | like-glycosyltransferase(large)                        | Danio rerio            |
-| P07742 | ribonucleotide reductase M1(Rrm1)                      | Mus musculus           |
-| P13086 | succinate-CoA ligase, alpha subunit(Suclg1)            | Rattus norvegicus      |
-
-### Here is the full list of genes that were differentially methylated
-[Genes-DAVID-DMGs.txt](https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/DMGs/Genes-DAVID-DMGs.txt)
 
 ### Barplots showing % methylation of DMGs by population 
 
@@ -284,11 +238,12 @@ results_2kbslop %>%
   left_join(DMGresults_genes[c("gene", "SPID", "Note")], by="gene") %>%
 
 # use this to call specific genes using Uniprot ID
-    filter(SPID=="Q04721") %>%
+    filter(SPID %in% c(as.character(quote(c(Q96AD5, Q9VH19, Q5F477, A2AAE1, P07686, Q95YE2)))[-1])) %>%
+  mutate(gene=as.factor(gene)) %>% 
 
 # generate bar plot of mean % methylation +SD by population 
   ggplot(aes(x = population, y = mean_percMeth, fill = population, 
-                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+                         label=paste0(round(mean_percMeth, digits = 1), "%"))) + 
       geom_bar(stat="identity", width = 0.5) + ylim(0,118) +
       scale_y_continuous(breaks=c(0,25, 50, 75, 100)) +
       geom_pointrange(aes(ymin=mean_percMeth,
@@ -301,8 +256,7 @@ results_2kbslop %>%
   facet_wrap(~gene) 
 ```
 
-
-### Extract GO terms for DMGs_2kbslop and save to file 
+### Extract GO terms for annotated DMGS and save to file 
 
 ```{r}
 DMGs_2kbslop.genes.GO <- DMGresults_genes[DMGresults_genes$adj.pval.pop < 0.05,] %>% 
@@ -321,14 +275,22 @@ write_delim(DMGs_2kbslop.genes.GO[,c("GO_term","adj.pval.pop")], path = here::he
 Create bed files to visualze as a track of DMGs_2kbslop in IGV 
 
 ```{r}
-DMGs_2kbslop.bed <- meth_filter_genes_2kbslop %>%
-  filter(contig_gene %in% DMGs_2kbslop.genes$contig_gene & 
-           start_gene_2kb %in% DMGs_2kbslop.genes$start_gene & 
-           end_gene_2kb %in% DMGs_2kbslop.genes$end_gene) %>%
-  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb, 
-                unknown1_gene, strand_gene, unknown2_gene, notes_gene) %>%
-  distinct(contig_gene, start_gene_2kb, end_gene_2kb)
+# THIS IS OLD CODE THAT I'M NOT CONFIDENT IS NECESSARY. 
+# DMGs_2kbslop.bed <- meth_filter_genes_2kbslop %>%
+#   filter(contig_gene %in% DMGresults_genes$contig_gene & 
+#            start_gene_2kb %in% DMGresults_genes$start_gene_2kb & 
+#            end_gene_2kb %in% DMGresults_genes$start_gene_2kb) %>%
+#   dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb, 
+#                 unknown1_gene, strand_gene, unknown2_gene, notes_gene) %>%
+#   distinct(contig_gene, start_gene_2kb, end_gene_2kb)
 #DMGs_2kbslop.bed <- DMGs_2kbslop.bed[!duplicated(test$contig_gene),]
+
+# INSTEAD I USE THIS
+DMGs_2kbslop.bed <- results_2kbslop %>%
+  filter(adj.pval.pop < 0.05) %>%
+  dplyr::select(contig_gene, start_gene_2kb, end_gene_2kb) %>%
+  distinct(contig_gene, start_gene_2kb, end_gene_2kb)
+
 readr::write_delim(DMGs_2kbslop.bed, "../analyses/DMGs/DMGs_2kbslop.bed",  delim = '\t', col_names = FALSE)
 ```
 
@@ -432,7 +394,7 @@ perc_meth_genes_2kbslop_wide <- perc_meth_genes_2kbslop %>%
   tibble::column_to_rownames(var = "sample")
 
 head(perc_meth_genes_2kbslop_wide[1:4]) #confirm correct format 
-ncol(perc_meth_genes_2kbslop_wide) #1394 gene regions 
+ncol(perc_meth_genes_2kbslop_wide) 
 ```
 
 ### Run Pst 
@@ -492,8 +454,6 @@ ggplot(genes_2kbslop_Pst_DMGpvalue, aes(x=Pst_Values, y=adj.pval.pop)) +
                formula = formula, parse = TRUE, size = 3, col="blue") +
   ylim(c(0,1))
 ```
-
-
 
 ##### Second, calculate Pst of average % methylation only within genes. Only look genes that have **at minimum 5 methylated loci** (this was done in a previous chunk). I need the % methylation data for each of the gene regions, so I'll first create that dataframe. 
 
@@ -707,6 +667,8 @@ meth_filter_genes_2kbslop %>%
 ```
 
 Plot methylation Pst values (mean) calculated at the loci level across a gene 
+
+# NOTE - THIS OBJECT ISN'T UPDATED AS OF SEPT. 10, 2021 - TOOK TOO LONG TO DO LOCI-LEVEL PST 
 
 ```{r}
 load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")

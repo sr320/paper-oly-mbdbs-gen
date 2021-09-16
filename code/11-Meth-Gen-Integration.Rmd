@@ -29,6 +29,8 @@ lapply(list.of.packages, FUN = function(X) {
 
 # Calculate methylation Pst for genome bins 
 
+# NOTE: None of the 1kb genome bin analyses were used in the manuscript - only used 10kb bins. 
+
 ## 1kb Genome Bins 
 
 ### Load filtered methylation data object with sample info which was created in the notebook "01-methylkit" 
@@ -113,7 +115,7 @@ perc_meth_bins_1kb_wide <- perc_meth_bins_1kb %>%
   tibble::column_to_rownames(var = "sample")
 
 head(perc_meth_bins_1kb_wide[1:4]) #confirm correct format 
-ncol(perc_meth_bins_1kb_wide)-1 # 71 bins
+ncol(perc_meth_bins_1kb_wide)-1 # 281 bins
 perc_meth_bins_1kb$`n()` %>% hist()
 perc_meth_bins_1kb$`n()` %>% summary()
 ```
@@ -146,6 +148,18 @@ write.table(perc_meth_bins_1kb_Pst %>%
 
 ## 10kb bins 
 
+### Use intersectBed to find where methylated loci and 10kb genome bins (that have genetic data)
+
+  wb: Print all lines in the second file
+  a: input data file, which was created in previous code chunk
+  b: save annotated gene list
+
+The file Olurida_v081_bins-10kb.bed was created by Katherine Silliman using the Oly genome index file (Olurida_v081.fa.fai) and this code: 
+```
+awk 'FS=OFS="\t"{print $1, 0, $2}' ../../Olurida_v081.fa.fai \
+| bedtools makewindows -b - -w 10000 > Olurida_v081_10kbIntervals.bed
+```
+
 ```{bash}
 intersectBed \
   -wb \
@@ -160,7 +174,7 @@ meth_filter_bins_10kb <- read_delim(file = "../analyses/methylation-filtered/met
 
 meth_filter_bins_10kb %>% 
        distinct(bin) %>%
-  nrow() #271 10kb bins 
+  nrow() #827 10kb bins 
 
 perc_meth_bins_10kb <- meth_filter_bins_10kb %>% 
    group_by(population, sample, bin, contig, bin.start, bin.end) %>%
@@ -217,6 +231,7 @@ awk 'FS=OFS="\t"{print $1, 0, $2}' ../genome-features/Olurida_v081.fa.fai \
 ```
 
 ## Assess 1kb bins 
+# NOTE: NOT RE-DONE IN THIS NEW ANALYSIS B/C IT TAKES TOO LONG AND NOT USED IN PAPER 
 
 ### Use intersectBed to find where methylated loci and all 1kb genome bins intersect
 ```{bash}
@@ -293,7 +308,7 @@ write.table(perc_meth_bins_allmeth_1kb_Pst %>%
 
 ## Assess 10kb bins 
 
-### Use intersectBed to find where methylated loci and all 1kb genome bins intersect
+### Use intersectBed to find where methylated loci and all 10kb genome bins intersect
 ```{bash}
 intersectBed \
   -wb \
