@@ -25,8 +25,11 @@ analyses/methylation-characteristics/methylated-gene.bed
 analyses/methylation-characteristics/merged_all_5x.bed
 analyses/methylation-characteristics/merged_methylated_5x.bed
 
+analyses/methylation-filtered/meth_filter_long.tab
 analyses/methylation-filtered/meth_filter_gene.2kbslop.tab
 analyses/methylation-filtered/meth_filter_gene.tab
+analyses/methylation-filtered/meth_filter_10kb-bin-allmeth.tab
+analyses/methylation-filtered/meth_filter_1kb-bin-allmeth.tab
 
 data/uniprot-SP-GO-sorted.tab
 data/zr1394_all_s456.CpG_report.merged_CpG_evidence.cov
