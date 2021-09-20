@@ -9,6 +9,7 @@ resources/
 .DS_Store
 analyses/.DS_Store
 
+analyses/DMLs/AllLociDMLs-ASV.bed
 analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
 analyses/myobj_18
