@@ -58,6 +58,7 @@ min.filt_2kbslop <- dplyr::count(meth_filter_genes_2kbslop, vars = c(group))
 newdata <- min.filt_2kbslop[which(min.filt_2kbslop$n > 4), ]
 sub_meth_table_2kbslop <- meth_filter_genes_2kbslop[meth_filter_genes_2kbslop$group %in% newdata$vars,]
 save(sub_meth_table_2kbslop, file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop")
+load(file="../analyses/DMGs/R-objects/sub_meth_table_2kbslop") #load if necessary
 ```
 
 ```{r}
@@ -115,6 +116,7 @@ results_2kbslop$adj.pval.pop <- p.adjust(results_2kbslop$pval.treatment, method=
 DMGs_2kbslop <- subset(results_2kbslop, adj.pval.pop < 0.05) #%>%
 #  mutate(contig_gene_start=paste(contig_gene, start_gene_2kb, sep="_"))
 save(DMGs_2kbslop, file="../analyses/DMGs/R-objects/DMGs_2kbslop")
+load(file="../analyses/DMGs/R-objects/DMGs_2kbslop")
 ```
 
 ### Edit gene and DMG stats dataframe, add uniprot accession numbers 
@@ -366,7 +368,7 @@ sub_meth_table_2kbslop %>%
 head(sub_meth_table_2kbslop)
 head(meth_filter_reshaped) #data frame that contains coverage and % methylation info 
 
-# I think this filtering step doesn't account for the 2kb +/- start and stop 
+# Calculate average % meth per sample each gene region (and include SD and no. of loci in that gene)
 perc_meth_genes_2kbslop <- sub_meth_table_2kbslop %>% 
    group_by(population, sample, contig_gene, start_gene_2kb, end_gene_2kb) %>%
    dplyr::summarise(
@@ -412,11 +414,16 @@ nrow(genes_2kbslop_5loci_Pst)
 head(genes_2kbslop_5loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE))
 
 # Write out Pst results 
+save(genes_2kbslop_5loci_Pst, file =here::here("analyses", "DMGs", "genes_2kbslop_5loci_Pst"))
 write.table(genes_2kbslop_5loci_Pst %>% separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE), file = here::here("analyses", "DMGs", "Pst_gene_2kbslop_5loci.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 
 head(genes_2kbslop_5loci_Pst %>% 
   separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   filter(Pst_Values>0.5))
+
+# What is mean Pst of gene regions (those that contain 5+ loci)
+round(mean(genes_2kbslop_5loci_Pst$Pst_Values), digits = 3)
+round(sd(genes_2kbslop_5loci_Pst$Pst_Values), digits = 3)
 ```
 
 #### Merge DMG list with Pst values 
@@ -542,6 +549,9 @@ perc_meth_genes_2kbslop <- meth_filter_genes_2kbslop %>%
     sd_percMeth=sd(percMeth, na.rm=TRUE),
     n())  
 
+# Confirm the number of genes containing any methylation data  
+perc_meth_genes_2kbslop %>% ungroup() %>% select(contig_gene,start_gene_2kb,end_gene_2kb) %>% unique() %>% nrow() #9,231 genes 
+
 # check a couple loci to make sure % methylation is calculated separately for each sample and gene region 
 perc_meth_genes_2kbslop %>% filter(contig_gene=="Contig0", start_gene_2kb==10497, end_gene_2kb==95068) %>%
   ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
@@ -585,6 +595,9 @@ write.table(genes_2kbslop_Pst %>% separate(Quant_Varia, into=c("contig_gene","st
 head(genes_2kbslop_Pst %>% 
   separate(Quant_Varia, into=c("contig_gene","start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   filter(Pst_Values>0.5))
+
+load(file = "../analyses/methylation-filtered/R-objects/genes_2kbslop_Pst") #load object if needed
+mean(genes_2kbslop_Pst$Pst_Values, na.rm = T)
 ```
 
 ## Examine methylation patters by gene location 

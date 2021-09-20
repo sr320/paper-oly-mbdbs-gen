@@ -165,6 +165,35 @@ print(DML.summary <- table(DML.features.df[c("feature")])) #Note: "similarity" r
 #save DML loci feature df object to file, to use in notebook #12 
 save(DML.features.df, file="../analyses/DMLs/R-objects/DML.features.df")
 save(DML.summary, file="../analyses/DMLs/R-objects/DML.summary")
+
+#How many DMLs are found within known genes? 
+DML.features[["DML.gene"]] %>%
+  select(contig.dml, start.dml, end.dml) %>% nrow()
+1915/nrow(dml25)
+
+#How many DMLs are found within one or more exons? 
+DML.features[["DML.exon"]] %>%
+  select(contig.dml, start.dml, end.dml) %>% unique() %>% nrow()
+1504/nrow(dml25)
+
+#How many DMLs are found upstream & downstream of genes? 
+DML.features[["DML.flank-up"]] %>% 
+    select(contig.dml, start.dml, end.dml) %>% nrow()
+178/nrow(dml25)
+
+DML.features[["DML.flank-down"]] %>% 
+    select(contig.dml, start.dml, end.dml) %>% nrow()
+173/nrow(dml25)
+
+#How many DMLs are found within TEs? 
+DML.features[["DML.TE"]] %>% 
+  select(contig.dml, start.dml, end.dml) %>% unique() %>% nrow()
+188/nrow(dml25)
+
+DML.features[["DML.unknown"]] %>% 
+  select(contig.DML, start.dml, end.dml) %>% unique() %>% nrow()
+500/nrow(dml25)
+
 ```
 
 ## 2. MACAU - where are size-associated methylated loci located? 
@@ -365,10 +394,10 @@ save(loci.locations.long, file="../analyses/methylation-filtered/R-objects/loci.
 
 
 ```{r}
-ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="flank-up"  | feature=="flank-down" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=percent, fill=feature, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+ggplot(data=subset(loci.locations.long, feature=="gene" | feature=="flank-up"  | feature=="flank-down" | feature=="exon" | feature=="TE" | feature=="unknown"), aes(x=analysis, y=count, fill=feature, label=prettyNum(count, big.mark = ","))) +  #percent(percent, accuracy = 0.1)
 #  geom_bar(stat="identity", width = .5) +
   geom_bar(position="fill", stat="identity", width=0.5) +
-  labs(y="% of Loci Assessed", x=NULL) + 
+  labs(y="No. of Loci", x=NULL) + 
   scale_fill_manual(name = "Loci Location", labels = c("Exon", "Downtream Gene Flank (+2kb at 3')", "Upstream Gene Flank (-2kb at 5')", 
                                                        "Gene Body", "Transposable Elements", "Unknown Regions"),
                     values=c("#a6cee3", "#1f78b4", "#b2df8a","#33a02c", "#fb9a99", "gray")) +
@@ -396,6 +425,7 @@ ggsave(filename = "../analyses/barplot-DMLs-SALs.png", device = "png")
 ### Copy Uniprot accession numbers for DMLs that are annotated 
 DML.features[["DML.gene2kb"]] %>%
   mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
+  select(ID, SPID) %>% unique() %>% #keep only one instance of each Oly gene 
   #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
   select(SPID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
   write_clip() #copy to clipboard 
@@ -403,7 +433,8 @@ DML.features[["DML.gene2kb"]] %>%
 ### Copy Uniprot accession numbers for all loci assessed for DMLs that are annotated 
 allLociDML.features[["allLociDML.gene2kb"]] %>%
   mutate(SPID=str_remove(SPID, "SPID=")) %>% mutate(SPID=str_remove(SPID, ";")) %>%  #remove extraneous info from Olur gene ID
-  #left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
+  select(ID, SPID) %>% unique() %>%  #keep only one instance of each Oly gene 
+#left_join(Olurida_gene_uniprot, by=c("Name" = "geneID")) %>%  #add uniprot IDs to gene dataframe
   select(SPID) %>% na.omit() %>% as.vector() %>%  # select only uniprot ID column, remove NA values and convert to vector 
   write_clip() #copy to clipboard       
 

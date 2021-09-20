@@ -510,12 +510,13 @@ dml25 <- myDiff25p %>% getData() %>%
 write_delim(dml25, "../analyses/DMLs/dml25.bed",  delim = '\t', col_names = TRUE) 
 write_delim(dml25, "../analyses/DMLs/dml25_forIGV.bed",  delim = '\t', col_names = FALSE) #no column names for IGV
 save(dml25, file="../analyses/DMLs/R-objects/dml25")
-#load(file="../analyses/DMLs/R-objects/dml25") #load dml25 if needed
+load(file="../analyses/DMLs/R-objects/dml25") #load dml25 if needed
 
 # Write out bedfile for all loci fed into DML analysis, to use as background for enrichment 
 mydiff.all <-  mutate(getData(myDiff), start = start -1, end = end + 1) %>% dplyr::select(chr, start, end, meth.diff) %>% mutate_if(is.numeric, as.integer)
 write_delim(mydiff.all, "../analyses/DMLs/mydiff-all.bed",  delim = '\t', col_names = TRUE)
 save(mydiff.all, file="../analyses/DMLs/R-objects/mydiff.all")
+#load(file="../analyses/DMLs/R-objects/mydiff.all")
 
 # Save DML bed files with hypermethylated loci in each population 
 #in the df "dml25", (-) values = hypermethylated in HC, and (+) = hypermethylated in SS

@@ -190,24 +190,32 @@ perc_meth_bins_10kb %>% filter(bin=="Contig10074_0_6621") %>%
 perc_meth_bins_10kb %>% filter(bin=="Contig19869_0_10000") %>%
   ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
 
+# How many of the 10kb bins have data at 5+ MBD loci? 
+perc_meth_bins_10kb %>% 
+  filter(`n()`>4) %>% ungroup() %>%
+  distinct(bin) %>%
+  nrow() #476 10kb bins 
+
 # Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
 perc_meth_bins_10kb_wide <- perc_meth_bins_10kb %>% 
   ungroup() %>%
+  filter(`n()`>4) %>% # filter for bins with 5+ loci 
   #tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   dplyr::select(population, sample, bin, mean_percMeth) %>%
   spread(bin, mean_percMeth) %>%
   tibble::column_to_rownames(var = "sample")
 
-#Now run the following line and it will provide Pst estimates for every gene.
+#Now run the following line and it will provide Pst estimates for every 10kb bins (n=827) for which we have methylation data AND genetic data.
 perc_meth_bins_10kb_Pst <- Pst(perc_meth_bins_10kb_wide, ci=1) #ci=1 to include 95% confidence interval calc 
 
 # Check out Pst distribution 
 hist(perc_meth_bins_10kb_Pst$Pst_Values)
 summary(perc_meth_bins_10kb_Pst$Pst_Values)
-mean(perc_meth_bins_10kb_Pst$Pst_Values)
-sd(perc_meth_bins_10kb_Pst$Pst_Values)
+round(mean(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
+round(sd(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
 
 # Write out Pst results 
+save(perc_meth_bins_10kb_Pst, file=here::here("analyses", "methylation-filtered", "perc_meth_bins_10kb_Pst"))
 write.table(
   perc_meth_bins_10kb_Pst %>% 
     separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), 
@@ -308,6 +316,12 @@ write.table(perc_meth_bins_allmeth_1kb_Pst %>%
 
 ## Assess 10kb bins 
 
+### How many 10kb bins does the O. lurida genome have? Answer- 214,511 bins 
+
+```{bash}
+wc -l "../genome-features/Olurida_v081_10kbIntervals.bed"
+```
+
 ### Use intersectBed to find where methylated loci and all 10kb genome bins intersect
 ```{bash}
 intersectBed \
@@ -324,13 +338,13 @@ meth_filter_bins_allmeth_10kb <- read_delim(file = "../analyses/methylation-filt
   mutate(bin=paste(contig, bin.start, bin.end, sep="_"))
 ```
 
-
 ### Calculate Pst for all bins represented in our methylation data 
 
 #### First, how many 10kb bins do we have methylation data for? 
+# whoa - 28,614 bins 
 
 ```{r}
-meth_filter_bins_allmeth_10kb %>% 
+meth_filter_bins_allmeth_10kb %>% ungroup() %>%
        distinct(bin) %>%
   nrow()
 ```
@@ -345,8 +359,13 @@ perc_meth_bins_allmeth_10kb <- meth_filter_bins_allmeth_10kb %>%
     sd_percMeth=sd(percMeth, na.rm=TRUE),
     n())  
 
+# NOTE: Also (NEW AS OF 9/19/2021) I will only keep bins that have at minimum 5 loci. How many is that?  Answer: 14,088
+perc_meth_bins_allmeth_10kb %>% filter(`n()`>4) %>%
+  ungroup() %>%
+       distinct(bin) %>% nrow()
+
 # Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
-perc_meth_bins_allmeth_10kb_wide <- perc_meth_bins_allmeth_10kb %>% 
+perc_meth_bins_allmeth_10kb_wide <- perc_meth_bins_allmeth_10kb %>% filter(`n()`>4) %>%
   ungroup() %>%
   #tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   dplyr::select(population, sample, bin, mean_percMeth) %>%
@@ -354,7 +373,7 @@ perc_meth_bins_allmeth_10kb_wide <- perc_meth_bins_allmeth_10kb %>%
   tibble::column_to_rownames(var = "sample")
 ```
 
-### Run Pst for 10kb bins (all with methylation data, not just bins with genetic+meth data)
+### Run Pst for 10kb bins (all bins that contain 5+ loci with methylation data, not just bins with genetic+meth data)
 
 ```{r}
 #Now run the following line and it will provide Pst estimates for every gene.
