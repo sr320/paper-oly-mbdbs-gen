@@ -47,6 +47,8 @@ resources/uniprot_sprot.fasta
 resources/uniprot_sprot_20200208.fasta.psq
 resources/uniprot_sprot_20200208.fasta.phr
 
+code/.ipynb_checkpoints
+
 #Admixture outputs
 analyses/2bRAD/PopGen/*_K*_run*
 
@@ -64,3 +66,28 @@ analyses/2bRAD/mQTL/*
 !*feature*
 !cis-meth.features.df
 !*uniprot*
+
+#GBS SNPs
+analyses/2bRAD/Inputs/*GBS*
+
+#mQTL_5x
+analyses/2bRAD/mQTL_5x/*
+!MBD_HCSS_Afilt32m70_maf05_m2pop_sites50k_mQTL0501_12_RNPCAcov
+!MBD_HCSS_Afilt32m70_maf05_m2pop_format.tab
+!snppos_mqtl_05_m2pop.tab
+!snppos_mqtl_05_m2pop.BED
+!meth_filter_12_RankNorm.tab
+!meth_filter_allsites_RankNorm.tab
+!methsitespos_12_mqtl.tab
+!covariate_PCA_covmat.tab
+!*feature*
+!cis-meth.features.df
+!*uniprot*
+!snpAmeth12B_50kb.txt
+!snpBmeth12A_50kb.txt
+!meth_mbd_maf05_sites_cisp01.bed
+!snp_mbd_maf05_sites_cisP01.bed
+!snps_mbd_maf05_sites_transF05.bed
+!meth_mbd_maf05_sites_transF05.bed
+!methtransF05-dml-gene2kbregions.bed
+!cisp01-meth-dml-gene2kbregions.bed
