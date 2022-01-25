@@ -337,7 +337,7 @@ sp
 
 
 
-# Figure 6a
+# Figure 6
 ## Plotting mQTLs
 ```{r}
 load("../analyses/2bRAD/mQTL_5x/Contig54624.19738.19738.df")
