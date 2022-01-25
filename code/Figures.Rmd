@@ -5,7 +5,6 @@ date: "7/13/2020"
 output: html_document
 ---
 ```{r}
-library(ggplot2)
 library(spaa) #list2dist
 library(ggpubr) #add correlation to plot
 ```
@@ -13,6 +12,10 @@ library(ggpubr) #add correlation to plot
 ```{r}
 library(tidyverse)
 ```
+
+This Rmd Files 
+
+
 
 
 
@@ -51,6 +54,8 @@ legend("topleft",
        cex = 1.2, bty = "n") #Add legend 
 ```
 
+
+# Figure 2
 ## PCA Figure, genetic data for all samples 
 
 ```{r, fig.show='hide'}
@@ -376,3 +381,7 @@ plot.title = element_text(size=19)) +
   scale_fill_discrete(labels=c("Hood Canal","South Sound"))
 p
 ```
+# Figure 7 
+
+
+
