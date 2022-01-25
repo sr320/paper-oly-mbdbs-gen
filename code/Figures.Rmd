@@ -294,6 +294,8 @@ panel.grid.minor = element_blank()
 sp
 ```
 
+
+# Figure 3c 
 ## Correlation of methylation PC2 and SNP PC1
 ```{r}
 ep <- read.table("../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",
