@@ -23,6 +23,7 @@ This Rmd Files
 # Figure 2
 ## PCA Figure, genetic data for all samples 
 
+
 ```{r, fig.show='hide'}
 # Load DF with PCA axis info 
 PCA.allgen <- read.table(file = "../analyses/2bRAD/PopGen/All_pca_covMat.tsv")
@@ -100,7 +101,7 @@ legend("topleft",
 
 
 
-
+# Figure 3b
 ## PCA Figure, all methylated loci after filtering 
 
 ```{r, fig.show='hide'}
