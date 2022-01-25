@@ -25,7 +25,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - _Crassostrea virginica_ proteins `genome-annot/GCF_002022765.2_C_virginica-3.0_protein.faa`
 
 **Genetic Analyses**
-- Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`
+- Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`    
 _2bRAD_ `analyses`     
 - Files for relatedness matrix for MACAU: HSmbdsamples_rab.txt and mbdsamples_rab.txt. File starting with HS is generated from an ANGSD run using only HC/SS samples, the other is a run using HC/SS/NF samples. The two files are very tightly correlated so should not matter much.
 - HCSS_Afilt32m70_01_pp90_m75_BSouts.vcf: VCF file of 7 SNPs determined to be outliers by Bayescan with FDR < 0.1 and prior of 10.
