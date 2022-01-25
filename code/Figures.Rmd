@@ -204,6 +204,8 @@ meth_filter_reshaped %>%
   scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
 ```
 
+
+# Figure 4a
 ## Correlation of Epigenetic/Genetic Distance  
 ```{r}
 #load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
@@ -234,6 +236,8 @@ panel.grid.minor = element_blank()
 sp
 ```
 
+
+# Figure 4b
 ## Correlation of Epigenetic/Genetic Distance (DML) 
 ```{r}
 #load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
