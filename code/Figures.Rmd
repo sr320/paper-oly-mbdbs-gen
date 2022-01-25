@@ -266,6 +266,7 @@ panel.grid.minor = element_blank()
 sp
 ```
 
+# Figure 5
 ## Correlation of Fst and Pst (10kb bins)  
 ```{r}
 fst <- read.csv("../analyses/2bRAD/MethGen/HCSS_sfsm70_Per10kbFst.csv")
