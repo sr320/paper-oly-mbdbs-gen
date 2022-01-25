@@ -11,6 +11,7 @@ library(ggpubr) #add correlation to plot
 
 ```{r}
 library(tidyverse)
+library(methylKit)
 ```
 
 This Rmd Files 
@@ -146,6 +147,9 @@ legend("topleft",
        col = c(c("firebrick3", "dodgerblue3")), 
        cex = 1.2, bty = "n") #Add a legend with information about ambient and elevated samples
 ```
+
+
+# SUPPLEMENTAL
 
 ## PCA Figure, DMLs only 
 
