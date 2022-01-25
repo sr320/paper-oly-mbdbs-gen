@@ -1,7 +1,13 @@
 ### Data and Code accompanying the manuscript
 ### _Epigenetic and genetic population structure is coupled in a marine invertebrate_
 
-
+Repository structure
+- `analyses`
+- `code`
+- `data`
+- `genome annot`
+- `genome-features`
+- `protocols`
 
 
 
@@ -30,4 +36,6 @@ _2bRAD_ `data`
 - HCSS_Afilt32m70_01_pp90.vcf: HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 - Afilt32m70_01_pp75.vcf: 3 populations, all SNPS with MAF > 1% and a genotype probobility of > 75%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 
-**DNA Methylation**
+**DNA Methylation**   
+- Bismark code `code\00-Bismark.sh`
+- methylKit code `code\methylkit.Rmd`
