@@ -1,4 +1,14 @@
-# paper-oly-mbdbs-gen
+### Data and Code for the manuscript 
+### _Epigenetic and genetic population structure is coupled in a marine invertebrate_
+
+
+
+
+
+
+
+---
+
 
 ## analyses
 
