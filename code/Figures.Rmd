@@ -20,41 +20,6 @@ This Rmd Files
 
 
 
-# Figure 3a
-## PCA Figure, genetic data for only MBD samples 
-
-```{r, fig.show='hide'}
-#Create dataframe with sample treatment information, color & symbol scheme 
-plotCustomization <- data.frame(sample = 1:18, population=c(
-                                rep("HC", times=9), 
-                                rep("SS", times=9)),
-                                color=c(rep("firebrick3", times=9),
-                                rep("dodgerblue3", times=9)),
-                                symbol=c(rep(16, times=9),
-                                rep(17, times=9))) 
-
-# Check out genetic PCA axes 
-load("../analyses/2bRAD/MethGen/MBD_pca_covMat.Robj") 
-
-# calculate % variance explained by each PC axis (order from 1+): 
-eig$val
-
-# Generate figure 
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-plot(1, type="n", xlab="", ylab="", xlim=c(-0.5, 0.5), ylim=c(-0.6, 0.8), axes=FALSE, ann=FALSE)
-points(x=PC[,1], y=PC[,2], col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (9.5%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (8.0%)", line = 3, cex = 1.5) #Add y-axis label
-legend("topleft", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.2, bty = "n") #Add legend 
-```
-
-
 # Figure 2
 ## PCA Figure, genetic data for all samples 
 
@@ -97,6 +62,44 @@ p1.base <- recordPlot()
 invisible(dev.off())
 #dev.off()
 ```
+
+
+# Figure 3a
+## PCA Figure, genetic data for only MBD samples 
+
+```{r, fig.show='hide'}
+#Create dataframe with sample treatment information, color & symbol scheme 
+plotCustomization <- data.frame(sample = 1:18, population=c(
+                                rep("HC", times=9), 
+                                rep("SS", times=9)),
+                                color=c(rep("firebrick3", times=9),
+                                rep("dodgerblue3", times=9)),
+                                symbol=c(rep(16, times=9),
+                                rep(17, times=9))) 
+
+# Check out genetic PCA axes 
+load("../analyses/2bRAD/MethGen/MBD_pca_covMat.Robj") 
+
+# calculate % variance explained by each PC axis (order from 1+): 
+eig$val
+
+# Generate figure 
+par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
+plot(1, type="n", xlab="", ylab="", xlim=c(-0.5, 0.5), ylim=c(-0.6, 0.8), axes=FALSE, ann=FALSE)
+points(x=PC[,1], y=PC[,2], col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
+axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
+mtext(side = 1, text = "PC 1 (9.5%)", line = 3, cex = 1.5) #Add x-axis label
+axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
+mtext(side = 2, text = "PC 2 (8.0%)", line = 3, cex = 1.5) #Add y-axis label
+legend("topleft", 
+       pch = c(16, 17), 
+       legend = c("Hood Canal", "South Sound"), 
+       col = c(c("firebrick3", "dodgerblue3")), 
+       cex = 1.2, bty = "n") #Add legend 
+```
+
+
+
 
 ## PCA Figure, all methylated loci after filtering 
 
