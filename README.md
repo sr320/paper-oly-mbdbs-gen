@@ -9,13 +9,11 @@ Repository structure
 - `genome-features` - genome feature tracks for visualization and analysis (eg _bedtools_)
 - `protocols` - protocol for 2bRAD library prep
 
+---
 
 _Below are select files in the repository distinctly referenced in the manuscript_
 
 
----
-
-## Methods
 
 **Genome Assembly**    
 - PBJelly code `genome-annot/20171130_emu_pbjelly.ipynb`
@@ -26,12 +24,12 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 
 **Genetic Analyses**
 - Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`    
-_2bRAD_ `analyses`     
+    _2bRAD_ `analyses`     
 - Files for relatedness matrix for MACAU: HSmbdsamples_rab.txt and mbdsamples_rab.txt. File starting with HS is generated from an ANGSD run using only HC/SS samples, the other is a run using HC/SS/NF samples. The two files are very tightly correlated so should not matter much.
 - HCSS_Afilt32m70_01_pp90_m75_BSouts.vcf: VCF file of 7 SNPs determined to be outliers by Bayescan with FDR < 0.1 and prior of 10.
 - GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP  
 - HCSS_sfsm70_Per{Site,Gene}Fst.csv: CSV files with pairwise FST values > 0 on either a per site or per gene basis.  
-_2bRAD_ `data`  
+    _2bRAD_ `data`  
 - HCSS_Afilt32m70_01_pp90.vcf: HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 - Afilt32m70_01_pp75.vcf: 3 populations, all SNPS with MAF > 1% and a genotype probobility of > 75%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 
