@@ -15,6 +15,9 @@ library(tidyverse)
 ```
 
 
+
+
+# Figure 3a
 ## PCA Figure, genetic data for only MBD samples 
 
 ```{r, fig.show='hide'}
