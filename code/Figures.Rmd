@@ -224,6 +224,7 @@ sp
 ```
 
 ## Correlation of Epigenetic/Genetic Distance (DML) 
+
 ```{r}
 #load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
 ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
