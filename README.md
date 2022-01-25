@@ -19,6 +19,11 @@
 - _Crassostrea gigas_ proteins `genome-annot/GCA_000297895.1_oyster_v9_protein.faa`
 - _Crassostrea virginica_ proteins `genome-annot/GCF_002022765.2_C_virginica-3.0_protein.faa`
 
+**Genetic Analyses**
+- Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`
+
+
+
 
 ## analyses
 
