@@ -2,19 +2,18 @@
 ### _Epigenetic and genetic population structure is coupled in a marine invertebrate_
 
 Repository structure
-- `analyses`
-- `code`
-- `data`
-- `genome annot`
-- `genome-features`
-- `protocols`
+- `analyses` - code output, organized by sub directories
+- `code` - code used including knitr products
+- `data` - files associated with annotation, genetics, and methylation
+- `genome annot` - code and fasta files used for genome annotation
+- `genome-features` - genome feature tracks for visualization and analysis (eg _bedtools_)
+- `protocols` - protocol for 2bRAD library prep
 
 
-
+_Below are select files in the repository distinctly referenced in the manuscript_
 
 
 ---
-
 
 ## Methods
 
