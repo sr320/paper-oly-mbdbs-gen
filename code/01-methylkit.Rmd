@@ -150,11 +150,11 @@ head(united0L)
 ```{r}
 # This code counts up the number of samples that have data and plots 
 getData(united0L) %>%
-  mutate(HC=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+  mutate(HC=apply(dplyr::select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+  mutate(SS=apply(dplyr::select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  select(c("chr", "start", "end", matches("HC|SS"))) %>% 
+  dplyr::select(c("chr", "start", "end", matches("HC|SS"))) %>% 
   pivot_longer(names_to = "population", cols = c("HC", "SS")) %>% mutate(population=as.factor(population)) %>% 
   ggplot(aes(x=value, fill=population)) +
   geom_histogram(alpha=0.5) + 
@@ -174,12 +174,12 @@ united5x=methylKit::unite(filtered.5x, destrand=TRUE, min.per.group=0L)
 #Save dataframe with % methyation information, and # of samples with 5x coverage. 
 #Also create column with locus information (contig, start, end) to merge with other dataframe 
 perc.meth5x <- methylKit::percMethylation(united5x, rowids=T) %>% as.data.frame() %>%
-  mutate(HC.mean=rowMeans(na.rm = TRUE, select(., c(1:9)))) %>% 
-  mutate(SS.mean=rowMeans(na.rm = TRUE, select(., c(10:18)))) %>%
+  mutate(HC.mean=rowMeans(na.rm = TRUE, dplyr::select(., c(1:9)))) %>% 
+  mutate(SS.mean=rowMeans(na.rm = TRUE, dplyr::select(., c(10:18)))) %>%
   rownames_to_column(var = "locus") %>%
-  mutate(HC.5x.count=apply(select(., c(matches("^1$|^2$|^3$|^4$|^5$|^6$|^7$|^8$|^9$"))), 
+  mutate(HC.5x.count=apply(dplyr::select(., c(matches("^1$|^2$|^3$|^4$|^5$|^6$|^7$|^8$|^9$"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS.5x.count=apply(select(., c(matches("10|11|12|13|14|15|16|17|18"))), 
+  mutate(SS.5x.count=apply(dplyr::select(., c(matches("10|11|12|13|14|15|16|17|18"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) 
 ```
 
@@ -188,16 +188,16 @@ perc.meth5x <- methylKit::percMethylation(united5x, rowids=T) %>% as.data.frame(
 ```{r}
 #Count number of samples that have data for each population, then merge with the average % methylation dataframe 
 samples.withdata <- getData(united0L) %>%
-  mutate(HC.1x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
+  mutate(HC.1x.count=apply(dplyr::select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>%
-  mutate(SS.1x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
+  mutate(SS.1x.count=apply(dplyr::select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), 
                       MARGIN = 1, function(x) sum(!is.na(x)))) %>% 
   mutate(locus=paste(chr, start, end, sep=".")) %>%
-  select(c("locus", matches("HC|SS"))) 
+  dplyr::select(c("locus", matches("HC|SS"))) 
 
 # HERE IS THE RESULTING DATAFRAME TO USE FOR ANALYSIS OF DATA/NO DATA LOCI 
 # Join the dataframe that has the # of samples with data at each loci (using no min. coverage), with the average % methylation for each loci and # of samples with sufficient coverage for that % (using 5x min. coverage) 
-(perc.meth.withdata <- samples.withdata %>% left_join(perc.meth5x%>%select(locus,HC.mean, SS.mean,HC.5x.count,HC.5x.count,SS.5x.count), by = "locus"))
+(perc.meth.withdata <- samples.withdata %>% left_join(perc.meth5x%>%dplyr::select(locus,HC.mean, SS.mean,HC.5x.count,HC.5x.count,SS.5x.count), by = "locus"))
 ```
 # Here I summarize how many loci have no data in one population, lots of data & high methylation rate in the other
 
@@ -226,6 +226,15 @@ paste("Number of loci with data in 2 Hood Canal sample (any coverage), 5x covera
 paste("Number of loci with data in 2 South Sound sample (any coverage), 5x coverage (or greater) in 7/9 samples in Hood Canal: ",
   perc.meth.withdata %>% filter(SS.1x.count<=2 & HC.5x.count>=7) %>% nrow())
 ```
+# Decided to go with this criteria: Loci with data in 1 sample (any coverage) in population A, 5x coverage (or greater) in 7/9 samples in population B 
+
+How many loci will I add to the analysis? 251 loci 
+
+```{r}
+rbind(perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7),
+      perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7)) %>%
+  arrange(locus) %>% distinct(locus)
+```
 
 ```{r}
 # Spot check to make sure calculations and filtering are correctly done 
@@ -239,11 +248,11 @@ getData(united0L) %>% filter(chr=="Contig137318", start=="3905")
 ```{r}
 # Save bed files - separate file for each population with loci that were "filled in with 10 zeros" 
 
-# loci with NO data in any Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples with a mean % methylation >75% 
+# loci with data in 1 or less Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples
  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
 
-# loci with NO data in any South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples with a mean % methylation >75% 
+# loci with data in 1 or less South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples
 perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
 
@@ -264,7 +273,7 @@ bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-f
 ### Examine raw data by population - how many loci have data in some population but not the other? 
 
 ```{r}
-(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
+(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
   setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
@@ -273,7 +282,7 @@ bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-f
   mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
 write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highSS.nodataHC.genes.csv")
   
-(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% select(c(-10,-11,-12,-15,-16,-17)) %>%
+(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
   setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
@@ -365,19 +374,18 @@ united0L.df[united0L.df$locus %in% nodata.HC$locus,]
 # confirm that i did it correctly 
 united0L.df[united0L.df$locus %in% nodata.SS$locus,]
 
-
 # and that other loci didn't also get changed 
 united0L.df[1:100,]
 ```
 
-## Filter out loci where coverage is less than 5x or greater than 100x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
+## Filter out loci where coverage is less than 5x. Then, column bind all samples, keeping only loci that are present in 7 of the 9 samples. Also, destrand. 
 
 ```{r}
 united0L.df.filtered <- united0L.df %>%
-  mutate(HC.5x.count=apply(select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>%
-  mutate(SS.5x.count=apply(select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>% 
+  mutate(HC.5x.count=apply(dplyr::select(., c(matches("coverage1$|coverage2$|coverage3$|coverage4$|coverage5$|coverage6$|coverage7$|coverage8$|coverage9$"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>%
+  mutate(SS.5x.count=apply(dplyr::select(., c(matches("coverage10|coverage11|coverage12|coverage13|coverage14|coverage15|coverage16|coverage17|coverage18"))), MARGIN = 1, function(x) sum(x > 4, na.rm=T))) %>% 
   filter(HC.5x.count>=7 & SS.5x.count>=7) %>%
-  select(-HC.5x.count, -SS.5x.count)
+  dplyr::select(-HC.5x.count, -SS.5x.count)
 ```
 
 ## Double check that the "no data" loci are included in the filtered dataframe 
@@ -388,6 +396,11 @@ united0L.df.filtered[united0L.df.filtered$locus %in% nodata.HC$locus,] #yes, 149
 
 # confirm that i did it correctly 
 united0L.df.filtered[united0L.df.filtered$locus %in% nodata.SS$locus,] #yes, 102 loci
+
+# And double check the number of loci at 5x in 7/9 samples w/o filled-in data 
+subset(united0L.df.filtered, !(locus %in% c(nodata.SS$locus,nodata.HC$locus))) #252,115 loci 
+
+252366-251
 ```
 
 # Create a methylBase object that includes data replaced for zeros in some instances. These instances include ... loci with data in 1 Hood Canal sample (any coverage) & 5x coverage (or greater) in 7/9 samples in South Sound, and visa ersa. 
@@ -536,6 +549,20 @@ write_delim(dml25 %>%filter(meth.diff>0), "../analyses/DMLs/dml25-hypermethSS.be
 paste("No. of DMLs:", nrow(dml25))
 paste("Percent of loci (filtered for 5x for 7 of 9 samples per pop) that are DMLs: ", round(nrow(dml25)/nrow(perc.meth)*100, digits=3), "%", sep="")
 ```
+
+### How many of our "zero-added" loci are also DMLs? 
+
+```{r}
+left_join(dml25,
+  
+  rbind(perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% mutate(pop.no.data="HC"),
+perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% mutate(pop.no.data="SS")) %>% 
+separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
+  dplyr::select(chr, start, end) %>% mutate_at(c("start", "end"), as.numeric) %>%
+  mutate(start=start-1, end=end+1)
+)
+```
+
 
 ###  Subset the filtered methylation count dataframe for only those that are differentially methylated. Save object to file. 
 

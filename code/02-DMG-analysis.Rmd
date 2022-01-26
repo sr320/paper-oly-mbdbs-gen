@@ -27,7 +27,7 @@ lapply(list.of.packages, FUN = function(X) {
 ### Load filtered methylation data object with sample info which was created in the notebook "01-methylkit" 
 
 ```{r}
-#load(here::here("analyses", "methylation-filtered", "R-objects", "meth_filter_reshaped")) 
+load(here::here("analyses", "methylation-filtered", "R-objects", "meth_filter_reshaped")) 
 head(meth_filter_reshaped) 
 ```
 
@@ -619,7 +619,7 @@ meth_filter_genes_2kbslop
 meth_filter_genes <- meth_filter_genes %>% 
   mutate(gen_location = ((start-start_gene)/(end_gene-start_gene)))
 
-# Histogram showing frequency of methylation data across gene (relative location)
+# Histogram showing frequency of ALL methylation (no min. % meth) data across gene (relative location)
 meth_filter_genes %>% 
   group_by(gene, gen_location, population) %>% 
   summarise(mean_meth=mean(percMeth)) %>%
@@ -629,6 +629,19 @@ meth_filter_genes %>%
   ylab("Frequency of methylation data") + 
   ggtitle("Methylation frequency relative to gene location") +
   theme_minimal()
+
+# Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
+meth_filter_genes %>% 
+  group_by(gene, gen_location) %>% 
+  summarise(mean_meth=mean(percMeth)) %>%
+  filter(mean_meth>50) %>%
+  ggplot(., aes(x=gen_location)) +
+  stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
+  xlab("Relative location along gene") + 
+  ylab("Frequency of methylation data") + 
+  ggtitle("Methylation frequency relative to gene location") +
+  theme_minimal()
+
 
 # Percent methylation across gene 
 meth_filter_genes$gen_location_round <- round(meth_filter_genes$gen_location, digits=2)

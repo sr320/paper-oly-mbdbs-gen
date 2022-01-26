@@ -191,6 +191,7 @@ perc_meth_bins_10kb %>% filter(bin=="Contig19869_0_10000") %>%
   ggplot(aes(x=sample, y=mean_percMeth)) + geom_bar(stat="identity")
 
 # How many of the 10kb bins have data at 5+ MBD loci? 
+# UPDATE 10/4 - not gonna use this filter 
 perc_meth_bins_10kb %>% 
   filter(`n()`>4) %>% ungroup() %>%
   distinct(bin) %>%
@@ -199,7 +200,7 @@ perc_meth_bins_10kb %>%
 # Reshape data. Need to have one row per sample, one column with the population, and separate columns with each gene region with % methylation. 
 perc_meth_bins_10kb_wide <- perc_meth_bins_10kb %>% 
   ungroup() %>%
-  filter(`n()`>4) %>% # filter for bins with 5+ loci 
+  #filter(`n()`>4) %>% # filter for bins with 5+ loci if desired
   #tidyr::unite("gene_region", c("contig_gene", "start_gene_2kb", "end_gene_2kb"), sep = "_", remove = FALSE) %>%
   dplyr::select(population, sample, bin, mean_percMeth) %>%
   spread(bin, mean_percMeth) %>%
@@ -215,7 +216,7 @@ round(mean(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
 round(sd(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
 
 # Write out Pst results 
-save(perc_meth_bins_10kb_Pst, file=here::here("analyses", "methylation-filtered", "perc_meth_bins_10kb_Pst"))
+save(perc_meth_bins_10kb_Pst, file=here::here("analyses", "methylation-filtered", "R-objects", "perc_meth_bins_10kb_Pst"))
 write.table(
   perc_meth_bins_10kb_Pst %>% 
     separate(Quant_Varia, into=c("contig","start.bin", "end.bin"), sep = "_", remove = FALSE), 

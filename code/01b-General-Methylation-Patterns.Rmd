@@ -33,7 +33,9 @@ bedtools --version
 CpGs <- read.table(file = here::here("genome-features", "Olurida_v081_CG-motif.gff"))[,c(1,4,5)] %>% setNames(c("contig", "start", "end"))
 
 # How many CpG loci are there in the genome? 
-nrow(CpGs)
+nrow(CpGs) #27,331,887
+
+#Steven counted 27,819,009 CpGs. Use that value here 
 ```
 
 ## Get methylation data 
@@ -144,6 +146,8 @@ all_methylated_5x <- allmeth.5x %>% filter(methyl.status=="methylated")
 
 # as .bed file 
 write_delim(all_methylated_5x %>% dplyr::select(contig, start, end, meth_perc), here::here("analyses", "methylation-characteristics", "all_methylated_5x.bed"), delim = '\t', col_names = F)
+
+1839241/27819009*100
 
 # as R object 
 save(all_methylated_5x, file="../analyses/methylation-characteristics/R-objects/all_methylated_5x")
@@ -422,6 +426,7 @@ methdata.summary <- methdata.summary %>%
 
 # Save summary object 
 save(methdata.summary, file="../analyses/methylation-characteristics/R-objects/loci.summary")
+load(file="../analyses/methylation-characteristics/R-objects/loci.summary")
 
 methdata.summary.long <- cbind(melt(methdata.summary[,c("feature", "methylated", "all5x", "CpGs")], 
                                   variable.name = "analysis", value.name = "count"),
@@ -444,7 +449,7 @@ meth.chisq #no, they are different. P-value very low.
 
 meth.chisq$observed
 meth.chisq$expected
-corrplot(meth.chisq$residuals, is.cor = FALSE)
+corrplot(meth.chisq$residuals, is.cor = FALSE, method="circle", cl.pos = 'n')
 ```
 
 **Positive residuals are in blue.** Positive values in cells specify an attraction (positive association) between the corresponding row and column variables. 
@@ -495,8 +500,8 @@ corrplot(contrib.isoform, is.cor = FALSE)
 
 ```{r}
 ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
-                     (feature=="gene" | feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
-                        feature=="2kbflank-down" | feature=="TE" | feature=="unknown")), 
+                     (feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
+                        feature=="TE" | feature=="unknown")), 
        aes(x=feature, y=percent, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
   geom_bar(stat="identity", position = "dodge", width = .5) +
 scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
@@ -507,6 +512,26 @@ scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs
     geom_text(aes(label=percent(percent, accuracy = 0.01)), position=position_dodge(width=0.7), vjust=-0.1, size=3) +
   scale_x_discrete(
     labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="5' flanking\nregion (-2kb)", 
+             `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement",
+             unknown="Unknown region\n of genome"))
+
+
+# Version that is positive / negative stacked bar chart 
+ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
+                     (feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
+                        feature=="TE" | feature=="unknown")) %>%
+         mutate(percent2 = ifelse(analysis == "CpGs", percent*(-1), percent)), 
+       aes(x=feature, y=percent2, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", position = "stack", width = .5) +
+scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
+                  values=c("#a6cee3", "#1f78b4")) +
+  ggtitle(expression(paste("Distribution of all CpG loci versus methylated CpG's in ", italic("Ostrea lurida"), " by genomic feature"))) +
+  labs(y="% of Loci", x=NULL) + coord_flip() +
+  theme_minimal() + theme(legend.position ="bottom", plot.title = element_text(size=11)) + 
+    geom_text(aes(label=percent(percent, accuracy = 0.01), y=percent2+.037*sign(percent2)),
+              position=position_dodge(width=0), vjust=-0.1, size=3) +
+  scale_x_discrete(limits=rev,
+    labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="Promoter region", 
              `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement",
              unknown="Unknown region\n of genome"))
 ```
@@ -589,6 +614,17 @@ CpGs.genes %>% select(SPID) %>%
 read_delim(file="../analyses/methylation-characteristics/methylated-loci-enriched-BP.txt", delim = "\t") %>% 
   mutate(GO = str_extract(Term, "GO(.*?)~")) %>% 
   mutate(GO = gsub("~", "", GO)) %>% dplyr::select(GO, PValue) %>% na.omit() %>% write_clip()
+
+# Identify GO Slim terms for processes enriched in genes containing methylated CpGs 
+# GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', col_names = FALSE) %>% 
+#   setNames(c("GO", "term", "slim", "category")) %>% 
+#   mutate_at(vars(category, slim), as.factor)
+
+read_delim(file="../analyses/methylation-characteristics/methylated-loci-enriched-BP.txt", delim = "\t") %>%
+  dplyr::select(Term,PValue, FDR) %>%
+  separate(Term, into=c("Term", "Process"), sep="~") %>% 
+  left_join(GOSlim %>% dplyr::select(Term, slim)) %>% arrange(slim, PValue) %>%
+  mutate(across(where(is.numeric), round, 2)) %>% View()
 ```
 
 
@@ -1066,5 +1102,10 @@ bedtools intersect -wb -a "../analyses/methylation-characteristics/all_methylate
 ```{bash}
 echo "No. of methylated loci not located in any known feature:"
 bedtools intersect -v -a "../analyses/methylation-characteristics/all_methylated_5x.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" "../genome-features/Olurida_v081-20190709.exon.gff" "../genome-features/Olurida_v081-20190709.CDS.gff" "../genome-features/Olurida_v081-20190709.mRNA.gff" "../genome-features/Olurida_v081_TE-Cg.gff" "../genome-features/20190709-Olurida_v081.stringtie.gtf" | wc -l 
+```
+
+```{bash}
+# How many genes in O. lurida genome?
+wc -l "../genome-features/Olurida_v081-20190709.gene.gff"
 ```
 
