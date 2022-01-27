@@ -1,10 +1,7 @@
 ---
 title: "Supplementary"
-author: "Katherine Silliman, Laura H Spencer, Steven Roberts"
-date: "1/26/2022"
 output: html_document
 ---
-## Supplementary 
 _Epigenetic and genetic population structure is coupled in a marine invertebrate_  
 Katherine Silliman, Laura H Spencer, Steven B Roberts
 
@@ -22,9 +19,7 @@ lapply(list.of.packages, FUN = function(X) {
 })
 ```
 
-
-#### Supplemental Figure 1
-Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).
+### 1. General _O. lurida_ methylation characteristics  
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/methylation-characteristics/R-objects/allmeth")
@@ -56,8 +51,9 @@ supp.figure01
 # dev.off()
 ```
 
-#### Supplemental Figure 2
-Top: Table showing the % of all CpG loci and methylated loci that overlap with each genomic feature. Bottom: A correlation plot, showing residuals from chi-squared tests of homogeneity on the distribution of methylated loci and CpG loci that intersect with features. Blue=positive associations, red=negative associations, and size of circles represents the absolute value of each correlation coefficient. 
+**Supplemental Figure 1**: Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).   
+
+---
 
 | Feature | % of all CpGs in genome | % of all methylated loci | Ratio of  % meth:%CpG |
 |---|---|---|---|
@@ -83,8 +79,10 @@ supp2
 # dev.off()
 ```
 
-#### Supplemental Figure 3
-Relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples.
+
+**Supplemental Figure 2**:  Top: Table showing the % of all CpG loci and methylated loci that overlap with each genomic feature. Bottom: A correlation plot, showing residuals from chi-squared tests of homogeneity on the distribution of methylated loci and CpG loci that intersect with features. Blue=positive associations, red=negative associations, and size of circles represents the absolute value of each correlation coefficient.  
+
+---
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/methylation-filtered/meth_filter_genes") 
@@ -98,7 +96,7 @@ load(file="../analyses/methylation-filtered/meth_filter_genes")
   stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
   xlab("Relative location along gene") + 
   ylab("Frequency of methylation data") + 
-  ggtitle("Methylation frequency relative to gene location") +
+  ggtitle("A. methylation frequency relative to gene location") +
   theme_minimal())
 
 (supp.3b <- meth_filter_genes %>% 
@@ -112,7 +110,7 @@ load(file="../analyses/methylation-filtered/meth_filter_genes")
   scale_y_continuous(limits = c(0, 100)) +
   xlab("Relative location along gene") +
   ylab("Mean % methylation") +
-  ggtitle("% methylation by relative gene location") +
+  ggtitle("B. % methylation by relative gene location") +
   theme_minimal())
 
 # Plot methylation variance by gene location  
@@ -124,16 +122,18 @@ load(file="../analyses/methylation-filtered/meth_filter_genes")
   geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
   xlab("Relative location along gene") +
   ylab("Variance in % methylation") +
-  ggtitle("Variance in % methylation by relative gene location") +
+  ggtitle("C. variance in % methylation by relative gene location") +
   theme_minimal())
 
-supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
-
+#supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
 ```
 
-#### Supplemental Table 1  
 
-Biological functions that are enriched in the _Ostrea lurida_ genome.  
+**Supplemental Figure 3**: Gene body methylation patterns. A) relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples, B) percent methylation across a gene body averaged across all MBD18 samples, and C) variation in percent methylation across a gene body, across all MBD18 samples.    
+
+---
+
+**Supplemental Table 1**:  Biological functions that are enriched in the _Ostrea lurida_ genome. Also available in .csv format, [methylated-loci-enriched-BP.csv](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/methylated-loci-enriched-BP.csv)   
 
 | GO Term | Biological Process | PValue | FDR | GO slim |
 |---|---|---|---|---|
@@ -196,8 +196,9 @@ Biological functions that are enriched in the _Ostrea lurida_ genome.
 | GO:0070936 | protein K48-linked ubiquitination | 0.07 | 1 | NA |
 | GO:0003341 | cilium movement | 0.07 | 1 | NA |
 
-#### Supplemental Figure 4
-Heat map of loci that are differentially methylated (DMLs) between the two populations.
+--- 
+
+### 2. Differential methylation analysis among populations    
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load("../analyses/DMLs/R-objects/DMLs_heatmap")
@@ -214,13 +215,14 @@ ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + 
 coord_cartesian(ylim = c(0, NA), clip = "off") + xlab("") +
   annotate("segment", x = 1, xend = 9, y = -225, yend = -225, colour="firebrick3") +
     annotate("segment", x = 10, xend = 18, y = -225, yend = -225, colour="dodgerblue3") +
-  annotate("text", x = 5, y = -350, colour="firebrick3", label="Hood Canal") +
-    annotate("text", x = 14, y = -350, colour="dodgerblue3", label="South Sound")#)#)
+  annotate("text", x = 5, y = -325, colour="firebrick3", label="Hood Canal") +
+    annotate("text", x = 14, y = -325, colour="dodgerblue3", label="South Sound")#)#)
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-#### Supplemental Figure 5
-PCA of methylation data using DMLs only 
+**Supplemental Figure 4***: Heat map of loci that are differentially methylated (DMLs) between the two populations.   
+
+---
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/DMLs/R-objects/PCA.figure")
@@ -245,8 +247,9 @@ legend.position = "right"
       xlim(-29,30) + ylim(-21,28))
 ```
 
-### Supplemental Figure 6
-The % difference between each population’s mean methylation for differentially methylated loci, which highlights that both populations have a similar number of hyper/hypo-methylated loci. Loci are sorted by % methylation difference.
+**Supplemental Figure 5**: PCA of methylation data using DMLs only   
+
+---
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load("../analyses/DMLs/R-objects/DML.ratios")
@@ -271,8 +274,11 @@ DML.ratios %>%
   ylab("% methylation difference among populations") + xlab("Locus") + coord_flip()
 ```
 
-#### Supplemental Table 2
-GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. Also available in .csv format, [DMG-DML-EnrichedBP.csv](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG-DML-EnrichedBP.csv)
+**Supplemental Figure 6**: The % difference between each population’s mean methylation for differentially methylated loci, which highlights that both populations have a similar number of hyper/hypo-methylated loci. Loci are sorted by % methylation difference.  
+
+---
+
+**Supplemental Table 2**: GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. Also available in .csv format, [DMG-DML-EnrichedBP.csv](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG-DML-EnrichedBP.csv)  
 
 | Go Slim | Term | Function | DMG | DML |
 |---|---|---|---|---|
@@ -338,3 +344,33 @@ GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE
 | NA  | GO:1903955 | positive regulation of protein targeting to mitochondrion | 0.0082 |   |
 | NA  | GO:0038061 | NIK/NF-kappaB sigling |   | 0.071 |
 | NA  | GO:0090175 | regulation of establishment of plar polarity |   | 0.082 |
+
+---
+
+### 3. Genetic Structure  
+
+```{r}
+# Add admixture figure here 
+```
+
+
+**Supplemental Figure 7**: Admixture plot for 114 individuals at K=2 (determined to be the best K using the Evanno method), based on 3,724 SNPs.  
+
+---
+
+### 4. Epigenetic and genetic comparision  
+
+```{r}
+# add "DMLs (PC1) vs filtered SNPs (PC1)" figure here 
+# add "Pst vs Fst, 2kbslop all genes w/ meth data, 237 genes" figure here
+# combine into multiplot and display 
+```
+
+
+**Supplemental Figure 8**: Correlation of genetic PC1 vs PC1 of DMLs: Pearson’s r = 0.896 p-value < 1E10-9 and Spearman’s ρ = 0.81, p-value < 1E10-4).  
+
+---
+
+### 5. mQTL analysis  
+
+![**Supplemental Figure 9:**  Comparison of mQTL results that intersect with the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), gene region (genes plus 2kb upstream and downstream), transposable element, and unknown region of genome. A) SNPs designated as either local (red, within 50kb) or distant (orange) mQTLs, compared with the background (blue) of all SNPs used in the mQTL analysis. B) CpGs associated with either local (red) or distant (orange) mQTLs, compared to the background (blue) of all CpGs used in the mQTL](../supplemental-files/Supp-09.png)   

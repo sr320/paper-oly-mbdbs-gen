@@ -413,3 +413,4 @@ dev.off()
 
 _Figure 7 is a flowchart showing the molecular and evolutionary mechanisms linking genetic variation and methylation variation, an was generated outside of R_ 
 
+![../figures/figure07.png]
