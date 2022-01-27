@@ -272,7 +272,7 @@ DML.ratios %>%
 ```
 
 #### Supplemental Table 2
-GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. 
+GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. Also available in .csv format, [DMG-DML-EnrichedBP.csv](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG-DML-EnrichedBP.csv)
 
 | Go Slim | Term | Function | DMG | DML |
 |---|---|---|---|---|
