@@ -30,12 +30,20 @@ bedtools --version
 ## Get all CpG loci in genome 
 
 ```{r}
-CpGs <- read.table(file = here::here("genome-features", "Olurida_v081_CG-motif.gff"))[,c(1,4,5)] %>% setNames(c("contig", "start", "end"))
+CpGs <- read.table(file = "../genome-features/Olurida_v081_CG-motif.gff")[,c(1,4,5)] %>% setNames(c("contig", "start", "end"))
 
 # How many CpG loci are there in the genome? 
 nrow(CpGs) #27,331,887
+```
 
-#Steven counted 27,819,009 CpGs. Use that value here 
+```{bash}
+head ../genome-features/Olurida_v081_CG-motif.gff
+```
+
+Count another way using bash. NOTE- there are many instances of a 3-line "header" in the CG file, which is why I use grep to return all CpG loci (i.e. I don't just count every line) 
+
+```{bash}
+grep "fuzznuc" ../genome-features/Olurida_v081_CG-motif.gff | wc -l
 ```
 
 ## Get methylation data 
@@ -45,7 +53,7 @@ Downloaded tab files with methylation proportions at each locus:
 - 5x: https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_all_s456_5x.tab  
 - 10x: https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/zr1394_all_s456_10x.tab  
 ```{r}
-allmeth <-read_delim(file=here::here("data", "zr1394_all_s456.CpG_report.merged_CpG_evidence.cov"), delim = "\t", col_names=FALSE) %>% 
+allmeth <-read_delim(file="../data/zr1394_all_s456.CpG_report.merged_CpG_evidence.cov", delim = "\t", col_names=FALSE) %>% 
   setNames(c("contig", "start", "end", "meth_perc", "methylated", "unmethylated"))
 head(allmeth)
 
@@ -70,6 +78,10 @@ allmeth <- allmeth %>%
 allmeth.5x <- allmeth.5x %>% 
   mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated"))) %>%
   mutate(coverage=methylated+unmethylated)
+
+# Save to objects 
+save(allmeth, file="../analyses/methylation-characteristics/R-objects/allmeth")
+save(allmeth.5x, file="../analyses/methylation-characteristics/R-objects/allmeth.5x")
 
 # allmeth.10x <- allmeth.10x %>% 
 #   mutate(methyl.status=factor(ifelse(meth_perc >= 50, 'methylated', "unmethylated")))
@@ -113,6 +125,11 @@ sum(allmeth$meth_perc == 0)/nrow(allmeth)
 hist(allmeth$meth_perc, col="gray85", 
      xlab="% methylation per base", 
      main="% methylation, no coverage minimum (all samples)") 
+
+# save figure to object
+supp1a <- recordPlot()
+plot.new() 
+supp1a # redraw
 ```
 
 #### How many methylated & unmethylated sites are there with 5x coverage? 
@@ -147,7 +164,8 @@ all_methylated_5x <- allmeth.5x %>% filter(methyl.status=="methylated")
 # as .bed file 
 write_delim(all_methylated_5x %>% dplyr::select(contig, start, end, meth_perc), here::here("analyses", "methylation-characteristics", "all_methylated_5x.bed"), delim = '\t', col_names = F)
 
-1839241/27819009*100
+# % of CpG loci in O. lurida genome that are methylated
+1839241/27331887*100
 
 # as R object 
 save(all_methylated_5x, file="../analyses/methylation-characteristics/R-objects/all_methylated_5x")
@@ -322,7 +340,7 @@ cat ../analyses/methylation-characteristics/all-21-70isoforms.bed | wc -l >> ../
 
 ```{r}
 methdata.summary <- cbind(read_delim(here::here("analyses", "methylation-characteristics", "all5x-features.tab"), delim="\t", col_names=FALSE), methdata.summary) %>%
-  rename(all5x=X1) %>% 
+  dplyr::rename(all5x=X1) %>% 
   mutate_at(vars(all5x), as.numeric)
 ```
 
@@ -395,7 +413,7 @@ cat ../analyses/methylation-characteristics/CpGs-21-70isoforms.bed | wc -l >> ..
 
 ```{r}
 print(methdata.summary <- cbind(read_delim(here::here("analyses", "methylation-characteristics", "CpGs-features.tab"), delim="\t", col_names=FALSE), methdata.summary) %>%
-  rename(CpGs=X1) %>% 
+  dplyr::rename(CpGs=X1) %>% 
   mutate_at(vars(CpGs), as.numeric))
 ```
 
@@ -424,16 +442,16 @@ methdata.summary <- methdata.summary %>%
          all5xperc=all5x/methdata.summary[methdata.summary$feature=="all", "all5x"], 
          methperc=methylated/methdata.summary[methdata.summary$feature=="all", "methylated"]) 
 
-# Save summary object 
-save(methdata.summary, file="../analyses/methylation-characteristics/R-objects/loci.summary")
-load(file="../analyses/methylation-characteristics/R-objects/loci.summary")
-
 methdata.summary.long <- cbind(melt(methdata.summary[,c("feature", "methylated", "all5x", "CpGs")], 
                                   variable.name = "analysis", value.name = "count"),
                              melt(methdata.summary[,c("feature", "methperc","all5xperc", "CpGperc")], 
                                   variable.name = "analysis", value.name = "percent"))[,c(1,2,3,6)] %>%
   mutate(feature=fct_relevel(as.factor(feature), c("gene", "gene2kb", "exon", "intron", "geneflank2kb", "2kbflank-up", "2kbflank-down", "CDS", "mRNA", "TE", "ASV", "1 isoform", "2-5 isoforms", "6-10 isoforms", "11-20 isoforms", "21-70 isoforms", "unknown", "all")),
          analysis=fct_relevel(as.factor(analysis), c("CpGs", "all5x", "methylated")))
+
+# Save summary objects 
+save(methdata.summary, file="../analyses/methylation-characteristics/R-objects/loci.summary")
+save(methdata.summary.long, file="../analyses/methylation-characteristics/R-objects/methdata.summary.long")
 ```
 
 ## Conduct chi-squared test of homogeneity 
@@ -443,7 +461,8 @@ The null hypothesis is that loci distributions in the genome are the same betwee
 ### Is distribution of total CpGs vs. methylated CpGs the same? 
 
 ```{r}
-meth.chisq <- methdata.summary %>% filter(feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
+meth.chisq <- methdata.summary %>% filter(feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% 
+  column_to_rownames("feature") %>% dplyr::select(CpGs, methylated) %>% chisq.test() 
 
 meth.chisq #no, they are different. P-value very low. 
 
@@ -474,7 +493,7 @@ These cells contribute about 89.77% to the total Chi-square score and thus accou
 ### Is distribution of total CpGs vs. methylated CpGs across genes with various # of isoforms the same? 
 
 ```{r}
-meth.isoform.chisq <- methdata.summary %>% filter(feature=="1 isoform" | feature== "2-5 isoforms" | feature=="6-10 isoforms" | feature=="11-20 isoforms" | feature=="21-70 isoforms") %>% column_to_rownames("feature") %>% select(CpGs, methylated) %>% chisq.test() 
+meth.isoform.chisq <- methdata.summary %>% filter(feature=="1 isoform" | feature== "2-5 isoforms" | feature=="6-10 isoforms" | feature=="11-20 isoforms" | feature=="21-70 isoforms") %>% column_to_rownames("feature") %>% dplyr::select(CpGs, methylated) %>% chisq.test() 
 
 meth.isoform.chisq #no, they are different. P-value very low. 
 
@@ -565,10 +584,10 @@ NOTE: coverage is probably an issue here (longer genes less likely to be fully s
 library(data.table)
 
 left_join(
-  fread(here::here("analyses", "methylation-characteristics", "methylated-gene2kb.bed"), sep = "\t", select=c(5,8,9)) %>% 
+  fread(here::here("analyses", "methylation-characteristics", "methylated-gene2kb.bed"), sep = "\t", dplyr::select=c(5,8,9)) %>% 
   count(V5, V8, V9) %>%  setNames(c("contig_gene", "start_gene", "end_gene", "n_mCpG")),
   
-  fread(here::here("analyses", "methylation-characteristics", "CpGs-gene2kb.bed"), select=c(10,13,14)) %>% 
+  fread(here::here("analyses", "methylation-characteristics", "CpGs-gene2kb.bed"), dplyr::select=c(10,13,14)) %>% 
   count(V10, V13, V14) %>%  setNames(c("contig_gene", "start_gene", "end_gene", "n_CpG")),
   
   by=c("contig_gene", "start_gene", "end_gene")) %>%

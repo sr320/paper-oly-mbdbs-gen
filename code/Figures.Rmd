@@ -1,29 +1,69 @@
 ---
 title: "Figures"
-author: "Laura H Spencer"
-date: "7/13/2020"
+author: "Silliman, Spencer & Roberts 2022"
+date: "1/25/2022"
 output: html_document
 ---
-```{r}
-library(spaa) #list2dist
-library(ggpubr) #add correlation to plot
+
+This Rmd file generates figures for the manuscript "Epigenetic and genetic population structure is coupled in a marine invertebrate" by Katherine Silliman, Laura H Spencer, Steven B Roberts
+
+## Load libraries
+
+```{r message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("spaa", "ggpubr", "tidyverse", "methylKit", "gridGraphics", "gridExtra", "vegan", "scales", "pryr") #add libraries here 
+
+# Install packages if needed
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load packages 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
 ```
 
+## Figure 1 
+### Barplot summarizing CpG methylation by feature in the _O. lurida_ genome  
+
+Caption: Figure 1: Comparison of the percentages of CpGs in genome (light blue) vs. methylated CpG loci (dark blue) in O. lurida muscle tissue that intersect with each of the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), transposable element, unknown region of genome. Compared to all CpGs in the O. lurida genome methylated loci are more likely to be located in exons (3.7x) and introns (1.4x), and less likely to be located in unknown regions (0.60x).
+
 ```{r}
-library(tidyverse)
-library(methylKit)
+load(file="../analyses/methylation-characteristics/R-objects/methdata.summary.long") # # load R object
+
+fig1 <- ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
+                     (feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
+                        feature=="TE" | feature=="unknown")) %>%
+         mutate(percent2 = ifelse(analysis == "CpGs", percent*(-1), percent)), 
+       aes(x=feature, y=percent2, fill=analysis, label=percent(percent, accuracy = 0.1))) +  #prettyNum(count, big.mark = ",")
+  geom_bar(stat="identity", position = "stack", width = .5) +
+scale_fill_manual(name = NULL, labels = c("All CpGs in genome", "Methylated CpGs"),
+                  values=c("#a6cee3", "#1f78b4")) +
+  #ggtitle(expression(paste("Distribution of all CpG loci versus methylated CpG's in ", italic("Ostrea lurida"), " by genomic feature"))) +  #commented out to remove title 
+  labs(y="% of Loci", x=NULL) + coord_flip() +
+  theme_minimal(base_size = 10) + theme(legend.position ="bottom", plot.title = element_text(size=11)) + 
+    geom_text(aes(label=percent(percent, accuracy = 0.01), y=percent2+.039*sign(percent2)),
+              position=position_dodge(width=0), vjust=-0.1, size=3) +
+  scale_x_discrete(limits=rev,
+    labels=c(gene="Gene", exon="Exon", intron="Intron", `2kbflank-up`="Promoter region", 
+             `2kbflank-down`="3' flanking\nregion (+2kb)", TE="Transposable\nelement",
+             unknown="Unknown region\n of genome"))
+fig1
+
+# Save to file 
+tiff(file = "../figures/figure01.tiff", width=1750, height=1000, res=250)
+fig1
+dev.off()
+
+png(file = "../figures/figure01.png", width=1750, height=1000, res=250)
+fig1
+dev.off()
 ```
-
-This Rmd Files 
-
-
-
-
 
 
 # Figure 2
 ## PCA Figure, genetic data for all samples 
 
+Caption: Figure 2: PCA based on 5,269 SNPs for 114 individuals, with colors and shape referring to parental population.
 
 ```{r, fig.show='hide'}
 # Load DF with PCA axis info 
@@ -33,36 +73,36 @@ PCA.allgen <- read.table(file = "../analyses/2bRAD/PopGen/All_pca_covMat.tsv")
 summary(PCA.allgen$PC1) #min= --0.1384, max=0.137 
 summary(PCA.allgen$PC2) #min= -0.1643, max=0.2098
 
-# Generate a DF to define color and shape of each point 
-plotCustomization <- rownames(PCA.allgen) %>% str_extract(c("HC|SS")) %>% as.tibble() %>% 
-  rename(population = value) %>%
-  mutate(color=ifelse(population=="HC", "firebrick3", "dodgerblue3")) %>%
-  mutate(symbol=ifelse(population=="HC", 16, 17)) 
+# Extract PC axes 1 and 2, annotate with population 
+PC.coord.gen <- PCA.allgen[,1:2] %>% rownames_to_column(var = "Population") %>%
+  mutate(Population=as.factor(str_extract(Population, c("HC|SS"))))
 
-# Generate figure 
-pdf(NULL)
-dev.control(displaylist="enable")
+fig2 <- ggplot(PC.coord.gen, aes(x=PC1,y=PC2)) + 
+  geom_point(aes(shape=Population,color=Population),size=1.8) +
+  scale_shape_manual(values=c(16,17), labels=c("HC"="Hood Canal", "SS"="South Sound")) + 
+  scale_color_manual(values=c("firebrick3", "blue3"), labels=c("HC"="Hood Canal", "SS"="South Sound")) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+legend.position = c(0.155, 0.87),
+legend.text=element_text(size=9)
+) +  
+  xlim(-0.16, 0.16) + ylim(-0.2, 0.22) +
+  xlab("PC 1 (4.5%)") + ylab("PC 2 (3.4%)") +
+  guides(colour = guide_legend(override.aes = list(size=3.25)))
+fig2
 
+# Save to file 
+tiff(file = "../figures/figure02.tiff", width=1250, height=1000, res=250)
+fig2
+dev.off()
 
-
-#png("../analyses/2bRAD/PopGen/PCA_covmat_all.png")
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-plot(1, type="n", xlab="", ylab="", xlim=c(-0.16, 0.16), ylim=c(-0.2, 0.22), axes=FALSE, ann=FALSE)
-points(x=PCA.allgen$PC1, y=PCA.allgen$PC2, col = as.character(plotCustomization$color), 
-       pch = plotCustomization$symbol, cex = 1.2) #Add each sample. 
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (4.5%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (3.38%)", line = 3, cex = 1.5) #Add y-axis label
-legend(x = -0.13, y=0.17, 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.3, bty = "n") #Add legend 
-
-p1.base <- recordPlot()
-invisible(dev.off())
-#dev.off()
+png(file = "../figures/figure02.png", width=1250, height=1000, res=250)
+fig2
+dev.off()
 ```
 
 
@@ -70,37 +110,34 @@ invisible(dev.off())
 ## PCA Figure, genetic data for only MBD samples 
 
 ```{r, fig.show='hide'}
-#Create dataframe with sample treatment information, color & symbol scheme 
-plotCustomization <- data.frame(sample = 1:18, population=c(
-                                rep("HC", times=9), 
-                                rep("SS", times=9)),
-                                color=c(rep("firebrick3", times=9),
-                                rep("dodgerblue3", times=9)),
-                                symbol=c(rep(16, times=9),
-                                rep(17, times=9))) 
-
 # Check out genetic PCA axes 
 load("../analyses/2bRAD/MethGen/MBD_pca_covMat.Robj") 
 
 # calculate % variance explained by each PC axis (order from 1+): 
 eig$val
 
-# Generate figure 
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-plot(1, type="n", xlab="", ylab="", xlim=c(-0.5, 0.5), ylim=c(-0.6, 0.8), axes=FALSE, ann=FALSE)
-points(x=PC[,1], y=PC[,2], col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (9.5%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (8.0%)", line = 3, cex = 1.5) #Add y-axis label
-legend("topleft", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.2, bty = "n") #Add legend 
+# Extract PC axes 1 and 2, annotate with population 
+PC.coord.a <- PC[,1:2] %>%
+  cbind(Population=c(rep("Hood Canal", times=9), rep("South Sound", times=9))) %>% 
+  mutate(Population=as.factor(Population))
+
+fig3a <- ggplot(PC.coord.a, aes(x=PC1,y=PC2)) + 
+  geom_point(aes(shape=Population,color=Population),size=4) +
+  scale_shape_manual(values=c(16,17)) + 
+  scale_color_manual(values=c("firebrick3", "blue3")) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+legend.position = "upperright"
+) +  
+  xlim(-0.35,0.4) + ylim(-0.52,0.42) +
+  xlab("PC 1 (9.5%)") + ylab("PC 2 (8.0%)") +
+  annotate("text", x = -0.34, y = 0.4, label = "(A)", size=7)
+fig3a
 ```
-
-
 
 # Figure 3b
 ## PCA Figure, all methylated loci after filtering 
@@ -108,208 +145,34 @@ legend("topleft",
 ```{r, fig.show='hide'}
 load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object 
 
-plotCustomization <- data.frame(sample = 1:18, population=c(
-                                rep("HC", times=9), 
-                                rep("SS", times=9)),
-                                color=c(rep("firebrick3", times=9),
-                                rep("dodgerblue3", times=9)),
-                                symbol=c(rep(16, times=9),
-                                rep(17, times=9))) 
-
-PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
+PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE, ) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
 summary(PCA.filtered) #Look at summary statistics. The first PC explains 9.879% of variation, the second PC explains 8.51% of variation
 
+# Extract PC axes 1 and 2, annotate with population 
+PCA.figure <- ordiplot(PCA.filtered, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points, but save object to file
+PC.coord.b <- PCA.figure$sites %>% as_tibble() %>% 
+  cbind(Population=c(rep("Hood Canal", times=9), rep("South Sound", times=9))) %>% 
+  mutate(Population=as.factor(Population))
 
-# Create figure 
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-PCA.figure <- ordiplot(PCA.filtered, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
-points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. Darker samples are ambient, lighter samples are elevated pCO2
-#Add multiple white boxes on top of the default black box to manually change the color
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-#ordiellipse(PCA.filtered, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (9.87%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (8.51%)", line = 3, cex = 1.5) #Add y-axis label
-legend("topleft", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.2, bty = "n") #Add a legend with information about ambient and elevated samples
-```
-
-
-# SUPPLEMENTAL
-
-## PCA Figure, DMLs only 
-
-```{r, fig.show='hide'}
-load("../analyses/DMLs/R-objects/dml25_counts")
-
-PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE, sd.filter = T) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
-summary(PCA.DMLs) #Look at summary statistics. The first PC explains 36.3% of variation, the second PC explains 8.47% of variation
-
-par(mar = c(5, 5, 1, 1)) #Specify inner and outer margins
-PCA.figure <- ordiplot(PCA.DMLs, choices = c(1, 2), type = "none", display = "sites", cex = 0.5, xlab = "", ylab = "", xaxt = "n", yaxt = "n") #Use ordiplot to create base biplot. Do not add any points
-points(PCA.figure, "sites", col = as.character(plotCustomization$color), pch = plotCustomization$symbol, cex = 2) #Add each sample. 
-#Add multiple white boxes on top of the default black box to manually change the color
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-box(col = "white")
-#ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "HC", col = "firebrick3") #Add confidence ellipse around the samples in elevated pCO2
-#ordiellipse(PCA.DMLs, plotCustomization$population, show.groups = "SS", col = "dodgerblue3") #Add confidence ellipse around the samples in ambient pCO2
-axis(side =  1, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add x-axis
-mtext(side = 1, text = "PC 1 (36.3%)", line = 3, cex = 1.5) #Add x-axis label
-axis(side =  2, labels = TRUE, col = "grey80", cex.axis = 1.7) #Add y-axis
-mtext(side = 2, text = "PC 2 (8.47%)", line = 3, cex = 1.5) #Add y-axis label
-legend("topright", 
-       pch = c(16, 17), 
-       legend = c("Hood Canal", "South Sound"), 
-       col = c(c("firebrick3", "dodgerblue3")), 
-       cex = 1.3, bty = "n") #Add a legend 
-```
-
-## Heatmap of DMLs 
-
-```{r}
-load("../analyses/DMLs/R-objects/DMLs_heatmap")
-
-#ggplotly(
-ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T) +
-  scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr_start)) + 
-  #scale_fill_viridis(discrete=FALSE) 
-  theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) + 
-  scale_fill_distiller(palette = "YlGnBu", direction = 1) #)
-  #scale_fill_gradient(low="gray5", high="white")
-```
-
-
-## Check out overall distribution of filtered methylation data by population 
-Any trends? Looks like HC has more instances of ~100% methylation with a lower second peak at around ~92%. Compared to SS that has a lower peak at ~100% and a second around 95%. 
-
-```{r}
-load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
-meth_filter_reshaped %>% 
-  ggplot(aes(x=population, y=percMeth, fill=population)) +
-  geom_violin(width=1.1, alpha=0.8) + theme_minimal() +
-  ylab("% CpG Methylation") + theme(axis.title.x = element_blank(), legend.position = "none",
-                                    text = element_text(size=18)) +
-  scale_x_discrete(labels=c("HC" = "Hood Canal\nPopulation", "SS" = "South Sound\nPopulation")) + 
-  scale_fill_manual(values=c("firebrick3", "dodgerblue3"))
-```
-
-
-# Figure 4a
-## Correlation of Epigenetic/Genetic Distance  
-```{r}
-#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
-ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.csv",header = T)
-ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
-ep10 <- as.matrix(list2dist(ep10))
-mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
-        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
-ep10 <- ep10[mbdorder, mbdorder]
-
-gen <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_mbd.dist", row.names = 1, header=T)
-
-df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
-
-sp <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
-    geom_smooth(method=lm) +
+fig3b <- ggplot(PC.coord.b, aes(x=PC1,y=PC2)) + 
+  geom_point(aes(shape=Population,color=Population),size=4) +
+  scale_shape_manual(values=c(16,17)) + 
+  scale_color_manual(values=c("firebrick3", "blue3")) +
   theme_linedraw()+
 theme(
 axis.title.x = element_text( size=15),
 axis.title.y = element_text(size=15),
 panel.grid.major = element_blank(),
-panel.grid.minor = element_blank()
-) +
-  xlab("Genetic distance") + ylab("Methylation distance")  +
-  scale_y_continuous(breaks = c(2250000,3250000),labels = c("225","325"))+
-   stat_cor(method = "pearson", label.x = 0.115, label.y = 3250000,size=5)
-  
-sp
+panel.grid.minor = element_blank(),
+legend.position = "none"
+) +  
+  xlim(-130,325) + ylim(-225,275) +
+  xlab("PC 1 (9.9%)") + ylab("PC 2 (8.5%)")  +
+  annotate("text", x = -125, y = 266, label = "(B)", size=7) 
+fig3b
 ```
 
-
-# Figure 4b
-## Correlation of Epigenetic/Genetic Distance (DML) 
-
-```{r}
-#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
-ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
-ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
-ep10 <- as.matrix(list2dist(ep10))
-mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
-        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
-ep10 <- ep10[mbdorder, mbdorder]
-
-df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
-
-sp <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
-    geom_smooth(method=lm) +
-  theme_linedraw()+
-theme(
-axis.title.x = element_text( size=15),
-axis.title.y = element_text(size=15),
-panel.grid.major = element_blank(),
-panel.grid.minor = element_blank()
-) +
-  xlab("Genetic distance") + ylab("Methylation distance (DMLs)")  +
-  scale_y_continuous(breaks = c(50000,200000),labels = c("5","20"))+
-   stat_cor(method = "pearson", label.x = 0.115, label.y = 190000,size=5,p.digits = 0.001)
-  
-sp
-```
-
-# Figure 5
-## Correlation of Fst and Pst (10kb bins)  
-```{r}
-fst <- read.csv("../analyses/2bRAD/MethGen/HCSS_sfsm70_Per10kbFst.csv")
-id <- paste(fst$contig,fst$start,fst$end, sep = "_")
-fst <- cbind(id,fst)
-
-pst10kb <- read.csv("../analyses/methylation-filtered/Pst_bins_10kb.tab", sep="\t",header=T,stringsAsFactors = F)
-colnames(pst10kb) <- c("id","contig","start","end","pst","pst.lowCI","pst.highCI")
-
-both = merge(pst10kb,fst, by ="id")
-
-sp <- ggplot(both, aes(x=fst01,y=pst)) + geom_point(shape=19) +    # Use hollow circles
-    geom_smooth(method=lm) +
-  theme_linedraw()+
-theme(
-axis.title.x = element_text( size=15),
-axis.title.y = element_text(size=15),
-panel.grid.major = element_blank(),
-panel.grid.minor = element_blank()
-) +
-  xlab("Fst") + ylab("Pst")  +
-  #scale_y_continuous(breaks = c(9000,15000),labels = c("9","15"))+
-   stat_cor(method = "pearson", label.x = 0.35, label.y = 0.87,size=5,p.digits = 0.001)
-  
-sp
-```
-
-
-# Figure 3c 
+## Figure 3c 
 ## Correlation of methylation PC2 and SNP PC1
 ```{r}
 ep <- read.table("../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",
@@ -328,10 +191,11 @@ rownames(gen) <- mbdorder
 ep <- ep[mbdorder,]
 
 both <- merge(ep[,"PC2"],gen[,"PC1"],by="row.names",sort=F)
-Pop <- as.factor(c(rep("Hood Canal",9),rep("South Sound",9)))
-both <- cbind(both,Pop)
-sp <- ggplot(both, aes(x=y,y=x)) + 
-  geom_point(aes(shape=Pop,color=Pop),size=3) +
+Population <- as.factor(c(rep("Hood Canal",9),rep("South Sound",9)))
+both <- cbind(both,Population)
+
+fig3c <- ggplot(both, aes(x=y,y=x)) + 
+  geom_point(aes(shape=Population,color=Population),size=3) +
   scale_shape_manual(values=c(16,17)) + 
   scale_color_manual(values=c("firebrick3", "blue3")) +
     geom_smooth(method=lm) +
@@ -340,24 +204,158 @@ theme(
 axis.title.x = element_text( size=15),
 axis.title.y = element_text(size=15),
 panel.grid.major = element_blank(),
-panel.grid.minor = element_blank()
+panel.grid.minor = element_blank(),
+legend.position = "bottom",
+legend.title=element_blank(),
+legend.text=element_text(size=15)
 ) +
   xlab("PC1 SNPs") + ylab("PC2 Methylation")  +
-   stat_cor(method = "pearson", label.x = 0, label.y = 200,size=4,p.digits = 0.001)
+   stat_cor(method = "pearson", label.x = 0.1, label.y = 175,size=4,p.digits = 0.001) +
+  guides(colour = guide_legend(override.aes = list(size=5)))  +
+  annotate("text", x = -0.31, y = 232, label = "(C)", size=7) 
   
-sp
+fig3c
 #ggsave(sp, file = "../analyses/2bRAD/MethGen/methPC2_SNPPC1.png", dpi = 800)
 ```
 
+### Save Figure 3, multipanel plot 
+Caption: A. PCA of genetic data for the MBD18 samples. B. PCA of DNA methylation data for MBD18 samples. C. Scatter plot of PC1 from SNP genotype data and PC2 from DNA methylation data showing the linear regression line, Pearson correlation coefficient, and p-value.
 
+```{r}
+(figure03 <- ggarrange(fig3a, 
+                       fig3b,  
+                       fig3c, 
+                       ncol=1, nrow=3,
+                       common.legend = TRUE, legend="top"))
+
+tiff(file = "../figures/figure03.tiff", width=1500, height=3500, res=250)
+figure03
+dev.off()
+
+png(file = "../figures/figure03.png", width=1500, height=3500, res=250)
+figure03
+dev.off()
+```
+
+# Figure 4a
+## Correlation of Epigenetic/Genetic Distance  
+```{r}
+#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+gen <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_mbd.dist", row.names = 1, header=T)
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+fig4a <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance")  +
+  scale_y_continuous(breaks = c(2250000,3250000),labels = c("225","325"))+
+   stat_cor(method = "pearson", label.x = 0.115, label.y = 3250000,size=5)
+  
+fig4a
+```
+# Figure 4b
+## Correlation of Epigenetic/Genetic Distance (DML) 
+
+```{r}
+#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+fig4b <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance (DMLs)")  +
+  scale_y_continuous(breaks = c(50000,200000),labels = c("5","20"))+
+   stat_cor(method = "pearson", label.x = 0.115, label.y = 190000,size=5,p.digits = 0.001)
+  
+fig4b
+```
+### Save Figure 4, multipanel plot 
+
+Caption: Figure 4: Epigenetic divergence as a linear function of genetic distance. The x axes represent genetic distances calculated from genotype probabilities for 5,269 SNPs. The y axes are the Manhattan distances from CpG methylation x1000 (a; using all methylation data and b; using DMLs). The linear regression lines are shown, together with the Pearson correlation coefficient and p-value.
+
+```{r}
+(figure04 <- ggarrange(fig4a, fig4b, ncol=2, nrow=1))
+
+tiff(file = "../figures/figure04.tiff", width=3000, height=1250, res=250) 
+figure04
+dev.off()
+
+png(file = "../figures/figure04.png", width=3000, height=1250, res=250) 
+figure04
+dev.off()
+```
+# Figure 5
+## Correlation of Fst and Pst (10kb bins)  
+
+Caption: Scatterplot of PST (measure of epigenetic divergence between populations) and FST (measure of genetic divergence) for 827 random 10kb genomic bins with both SNP and methylation data. 
+
+```{r}
+fst <- read.csv("../analyses/2bRAD/MethGen/HCSS_sfsm70_Per10kbFst.csv")
+id <- paste(fst$contig,fst$start,fst$end, sep = "_")
+fst <- cbind(id,fst)
+
+pst10kb <- read.csv("../analyses/methylation-filtered/Pst_bins_10kb.tab", sep="\t",header=T,stringsAsFactors = F)
+colnames(pst10kb) <- c("id","contig","start","end","pst","pst.lowCI","pst.highCI")
+
+both = merge(pst10kb,fst, by ="id")
+
+fig5 <- ggplot(both, aes(x=fst01,y=pst)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Fst") + ylab("Pst")  +
+  #scale_y_continuous(breaks = c(9000,15000),labels = c("9","15"))+
+   stat_cor(method = "pearson", label.x = 0.35, label.y = 0.87,size=5,p.digits = 0.001)
+fig5
+  
+tiff(file = "../figures/figure05.tiff", width=1500, height=1250, res=250) 
+fig5
+dev.off()
+
+png(file = "../figures/figure05.png", width=1500, height=1250, res=250) 
+fig5
+dev.off()
+```
 
 # Figure 6
 ## Plotting mQTLs
 ```{r}
 load("../analyses/2bRAD/mQTL_5x/Contig54624.19738.19738.df")
 loci = "Contig54624.19738.19738"
-p <- ggplot(df, aes(value, percMeth, fill=pop))  +
-        geom_boxplot(alpha=0.7) +
+fig6a <- ggplot(df, aes(value, percMeth, fill=pop))  +
+        geom_boxplot(alpha=0.7, position = position_dodge2(preserve = "single"), outlier.shape = NA) +
   geom_dotplot(binaxis='y', stackdir='center',dotsize=0.8, position = position_dodge(0.75)) +
         theme_linedraw() + ggtitle("A.") +
   xlab("SNP Genotype") + ylab("% Methylation") + 
@@ -368,15 +366,18 @@ axis.title.x = element_text( size=15),
 axis.title.y = element_text(size=15),
 panel.grid.major = element_blank(),
 panel.grid.minor = element_blank(),
-plot.title = element_text(size=19)) +
-  scale_fill_discrete(labels=c("Hood Canal","South Sound"))
-p
+plot.title = element_text(size=19)) + 
+  scale_fill_manual(labels=c("Hood Canal","South Sound"), 
+                    values=c("firebrick3", "blue3")) #+ 
+#  guides(fill=guide_legend(nrow=2,byrow=TRUE))
+fig6a
 ```
+
 ```{r}
 load("../analyses/2bRAD/mQTL_5x/Contig60108.5780.5780.df")
-p <- ggplot(df, aes(value, percMeth, fill=pop))  +
-        geom_boxplot(alpha=0.7) +
-  geom_dotplot(binaxis='y', stackdir='center',dotsize=0.8, position = position_dodge(0.75)) +
+fig6b <- ggplot(df, aes(value, percMeth, fill=pop))  +
+        geom_boxplot(alpha=0.7, position = position_dodge2(preserve="single"), outlier.shape = NA) +
+    geom_dotplot(binaxis='y', stackdir='center',dotsize=0.8, position = position_dodge(0.75)) +
         theme_linedraw() + ggtitle("B.") +
   xlab("SNP Genotype") + ylab("% Methylation") + 
   theme(legend.title = element_blank(),
@@ -386,11 +387,29 @@ axis.title.x = element_text( size=15),
 axis.title.y = element_text(size=15),
 panel.grid.major = element_blank(),
 panel.grid.minor = element_blank(),
-plot.title = element_text(size=19)) +
-  scale_fill_discrete(labels=c("Hood Canal","South Sound"))
-p
+plot.title = element_text(size=19)) + 
+  scale_fill_manual(labels=c("Hood Canal","South Sound"), 
+                    values=c("firebrick3", "blue3")) #+ 
+#  guides(fill=guide_legend(nrow=2,byrow=TRUE))
+fig6b
 ```
+### Save Figure 6, multipanel plot as tiff and png
+
+Caption: Two example CpG loci that are associated with a local SNP and are differentially methylated between populations. Each dot is an individual, with the genotype of the SNP on the X axis and percent methylation on the Y axis. Boxplots are grouped and colored by population. A) CpG (Contig54624.19738) is found on a gene annotated as “similar to eif3d”, is differentially methylated 38.6% between populations, and associated with SNP Contig54624.19920. B) CpG (Contig60108.5780) is found on a gene annotated as “similar to MLH3”, is differentially methylated 37.3% between populations,and is associated with SNP Contig60108.2787.
+
+```{r}
+figure06 <- ggarrange(fig6a, fig6b, ncol=2, nrow=1, common.legend = TRUE, legend="right")
+
+tiff(file = "../figures/figure06.tiff", width=3000, height=1250, res=250) 
+figure06
+dev.off()
+
+png(file = "../figures/figure06.png", width=3000, height=1250, res=250) 
+figure06
+dev.off()
+```
+
 # Figure 7 
 
-
+_Figure 7 is a flowchart showing the molecular and evolutionary mechanisms linking genetic variation and methylation variation, an was generated outside of R_ 
 
