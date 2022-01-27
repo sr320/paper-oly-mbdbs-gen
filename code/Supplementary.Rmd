@@ -5,8 +5,8 @@ date: "1/26/2022"
 output: html_document
 ---
 ## Supplementary 
-### _Epigenetic and genetic population structure is coupled in a marine invertebrate_
-### Katherine Silliman, Laura H Spencer, Steven B Roberts
+_Epigenetic and genetic population structure is coupled in a marine invertebrate_  
+Katherine Silliman, Laura H Spencer, Steven B Roberts
 
 ```{r, include=FALSE}
 # Load libraries
@@ -23,10 +23,10 @@ lapply(list.of.packages, FUN = function(X) {
 ```
 
 
-### Supplemental Figure 1
-#### Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).
+#### Supplemental Figure 1
+Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/methylation-characteristics/R-objects/allmeth")
 load(file="../analyses/methylation-characteristics/R-objects/allmeth.5x")
 
@@ -56,8 +56,8 @@ supp.figure01
 # dev.off()
 ```
 
-### Supplemental Figure 2
-#### Top: Table showing the % of all CpG loci and methylated loci that overlap with each genomic feature. Bottom: A correlation plot, showing residuals from chi-squared tests of homogeneity on the distribution of methylated loci and CpG loci that intersect with features. Blue=positive associations, red=negative associations, and size of circles represents the absolute value of each correlation coefficient. 
+#### Supplemental Figure 2
+Top: Table showing the % of all CpG loci and methylated loci that overlap with each genomic feature. Bottom: A correlation plot, showing residuals from chi-squared tests of homogeneity on the distribution of methylated loci and CpG loci that intersect with features. Blue=positive associations, red=negative associations, and size of circles represents the absolute value of each correlation coefficient. 
 
 | Feature | % of all CpGs in genome | % of all methylated loci | Ratio of  % meth:%CpG |
 |---|---|---|---|
@@ -68,7 +68,7 @@ supp.figure01
 | Transposable Elements | 14.93% | 13.83% | 0.93 |
 | Unknown genome regions | 56.01% | 32.25% | 0.58 |
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/methylation-characteristics/R-objects/loci.summary")
 
 meth.chisq <- methdata.summary %>% filter(feature=="exon" | feature=="intron" | feature=="2kbflank-up" | feature=="2kbflank-down" | feature=="TE" | feature=="unknown") %>% 
@@ -83,10 +83,10 @@ supp2
 # dev.off()
 ```
 
-### Supplemental Figure 3
-#### Relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples.
+#### Supplemental Figure 3
+Relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples.
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/methylation-filtered/meth_filter_genes") 
 
 # Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
@@ -130,8 +130,10 @@ load(file="../analyses/methylation-filtered/meth_filter_genes")
 supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
 
 ```
-### Supplemental Table 1
-#### Biological functions that are enriched in the _Ostrea lurida_ genome.
+
+#### Supplemental Table 1  
+
+Biological functions that are enriched in the _Ostrea lurida_ genome.  
 
 | GO Term | Biological Process | PValue | FDR | GO slim |
 |---|---|---|---|---|
@@ -194,14 +196,13 @@ supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
 | GO:0070936 | protein K48-linked ubiquitination | 0.07 | 1 | NA |
 | GO:0003341 | cilium movement | 0.07 | 1 | NA |
 
-### Supplemental Figure 4
-#### Heat map of loci that are differentially methylated (DMLs) between the two populations.
+#### Supplemental Figure 4
+Heat map of loci that are differentially methylated (DMLs) between the two populations.
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load("../analyses/DMLs/R-objects/DMLs_heatmap")
 load("../analyses/DMLs/R-objects/DML.ratios")
 
-DMLs_heatmap %>% dplyr::select(chr, start, end) %>% unique()
 #ggplotly(
 ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + geom_tile(na.rm = T) +
   scale_y_discrete(limits=(DML.ratios[order(DML.ratios$ratio_HC.SS),]$chr_start)) + 
@@ -218,10 +219,10 @@ coord_cartesian(ylim = c(0, NA), clip = "off") + xlab("") +
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-### Supplemental Figure 5
-#### PCA of methylation data using DMLs only 
+#### Supplemental Figure 5
+PCA of methylation data using DMLs only 
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load(file="../analyses/DMLs/R-objects/PCA.figure")
 
 PC.coord <- PCA.figure$sites %>% as_tibble() %>% 
@@ -245,9 +246,9 @@ legend.position = "right"
 ```
 
 ### Supplemental Figure 6
-#### The % difference between each population’s mean methylation for differentially methylated loci, which highlights that both populations have a similar number of hyper/hypo-methylated loci. Loci are sorted by % methylation difference.
+The % difference between each population’s mean methylation for differentially methylated loci, which highlights that both populations have a similar number of hyper/hypo-methylated loci. Loci are sorted by % methylation difference.
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
 load("../analyses/DMLs/R-objects/DML.ratios")
 
 DML.ratios %>% 
@@ -269,8 +270,9 @@ DML.ratios %>%
     # annotate(geom="text", x=260, y=62, label="Loci hypermethylated in\nHood Canal", color="firebrick3") +
   ylab("% methylation difference among populations") + xlab("Locus") + coord_flip()
 ```
-### Supplemental Table 2
-#### GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. 
+
+#### Supplemental Table 2
+GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. 
 
 | Go Slim | Term | Function | DMG | DML |
 |---|---|---|---|---|
