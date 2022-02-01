@@ -456,6 +456,66 @@ allLociDML.features[["allLociDML.gene2kb"]] %>%
 | GOTERM_BP_DIRECT | GO:0006974~cellular response to DNA damage stimulus | 8     | 5.63 | 0.091  | Q9CPR8, Q80Z37, Q13535, Q9U221, Q7TMY8, F1MRW8, Q2NL57, Q8IW19                                 | 122        | 64       | 1984      | 2.033           | 1.0        | 1.0       | 1.0 |
 | GOTERM_BP_DIRECT | GO:0034220~ion transmembrane transport              | 4     | 2.82 | 0.092  | Q6Q760, Q9HCE9, Q18297, Q9P2D8                                                                 | 122        | 18       | 1984      | 3.61            | 1.0        | 1.0       | 1.0 |
 
+## For each GO term, which population has a higher methylation rate? 
+
+```{r}
+EnrBP.DMLs <- read_delim(here::here("analyses", "DMLs", "Enriched-BioProc-DMLs.txt"), delim = '\t', col_names = TRUE) %>% 
+  separate(Term, into = c("Term", "Function"), sep="~") %>%
+  mutate(GeneSet="DML") %>%
+  mutate_at(vars(Term, Function), as.factor) #%>%
+  #separate_rows(Genes)
+
+
+# Bar plots for each DML by enriched GO term - looking for a pattern by population 
+for (i in 1:nrow(EnrBP.DMLs)) {
+  print(DML.features[["DML.gene2kb"]] %>% 
+  left_join(DML.calcs %>% mutate(start=as.numeric(start-1)), by = c("contig.dml"="chr", "start.dml"="start")) %>%
+  mutate(SPID=str_remove(SPID, "SPID="))  %>% mutate(SPID=str_remove(SPID, ";")) %>% #filter(!is.na(SPID)) %>% 
+  filter(SPID %in% unlist(strsplit(EnrBP.DMLs$Genes[i], split=", "))) %>%
+  ggplot(aes(x = population, y = mean_percMeth, fill = population, 
+                         label=paste0(round(mean_percMeth, digits = 2), "%"))) + 
+      geom_bar(stat="identity", width = 0.5) + ylim(0,110) +
+      geom_pointrange(aes(ymin=mean_percMeth, 
+                        ymax=mean_percMeth+sd_percMeth, width=0.15)) + 
+      geom_text(size=3, vjust=-0.5, hjust=1.25) +
+      theme_light() + ggtitle(as.character(EnrBP.DMLs$Term[i])) +
+    scale_fill_manual(values=c("firebrick3","dodgerblue3")) + 
+    theme(strip.background = element_blank(), strip.text.x = element_blank(), 
+          strip.text.y = element_blank(), title = element_blank()) +
+  facet_wrap(~SPID+contig.dml+start.dml)) #can include "+contig.dml+start.dml" to separate each DML  
+}
+
+
+plot_list = list()
+
+# Scatter plots for each enriched biological process showing the ratio of % meth. between HC and SS for each DML  
+for (i in 1:nrow(EnrBP.DMLs)) {
+  p <- DML.features[["DML.gene2kb"]] %>% 
+  left_join(DML.calcs %>% mutate(start=as.numeric(start-1)), by = c("contig.dml"="chr", "start.dml"="start")) %>%
+  dplyr::select(-sd_percMeth) %>%
+  pivot_wider(names_from = population, values_from = mean_percMeth) %>%
+  mutate(SPID=str_remove(SPID, "SPID="))  %>% mutate(SPID=str_remove(SPID, ";")) %>% #filter(!is.na(SPID)) %>% 
+  filter(SPID %in% unlist(strsplit(EnrBP.DMLs$Genes[i], split=", "))) %>%
+  ggplot(aes(x = HC, y = SS, color=SPID, label=paste0(round(HC/SS, digits = 2)))) + 
+      geom_point(stat="identity", width = 0.5, size=3) + 
+      #geom_text(size=3, vjust=-0.5, hjust=0.75) +
+      geom_smooth(method=lm, color = "black") +
+    ggtitle(paste("Enriched Biological Process: ", as.character(EnrBP.DMLs$Function[i]))) +
+    xlab("Hood Canal % Methylation") + ylab("South Sound % Methylation") +
+    theme_light() + theme(plot.title = element_text(size=10))
+  plot_list[[i]] <- p
+}
+
+pdf("../analyses/DMLs/DML-Enriched-BP-meth-ratio-scatter.pdf")
+for (i in 1:length(plot_list)) {
+    print(plot_list[[i]])
+}
+dev.off()
+
+```
+
+
+
 ### Size Associated Soci (SALs, identified via MACAU) 
 
 ```{r}
@@ -504,6 +564,7 @@ GO.enriched.SAL <- read_delim(here::here("analyses", "macau", "EnrichBioFunc-DAV
 
 GO.enriched.SAL %>% select(GO, slim, FDR)
 ```
+
 Extract GO terms for SAL genes and merge with GO SLIM 
 
 ```{r}
@@ -615,6 +676,56 @@ library(gridExtra)
 grid.arrange(SAL.plots[[2]], SAL.plots[[5]], SAL.plots[[6]], SAL.plots[[11]], nrow = 2)
 
 ```
+
+# Merge Enriched Biological Processes in DMGs and genes containing DMLs - see which overlap 
+
+```{r}
+EnrBP.DMGs <- read_delim(here::here("analyses", "DMGs", "Enriched-BioProc-DMGs.txt"), delim = '\t', col_names = TRUE) %>% 
+  separate(Term, into = c("Term", "Function"), sep="~") %>%
+  mutate(GeneSet="DMG") %>%
+  mutate_at(vars(Term, Function), as.factor)
+
+EnrBP.DMLs <- read_delim(here::here("analyses", "DMLs", "Enriched-BioProc-DMLs.txt"), delim = '\t', col_names = TRUE) %>% 
+  separate(Term, into = c("Term", "Function"), sep="~") %>%
+  mutate(GeneSet="DML") %>%
+  mutate_at(vars(Term, Function), as.factor)
+
+# Read in the Term Slim table  
+GOSlim <- read_delim(here::here("resources", "GO-GOslim.sorted"), delim = '\t', col_names = FALSE) %>% 
+  setNames(c("Term", "term", "slim", "category")) %>% 
+  mutate_at(vars(category, slim), as.factor)
+
+# Identify biological processes enriched in both DMGs and genes containing DMLs
+inner_join(by = c("Term", "Function"), 
+          EnrBP.DMGs %>% dplyr::select(Term, Function, PValue, FDR, GeneSet) %>%
+  mutate(DMG=paste0(signif(PValue, digits = 2), " (", FDR, ")")), 
+          EnrBP.DMLs %>% dplyr::select(Term, Function, PValue, FDR, GeneSet) %>%
+  mutate(DML=paste0(signif(PValue, digits = 2), " (", FDR, ")"))) %>%
+    left_join(GOSlim) %>% dplyr::select(slim, Term, Function, PValue.x, PValue.y) %>% 
+  arrange(slim) %>% 
+  write_csv(file = "../analyses/DMG-DML-EnrichedBP-common.csv", col_names = TRUE)
+
+nrow(EnrBP.DMGs)
+nrow(EnrBP.DMLs)
+31-7
+
+# Write out table for supplemental materials - all enriched biological processes found in both DMGs and genes containing DMLs 
+full_join(by = c("Term", "Function"), 
+          EnrBP.DMGs %>% dplyr::select(Term, Function, PValue, FDR, GeneSet) %>%
+  mutate(DMG=paste0(signif(PValue, digits = 2), " (", FDR, ")")), 
+          EnrBP.DMLs %>% dplyr::select(Term, Function, PValue, FDR, GeneSet) %>%
+  mutate(DML=paste0(signif(PValue, digits = 2), " (", FDR, ")"))) %>%
+  dplyr::select(Term, Function, DMG, DML) %>%
+  left_join(GOSlim) %>% arrange(slim, Function) %>% 
+  dplyr::select(slim, Term, Function, DMG, DML) %>% dplyr::rename(., `Go Slim` =slim) %>% 
+  write_csv(file = "../analyses/DMG-DML-EnrichedBP.csv", col_names = TRUE) 
+
+
+
+
+```
+
+
 
 
 
