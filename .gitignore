@@ -51,6 +51,7 @@ code/.ipynb_checkpoints
 
 #Admixture outputs
 analyses/2bRAD/PopGen/*_K*_run*
+!HCSS_Afilt32m70_01_K2_run1.qopt
 
 #Outlier annotations
 analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-*bed
