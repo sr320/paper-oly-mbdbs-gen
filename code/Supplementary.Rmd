@@ -16,6 +16,11 @@ list.of.packages <- c("spaa", "ggpubr", "tidyverse", "methylKit", "gridGraphics"
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("methylKit")
+
 # Load packages 
 lapply(list.of.packages, FUN = function(X) {
   do.call("require", list(X)) 
@@ -391,8 +396,7 @@ genes2kb <- genes2kb[,c("SNP.Contig","SNP.start","Feature.Contig","feature.start
        Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
        Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
        uniprotID=str_extract(attribute, "SPID=(.*?);")) %>%
-       mutate(ID=str_remove(ID, "ID=")) %>% mutate(ID=str_remove(ID, ";")) %>%
-       )
+       mutate(ID=str_remove(ID, "ID=")) %>% mutate(ID=str_remove(ID, ";"))
 genes2kb <- genes2kb[,c("SNP.Contig","SNP.start","Feature.Contig","feature.start","feature.end","feature","ID","Note","Ontology_term")]
 colnames(genes2kb) <- c("SNP Contig","SNP Position","Feature Contig", "Feature Start","Feature End","Feature Type","Genome ID","Gene Name","GO Terms")
 kbl(genes2kb) %>%
