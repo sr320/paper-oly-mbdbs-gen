@@ -1,13 +1,16 @@
 ---
 title: "Supplementary"
-output: html_document
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
 ---
 _Epigenetic and genetic population structure is coupled in a marine invertebrate_  
 Katherine Silliman, Laura H Spencer, Steven B Roberts
 
 ```{r, include=FALSE}
 # Load libraries
-list.of.packages <- c("spaa", "ggpubr", "tidyverse", "methylKit", "gridGraphics", "gridExtra", "vegan", "scales", "pryr", "corrplot") #add libraries here 
+list.of.packages <- c("spaa", "ggpubr", "tidyverse", "methylKit", "gridGraphics", "gridExtra", "vegan", "scales", "pryr", "corrplot", "kableExtra") #add libraries here 
 
 # Install packages if needed
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
@@ -85,45 +88,45 @@ supp2
 ---
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
-load(file="../analyses/methylation-filtered/meth_filter_genes") 
-
-# Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
-(supp.3a <- meth_filter_genes %>% 
-  group_by(gene, gen_location) %>% 
-  summarise(mean_meth=mean(percMeth)) %>%
-  filter(mean_meth>50) %>%
-  ggplot(., aes(x=gen_location)) +
-  stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
-  xlab("Relative location along gene") + 
-  ylab("Frequency of methylation data") + 
-  ggtitle("A. methylation frequency relative to gene location") +
-  theme_minimal())
-
-(supp.3b <- meth_filter_genes %>% 
-  ungroup() %>%
-  group_by(gen_location_round) %>% 
-  summarise(mean_meth=mean(percMeth, na.rm=TRUE), sd_meth=sd(percMeth, na.rm=TRUE)) %>%
-  ggplot(., aes(x=gen_location_round, y=mean_meth)) +
-  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
-  # geom_errorbar(aes(ymin=mean_meth-sd_meth, ymax=mean_meth+sd_meth), width=.02,
-  #                position=position_dodge(.9), ) +
-  scale_y_continuous(limits = c(0, 100)) +
-  xlab("Relative location along gene") +
-  ylab("Mean % methylation") +
-  ggtitle("B. % methylation by relative gene location") +
-  theme_minimal())
-
-# Plot methylation variance by gene location  
-(supp.3c <- meth_filter_genes %>% 
-  ungroup() %>%
-  group_by(gen_location_round) %>% 
-  summarise(var_meth=var(percMeth, na.rm=TRUE)) %>%
-  ggplot(., aes(x=gen_location_round, y=var_meth)) +
-  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
-  xlab("Relative location along gene") +
-  ylab("Variance in % methylation") +
-  ggtitle("C. variance in % methylation by relative gene location") +
-  theme_minimal())
+# load(file="../analyses/methylation-filtered/meth_filter_genes") 
+# 
+# # Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
+# (supp.3a <- meth_filter_genes %>% 
+#   group_by(gene, gen_location) %>% 
+#   summarise(mean_meth=mean(percMeth)) %>%
+#   filter(mean_meth>50) %>%
+#   ggplot(., aes(x=gen_location)) +
+#   stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
+#   xlab("Relative location along gene") + 
+#   ylab("Frequency of methylation data") + 
+#   ggtitle("A. methylation frequency relative to gene location") +
+#   theme_minimal())
+# 
+# (supp.3b <- meth_filter_genes %>% 
+#   ungroup() %>%
+#   group_by(gen_location_round) %>% 
+#   summarise(mean_meth=mean(percMeth, na.rm=TRUE), sd_meth=sd(percMeth, na.rm=TRUE)) %>%
+#   ggplot(., aes(x=gen_location_round, y=mean_meth)) +
+#   geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+#   # geom_errorbar(aes(ymin=mean_meth-sd_meth, ymax=mean_meth+sd_meth), width=.02,
+#   #                position=position_dodge(.9), ) +
+#   scale_y_continuous(limits = c(0, 100)) +
+#   xlab("Relative location along gene") +
+#   ylab("Mean % methylation") +
+#   ggtitle("B. % methylation by relative gene location") +
+#   theme_minimal())
+# 
+# # Plot methylation variance by gene location  
+# (supp.3c <- meth_filter_genes %>% 
+#   ungroup() %>%
+#   group_by(gen_location_round) %>% 
+#   summarise(var_meth=var(percMeth, na.rm=TRUE)) %>%
+#   ggplot(., aes(x=gen_location_round, y=var_meth)) +
+#   geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+#   xlab("Relative location along gene") +
+#   ylab("Variance in % methylation") +
+#   ggtitle("C. variance in % methylation by relative gene location") +
+#   theme_minimal())
 
 #supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
 ```
@@ -220,7 +223,7 @@ coord_cartesian(ylim = c(0, NA), clip = "off") + xlab("") +
   #scale_fill_gradient(low="gray5", high="white")
 ```
 
-**Supplemental Figure 4***: Heat map of loci that are differentially methylated (DMLs) between the two populations.   
+**Supplemental Figure 4**: Heat map of loci that are differentially methylated (DMLs) between the two populations.   
 
 ---
 
@@ -349,28 +352,70 @@ DML.ratios %>%
 
 ### 3. Genetic Structure  
 
-```{r}
-# Add admixture figure here 
-```
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
+# assembling the input table
+inName="../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_K2_run1.qopt" # name of the input file to plot, output of ngsAdmix or ADMIXTURE run
+npops=2
+pops="../analyses/2bRAD/Inputs/SSHCfiltNreps.ind2pop" # 2-column tab-delimited table of individual assignments to populations; must be in the same order as samples in the bam list or vcf file.
+tbl=read.table(inName,header=F)
+i2p=read.table(pops,header=F)
+names(i2p)=c("ind","pop")
+tbl=cbind(tbl,i2p)
+row.names(tbl)=tbl$ind
 
+#head(tbl,5) # this is how the resulting dataset must look
+
+source("plot_admixture_v5_function.R") # file from z0on github
+
+# putting populations in desired order (edit pop names as needed or skip to plot them alphabetically)
+tbl$pop=factor(tbl$pop,levels=c("HC","SS"),labels = c("Hood Canal","South Sound"))
+
+ords=plotAdmixture(data=tbl,npops=npops,angle=0,vshift=0.05,hshift=0,colors = c("red","blue"))
+```
 
 **Supplemental Figure 7**: Admixture plot for 114 individuals at K=2 (determined to be the best K using the Evanno method), based on 3,724 SNPs.  
 
 ---
 
-### 4. Epigenetic and genetic comparision  
+**Supplemental Table 3**: Annotations for outlier SNPs that fall within 2kb of a gene. Also available in .bed format, [HCSS_Afilt32m70_01_BS-gene2kb.bed](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-gene2kb.bed)  
 
-```{r}
-# add "DMLs (PC1) vs filtered SNPs (PC1)" figure here 
-# add "Pst vs Fst, 2kbslop all genes w/ meth data, 237 genes" figure here
-# combine into multiplot and display 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+genes2kb <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-gene2kb.bed",header = F,sep = "\t", col.names = c("SNP.Contig","SNP.start","SNP.end","Feature.Contig","source","feature","feature.start","feature.end","some1", "strand","something","attribute"))
+genes2kb <- genes2kb[,c("SNP.Contig","SNP.start","Feature.Contig","feature.start","feature.end","feature","attribute")] %>% mutate(ID=str_extract(attribute, "ID=(.*?);"),
+       Parent=str_extract(attribute, "Parent=(.*?);"),
+       Name=str_extract(attribute, "Name=(.*?);"),
+       Alias=str_extract(attribute, "Alias=(.*?);"),
+       AED=str_extract(attribute, "AED=(.*?);"),
+       eAED=str_extract(attribute, "eAED=(.*?);"),
+       Note=str_extract(attribute, "Note=(.*?);"),
+       Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
+       Dbxref=str_extract(attribute, "Dbxref=(.*?);"),
+       uniprotID=str_extract(attribute, "SPID=(.*?);")) %>%
+       mutate(ID=str_remove(ID, "ID=")) %>% mutate(ID=str_remove(ID, ";")) %>%
+       )
+genes2kb <- genes2kb[,c("SNP.Contig","SNP.start","Feature.Contig","feature.start","feature.end","feature","ID","Note","Ontology_term")]
+colnames(genes2kb) <- c("SNP Contig","SNP Position","Feature Contig", "Feature Start","Feature End","Feature Type","Genome ID","Gene Name","GO Terms")
+kbl(genes2kb) %>%
+  kable_styling(font_size = 8, latex_options = c("HOLD_position","scale_down"))
 ```
-
-
-**Supplemental Figure 8**: Correlation of genetic PC1 vs PC1 of DMLs: Pearson’s r = 0.896 p-value < 1E10-9 and Spearman’s ρ = 0.81, p-value < 1E10-4).  
 
 ---
 
-### 5. mQTL analysis  
+**Supplemental Table 4**: DAVID enrichment results for genes with F<sub>ST</sub> > 0.3. Also available in .tsv format, [fst_g03_david.tab](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/fst_g03_david.tab) 
 
-![**Supplemental Figure 9:**  Comparison of mQTL results that intersect with the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), gene region (genes plus 2kb upstream and downstream), transposable element, and unknown region of genome. A) SNPs designated as either local (red, within 50kb) or distant (orange) mQTLs, compared with the background (blue) of all SNPs used in the mQTL analysis. B) CpGs associated with either local (red) or distant (orange) mQTLs, compared to the background (blue) of all CpGs used in the mQTL](../supplemental-files/Supp-09.png)   
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+d <- read.table("../analyses/2bRAD/PopGen/fst_g03_david.tab",header=T,sep="\t")
+
+d <- d[,c(1,2,3,4,5,10,13)]
+colnames(d)[4] <- "Percent.Genes"
+
+d %>% mutate_if(is.numeric, format, digits=3,nsmall = 0) %>%
+  kable(., col.names = gsub("[.]", " ", names(.))) %>%
+  kable_styling(font_size = 10, latex_options = c("HOLD_position","scale_down"))
+```
+
+---
+
+### 4. mQTL analysis  
+
+![**Supplemental Figure 9:**  Comparison of mQTL results that intersect with the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), gene region (genes plus 2kb upstream and downstream), transposable element, and unknown region of genome. A) SNPs designated as either local (red, within 50kb) or distant (orange) mQTLs, compared with the background (blue) of all SNPs used in the mQTL analysis. B) CpGs associated with either local (red) or distant (orange) mQTLs, compared to the background (blue) of all CpGs used in the mQTL](../supplemental-files/Supp-09.png){width=70%}   
