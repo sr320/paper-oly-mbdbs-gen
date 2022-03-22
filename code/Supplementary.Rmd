@@ -6,7 +6,7 @@ output:
   html_document: default
 ---
 _Epigenetic and genetic population structure is coupled in a marine invertebrate_  
-Katherine Silliman, Laura H Spencer, Steven B Roberts
+Katherine Silliman, Laura H Spencer, Sam White, Steven B Roberts
 
 ```{r, include=FALSE}
 # Load libraries
