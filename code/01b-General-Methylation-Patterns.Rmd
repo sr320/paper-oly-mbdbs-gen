@@ -485,8 +485,6 @@ round(contrib, 3)
 corrplot(contrib, is.cor = FALSE)
 ```
 
-The relative contribution of each cell to the total Chi-square score give some indication of the nature of the dependency between rows and columns of the contingency table. From the table/image above, it can be seen that the most contributing cells to the Chi-square are exon/methylated (41.62%), gene/methylated (21.39%), and unknown/methylated (26.7%). 
-
 These cells contribute about 89.77% to the total Chi-square score and thus account for most of the difference between expected and observed values.
 
 
@@ -642,8 +640,9 @@ read_delim(file="../analyses/methylation-characteristics/methylated-loci-enriche
 read_delim(file="../analyses/methylation-characteristics/methylated-loci-enriched-BP.txt", delim = "\t") %>%
   dplyr::select(Term,PValue, FDR) %>%
   separate(Term, into=c("Term", "Process"), sep="~") %>% 
-  left_join(GOSlim %>% dplyr::select(Term, slim)) %>% arrange(slim, PValue) %>%
-  mutate(across(where(is.numeric), round, 2)) %>% View()
+  left_join(GOSlim %>% dplyr::select(GO, slim), by = c("Term"="GO")) %>% arrange(slim, PValue) %>%
+  mutate(across(where(is.numeric), round, 2)) %>% 
+  write.csv("../analyses/methylation-characteristics/methylated-loci-enriched-BP.csv",quote = F,row.names = F, na = "NA")
 ```
 
 

@@ -642,7 +642,6 @@ meth_filter_genes %>%
   ggtitle("Methylation frequency relative to gene location") +
   theme_minimal()
 
-
 # Percent methylation across gene 
 meth_filter_genes$gen_location_round <- round(meth_filter_genes$gen_location, digits=2)
 
@@ -724,6 +723,11 @@ perc.meth.Pst.done %>%
 #  theme(axis.text.x=element_blank())
 ```
 
+Save some objects for figures 
+
+```{r}
+save(meth_filter_genes, file="../analyses/methylation-filtered/meth_filter_genes") 
+```
 
 
 # Additional optional analyses 

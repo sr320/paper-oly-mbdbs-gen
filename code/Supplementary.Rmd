@@ -25,6 +25,8 @@ BiocManager::install("methylKit")
 lapply(list.of.packages, FUN = function(X) {
   do.call("require", list(X)) 
 })
+
+require(tidyverse)
 ```
 
 ### 1. General _O. lurida_ methylation characteristics  
@@ -93,51 +95,54 @@ supp2
 ---
 
 ```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
-load(file="../analyses/methylation-filtered/meth_filter_genes")
-#
-# Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
-(supp.3a <- meth_filter_genes %>%
-  group_by(gene, gen_location) %>%
-  summarise(mean_meth=mean(percMeth)) %>%
-  filter(mean_meth>50) %>%
-  ggplot(., aes(x=gen_location)) +
-  stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
-  xlab("Relative location along gene") +
-  ylab("Frequency of methylation data") +
-  ggtitle("A. methylation frequency relative to gene location") +
-  theme_minimal())
-#
-(supp.3b <- meth_filter_genes %>%
-  ungroup() %>%
-  group_by(gen_location_round) %>%
-  summarise(mean_meth=mean(percMeth, na.rm=TRUE), sd_meth=sd(percMeth, na.rm=TRUE)) %>%
-  ggplot(., aes(x=gen_location_round, y=mean_meth)) +
-  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
-  geom_errorbar(aes(ymin=mean_meth-sd_meth, ymax=mean_meth+sd_meth), width=.02,
-                 position=position_dodge(.9), ) +
-  scale_y_continuous(limits = c(0, 100)) +
-  xlab("Relative location along gene") +
-  ylab("Mean % methylation") +
-  ggtitle("B. % methylation by relative gene location") +
-  theme_minimal())
-#
-#Plot methylation variance by gene location
-(supp.3c <- meth_filter_genes %>%
-  ungroup() %>%
-  group_by(gen_location_round) %>%
-  summarise(var_meth=var(percMeth, na.rm=TRUE)) %>%
-  ggplot(., aes(x=gen_location_round, y=var_meth)) +
-  geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
-  xlab("Relative location along gene") +
-  ylab("Variance in % methylation") +
-  ggtitle("C. variance in % methylation by relative gene location") +
-  theme_minimal())
-
-supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
+# load(file="../analyses/methylation-filtered/meth_filter_genes")
+# 
+# # Histogram showing frequency of methylated loci (min 50% meth) data across gene (relative location)
+# supp.3a <- meth_filter_genes %>%
+#   group_by(gene, gen_location) %>%
+#   summarise(mean_meth=mean(percMeth)) %>%
+#   filter(mean_meth>50) %>%
+#   ggplot(., aes(x=gen_location)) +
+#   stat_bin(bins=150, col="gray30", fill="lavenderblush3") +
+#   xlab("Relative location along gene") +
+#   ylab("Frequency of methylation data") +
+#   ggtitle("A. methylation frequency relative to gene location") +
+#   theme_minimal()
+# #
+# supp.3b <- meth_filter_genes %>%
+#   ungroup() %>%
+#   group_by(gen_location_round) %>%
+#   summarise(mean_meth=mean(percMeth, na.rm=TRUE), sd_meth=sd(percMeth, na.rm=TRUE)) %>%
+#   ggplot(., aes(x=gen_location_round, y=mean_meth)) +
+#   geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+#   geom_errorbar(aes(ymin=mean_meth-sd_meth, ymax=mean_meth+sd_meth), width=.02,
+#                  position=position_dodge(.9), ) +
+#   scale_y_continuous(limits = c(0, 100)) +
+#   xlab("Relative location along gene") +
+#   ylab("Mean % methylation") +
+#   ggtitle("B. % methylation by relative gene location") +
+#   theme_minimal()
+# #
+# #Plot methylation variance by gene location
+# supp.3c <- meth_filter_genes %>%
+#   ungroup() %>%
+#   group_by(gen_location_round) %>%
+#   summarise(var_meth=var(percMeth, na.rm=TRUE)) %>%
+#   ggplot(., aes(x=gen_location_round, y=var_meth)) +
+#   geom_bar(stat="identity", col="gray30", fill="lavenderblush3") +
+#   xlab("Relative location along gene") +
+#   ylab("Variance in % methylation") +
+#   ggtitle("C. variance in % methylation by relative gene location") +
+#   theme_minimal()
+# 
+# supp.figure03 <- ggarrange(supp.3a, supp.3b, supp.3c, ncol=1, nrow=3)
+# 
+# png(file = "../supplemental-files/Supp-03.png", width=1500, height=3500, res=250) 
+# supp.figure03
+# dev.off()
 ```
 
-
-**Supplemental Figure 3**: Gene body methylation patterns. A) relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples, B) percent methylation across a gene body averaged across all MBD18 samples, and C) variation in percent methylation across a gene body, across all MBD18 samples.    
+![**Supplemental Figure 3:**  Gene body methylation patterns. A) relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples, B) percent methylation across a gene body averaged across all MBD18 samples, and C) variation in percent methylation across a gene body, across all MBD18 samples.](../supplemental-files/Supp-03.png){width=60%}
 
 ---
 

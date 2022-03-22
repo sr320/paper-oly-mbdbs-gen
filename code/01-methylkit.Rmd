@@ -553,14 +553,16 @@ paste("Percent of loci (filtered for 5x for 7 of 9 samples per pop) that are DML
 ### How many of our "zero-added" loci are also DMLs? 
 
 ```{r}
-left_join(dml25,
-  
+paste("Number of the `zero-added` loci that are DMLs = ", 
+inner_join(
   rbind(perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% mutate(pop.no.data="HC"),
 perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% mutate(pop.no.data="SS")) %>% 
 separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
   dplyr::select(chr, start, end) %>% mutate_at(c("start", "end"), as.numeric) %>%
-  mutate(start=start-1, end=end+1)
-)
+  mutate(start=start-1, end=end+1),
+
+dml25
+) %>% nrow())
 ```
 
 
@@ -583,7 +585,7 @@ FYI I checked that the correlation matrix in `getCorrelation` is derived from th
 cor.pears <- cor(perc.meth, method="pearson") # create pearson correlation matrix. 
 dist.manhat <- dist(t(perc.meth), method = "manhattan", diag = T, upper = F)
 dist.manhat.df <- reshape2::melt(as.matrix(dist.manhat), varnames = c("row", "col"))
-
+?dist()
 cor.pears.DMLs <- cor(perc.methDMLs, method="pearson") 
 dist.manhat.DMLs <- dist(t(perc.methDMLs), method = "manhattan", diag = T, upper = F) 
 dist.manhat.DMLs.df <- reshape2::melt(as.matrix(dist.manhat.DMLs), varnames = c("row", "col"))
@@ -707,6 +709,7 @@ PCA.DMLs <- PCASamples(dml25_counts, obj.return = TRUE, sd.filter = T) #Run a PC
 nrow(PCA.DMLs$rotation)
 
 summary(PCA.DMLs) #Look at summary statistics. The first PC explains 36.3% of variation, the second PC explains 8.5% of variation
+
 ```
 
 ### PCA Figure, DMLs only 
@@ -737,6 +740,8 @@ legend("topright",
        legend = c("Hood Canal", "South Sound"), 
        col = c(c("firebrick3", "dodgerblue3")), 
        cex = 1.6, bty = "n") #Add a legend with information about ambient and elevated samples
+
+save(PCA.figure, file="../analyses/DMLs/R-objects/PCA.figure")
 ```
 
 ### Save PC scores and R object for integration with genetic data 
@@ -870,6 +875,7 @@ DML.ratios <- meth_filter_reshaped %>%
 
 nrow(DML.ratios)==nrow(dml25_counts_unique) #confirm same # loci; should=TRUE
 save(DML.ratios, file="../analyses/DMLs/R-objects/DML.ratios")
+load(file="../analyses/DMLs/R-objects/DML.ratios")
 
 # For all loci, calculate mean and sd percent methylation across samples by population 
 DML.calcs <- meth_filter_reshaped %>% 
