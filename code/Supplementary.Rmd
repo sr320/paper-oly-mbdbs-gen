@@ -6,7 +6,7 @@ output:
   html_document: default
 ---
 _Epigenetic and genetic population structure is coupled in a marine invertebrate_  
-Katherine Silliman, Laura H Spencer, Sam White, Steven B Roberts
+Katherine Silliman, Laura H. Spencer, Samuel J. White, Steven B. Roberts
 
 ```{r, include=FALSE}
 # Load libraries
@@ -141,6 +141,7 @@ supp2
 # supp.figure03
 # dev.off()
 ```
+
 
 ![**Supplemental Figure 3:**  Gene body methylation patterns. A) relative location of methylation within gene bodies in _Ostrea lurida_. For this analysis methylated loci were designated as those with >50% methylation when averaged across all MBD18 samples, B) percent methylation across a gene body averaged across all MBD18 samples, and C) variation in percent methylation across a gene body, across all MBD18 samples.](../supplemental-files/Supp-03.png){width=60%}
 
