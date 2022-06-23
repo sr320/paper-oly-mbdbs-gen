@@ -6,7 +6,7 @@ output: html_document
 First I want to get deduplicated BAMs 
 
 ```{bash}
-cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata
+cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v082
 
 wget -r \
 --no-check-certificate \
@@ -14,56 +14,27 @@ wget -r \
 --no-directories --no-parent \
 -P . \
 -A *sorted.bam \
-https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/020320-oly/
+https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/061722-v082/
 ```
 
 ```{bash}
-curl -O http://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081.fa
+curl -O https://gannet.fish.washington.edu/seashell/bu-mox/data/olurida-bs/v082/Olurida_v081_100000.fa
 ```
 
 
 ```{bash}
-cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/
-
-FILES=$(ls *deduplicated.sorted.bam)
-echo ${FILES}
-cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/code
-for file in ${FILES}
-do
-    NAME=$(echo ${file} | awk -F "." '{print $1}')
-    echo ${NAME}
+cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/
 
     perl /home/shared/BS-Snper-master/BS-Snper.pl \
-    --fa ../data/bgdata/Olurida_v081.fa \
-    --input /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/${NAME}.deduplicated.sorted.bam \
-    --output ../analyses/20-bs-snp/${NAME}.SNP-candidates.txt \
-    --methcg ../analyses/20-bs-snp/${NAME}.CpG-meth-info.tab \
-    --methchg ../analyses/20-bs-snp/${NAME}.CHG-meth-info.tab \
-    --methchh ../analyses/20-bs-snp/${NAME}.CHH-meth-info.tab \
-    --mincover 10 \
-    > ../analyses/20-bs-snp/${NAME}.SNP-results.vcf
-done
-```
-
-```{bash}
-cd ../data/bgdata
-
-curl -O https://gannet.fish.washington.edu/seashell/wd/Olurida_v081_concat.fa
-```
-
-
-```{bash}
-cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/
-
-FILES=$(ls *deduplicated.sorted.bam)
-echo ${FILES}
-
-
-for file in ${FILES}
-do
-    NAME=$(echo ${file} | awk -F "." '{print $1}')
-    ls /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/${NAME}.deduplicated.sorted.bam
-done    
+    --fa Olurida_v081_100000.fa \
+    --input bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+    --output ../analyses/20-bs-snp/all.SNP-candidates.txt \
+    --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab \
+    --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab \
+    --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab \
+    --mincover 2 \
+    --mapvalue 10 \
+    > ../analyses/20-bs-snp/all.SNP-results.vcf
 ```
 
 

@@ -1,7 +1,7 @@
 ##fileformat=VCFv4.3
 ##fileDate= 20220623
 ##bssnperVersion=1.1
-##bssnperCommand=--fa Olurida_v081_100000.fa   --input bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam --output ../analyses/20-bs-snp/all.SNP-candidates.txt --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab --minhetfreq  0.1 --minhomfreq  0.85 --minquali 15 --mincover 2 --maxcover 1000 --minread2 2 --errorate 0.02 --mapvalue 20
+##bssnperCommand=--fa Olurida_v081_100000.fa   --input bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam --output ../analyses/20-bs-snp/all.SNP-candidates.txt --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab --minhetfreq  0.1 --minhomfreq  0.85 --minquali 15 --mincover 2 --maxcover 1000 --minread2 2 --errorate 0.02 --mapvalue 10
 ##reference=file://Olurida_v081_100000.fa
 ##Bisulfite=directional>
 ##contig=<ID=Contig0,length=116746>
