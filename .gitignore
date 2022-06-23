@@ -8,7 +8,6 @@ resources/
 .DS_Store
 .DS_Store
 analyses/.DS_Store
-
 analyses/DMLs/AllLociDMLs-ASV.bed
 analyses/BEDtools/AllLoci-ASV.bed
 analyses/AllLoci.features.txt
@@ -25,37 +24,28 @@ analyses/methylation-characteristics/all-gene.bed
 analyses/methylation-characteristics/methylated-gene.bed
 analyses/methylation-characteristics/merged_all_5x.bed
 analyses/methylation-characteristics/merged_methylated_5x.bed
-
 analyses/methylation-filtered/meth_filter_long.tab
 analyses/methylation-filtered/meth_filter_gene.2kbslop.tab
 analyses/methylation-filtered/meth_filter_gene.tab
 analyses/methylation-filtered/meth_filter_10kb-bin-allmeth.tab
 analyses/methylation-filtered/meth_filter_1kb-bin-allmeth.tab
-
 data/uniprot-SP-GO-sorted.tab
 data/zr1394_all_s456.CpG_report.merged_CpG_evidence.cov
 data/uniprot_sprot.fasta
-
 genome-annot/Olurida_transcriptome_v3.fasta
-
 genome-features/Olurida_v081_CG-motif.gff
 genome-features/20190709-Olurida_v081.stringtie.gtf
 genome-features/Olurida_v081_CG-motif.gff.idx
-
 resources/Olurida_v081.fa
 resources/uniprot_sprot.fasta
 resources/uniprot_sprot_20200208.fasta.psq
 resources/uniprot_sprot_20200208.fasta.phr
-
 code/.ipynb_checkpoints
-
 #Admixture outputs
 analyses/2bRAD/PopGen/*_K*_run*
 !HCSS_Afilt32m70_01_K2_run1.qopt
-
 #Outlier annotations
 #analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-*bed
-
 #mQTL
 analyses/2bRAD/mQTL/*
 !MBD_HCSS_Afilt32m70_maf05_m2pop_sites50k_mQTL
@@ -67,10 +57,8 @@ analyses/2bRAD/mQTL/*
 !*feature*
 !cis-meth.features.df
 !*uniprot*
-
 #GBS SNPs
 analyses/2bRAD/Inputs/*GBS*
-
 #mQTL_5x
 analyses/2bRAD/mQTL_5x/*
 !MBD_HCSS_Afilt32m70_maf05_m2pop_sites50k_mQTL0501_12_RNPCAcov
@@ -93,3 +81,5 @@ analyses/2bRAD/mQTL_5x/*
 !methtransF05-dml-gene2kbregions.bed
 !cisp01-meth-dml-gene2kbregions.bed
 !Contig*
+.nextflow/
+code/work/*
