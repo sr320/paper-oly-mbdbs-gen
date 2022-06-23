@@ -1,0 +1,27 @@
+---
+title: "21-epidiverse"
+output: html_document
+---
+
+
+```{bash}
+export PATH=/home/shared/samtools-1.12/samtools:$PATH
+```
+
+```{bash}
+export PATH=/home/shared/samtools-1.12/:$PATH
+samtools
+```
+
+```{bash}
+samtools
+```
+
+
+```{bash}
+export PATH=/home/shared/samtools-1.12/:$PATH
+
+
+NXF_VER=20.07.1 /home/shared/nextflow run epidiverse/snp -profile test, docker
+```
+
