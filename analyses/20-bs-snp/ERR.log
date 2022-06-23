@@ -1,0 +1,59 @@
+FLAG: 1
+refSeqFile = Olurida_v081_100000.fa.
+bamFileName = bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam.
+snpFileName = ../analyses/20-bs-snp/all.SNP-candidates.txt.
+methCgFileName = ../analyses/20-bs-snp/all.CpG-meth-info.tab.
+methChgFileName = ../analyses/20-bs-snp/all.CHG-meth-info.tab.
+methChhFileName = ../analyses/20-bs-snp/all.CHH-meth-info.tab.
+vQualMin = 15.
+nLayerMax = 1000.
+vSnpRate = 0.100000.
+vSnpPerBase = 0.020000.
+mapqThr = 20.
+Init chrome name-len array completed, total 3816038 bp of 32 chromosomes.
+32 chromes loaded.
+Init chrome name-idx hash table completed.
+Init chrome seq array completed.
+Meth process begins...
+Chrome updated to Contig0!
+Chrome updated to Contig2!
+Chrome updated to Contig3!
+Chrome updated to Contig5!
+Chrome updated to Contig7!
+Chrome updated to Contig9!
+Chrome updated to Contig65!
+Chrome updated to Contig84!
+Chrome updated to Contig89!
+Chrome updated to Contig468!
+Chrome updated to Contig15326!
+Chrome updated to Contig16524!
+Chrome updated to Contig16668!
+Chrome updated to Contig16915!
+Chrome updated to Contig17050!
+Chrome updated to Contig17624!
+Chrome updated to Contig17876!
+Chrome updated to Contig18024!
+Chrome updated to Contig18052!
+Chrome updated to Contig18174!
+Chrome updated to Contig18571!
+Chrome updated to Contig19267!
+Chrome updated to Contig19330!
+Chrome updated to Contig19646!
+Chrome updated to Contig19826!
+Chrome updated to Contig20140!
+Chrome updated to Contig20625!
+Chrome updated to Contig22814!
+500000 records have been dealed.
+Chrome updated to Contig23978!
+Chrome updated to Contig23979!
+Chrome updated to Contig26138!
+Chrome updated to Contig34578!
+Meth process ends...
+SNP process begins...
+100000 records have been dealed.
+200000 records have been dealed.
+300000 records have been dealed.
+400000 records have been dealed.
+500000 records have been dealed.
+SNP process ends...
+SNP process completed.
