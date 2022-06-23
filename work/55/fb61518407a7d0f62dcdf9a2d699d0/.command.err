@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/sr320/.nextflow/assets/epidiverse/snp/bin/change_sam_queries.py", line 68, in <module>
+    import pysam
+ModuleNotFoundError: No module named 'pysam'
