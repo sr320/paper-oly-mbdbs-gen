@@ -83,3 +83,4 @@ analyses/2bRAD/mQTL_5x/*
 !Contig*
 .nextflow/
 code/work/*
+work/*
