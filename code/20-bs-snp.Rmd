@@ -26,15 +26,13 @@ curl -O https://gannet.fish.washington.edu/seashell/bu-mox/data/olurida-bs/v082/
 cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/
 
     perl /home/shared/BS-Snper-master/BS-Snper.pl \
+    bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
     --fa Olurida_v081_100000.fa \
-    --input bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
     --output ../analyses/20-bs-snp/all.SNP-candidates.txt \
     --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab \
     --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab \
     --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab \
-    --mincover 2 \
-    --mapvalue 10 \
-    > ../analyses/20-bs-snp/all.SNP-results.vcf
+    > ../analyses/20-bs-snp/SNP.out 2> ../analyses/20-bs-snp/ERR.log
 ```
 
 
