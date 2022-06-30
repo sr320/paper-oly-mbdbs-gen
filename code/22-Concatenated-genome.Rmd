@@ -39,7 +39,8 @@ awk -v i=10628 -f merge_contigs.awk.txt \
 
 
 ```{bash}
-fgrep ">" ../data/bgdata/Olurida_v081-mergecat.fa 
+fgrep ">" ../data/bgdata/Olurida_v081-mergecat.fa | head
+
 ```
 
 
