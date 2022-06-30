@@ -84,4 +84,5 @@ analyses/2bRAD/mQTL_5x/*
 .nextflow/
 code/work/*
 work/*
+.nextflow*
 .nextflow.log

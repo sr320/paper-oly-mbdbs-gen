@@ -1,0 +1,9 @@
+---
+title: "22-Concatenated-genome"
+output: html_document
+---
+
+Effort to get version of genome that BS-SNper will like such that we can determine CT snps
+
+
+
