@@ -96,18 +96,58 @@ echo $digits
 echo $n_contigs_new
 echo $n
 
+echo "going to next step"
 
 for i in $n
 do
 old=$(grep ">" ../data/bgdata/Olurida_v081-mergecat01.fa | sed "${i}q;d")
 start=$(echo $old | grep -o -E '[0-9]{1,6}' | head -n 1) #If needed, change the 6 to match the value in $digits
+echo "What is start?"
+echo $start
 end=$(echo $old | grep -o -E '[0-9]{1,6}' | tail -n 1) #If needed, change the 6 to match the value in $digits
+echo "What is end?"
+echo $end
 new=$(echo ">Contig"$start":Contig"$end)
-sed -i.bak "s|$old|$new|" ../data/bgdata/Olurida_v081-mergecat01.fa # edit fasta in place.
+echo "What is new?"
+echo $new
+sed  "s|$old|$new|" ../data/bgdata/Olurida_v081-mergecat01.fa > ../data/bgdata/Olurida_v081-mergecat09.fa
 done
 ```
 
+```{bash}
+sed '/>/s/.*/>Contig00/' ../data/bgdata/Olurida_v081-mergecat01.fa > ../data/bgdata/Olurida_v081-mergecat02.fa
+```
 
 
+```{bash}
+n_contigs_old=$(grep ">" ../data/bgdata/Olurida_v081.fa | wc -l) #number of contigs in original fasta
+d="${n_contigs_old//[^[:digit:]]/}" #Return ID of last/highest number contig
+digits=$(echo ${#d}) #number of digits in the last contig
+n_contigs_new=$(grep ">" ../data/bgdata/Olurida_v081-mergecat01.fa | wc -l) #number of contigs in concatenated genome
+n=$(seq 1 1 $n_contigs_new) #vector of 1:# of contigs in concat. genome
 
+echo $n_contigs_old
+echo $d
+echo $digits
+echo $n_contigs_new
+echo $n
+
+echo "going to next step"
+
+i=10
+old=$(grep ">" ../data/bgdata/Olurida_v081-mergecat01.fa | sed "${i}q;d")
+echo "What is old?"
+echo $old
+start=$(echo $old | grep -o -E '[0-9]{1,6}' | head -n 1) #If needed, change the 6 to match the value in $digits
+echo "What is start?"
+echo $start
+end=$(echo $old | grep -o -E '[0-9]{1,6}' | tail -n 1) #If needed, change the 6 to match the value in $digits
+echo "What is end?"
+echo $end
+new=$(echo ">Contig"$start":Contig"$end)
+echo "What is new?"
+echo $new
+sed -i.bak "s|$old|$new|" ../data/bgdata/Olurida_v081-mergecat01.fa # edit fasta in place.
+
+```
 
