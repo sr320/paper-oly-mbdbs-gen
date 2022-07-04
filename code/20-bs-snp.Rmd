@@ -6,7 +6,7 @@ output: html_document
 First I want to get deduplicated BAMs 
 
 ```{bash}
-cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v082
+cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v99
 
 wget -r \
 --no-check-certificate \
@@ -14,25 +14,23 @@ wget -r \
 --no-directories --no-parent \
 -P . \
 -A *sorted.bam \
-https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/061722-v082/
+https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/063022-olymerge-snp/
 ```
 
-```{bash}
-curl -O https://gannet.fish.washington.edu/seashell/bu-mox/data/olurida-bs/v082/Olurida_v081_100000.fa
-```
+
 
 
 ```{bash}
 cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/
 
     perl /home/shared/BS-Snper-master/BS-Snper.pl \
-    bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
-    --fa Olurida_v081_100000.fa \
-    --output ../analyses/20-bs-snp/all.SNP-candidates.txt \
-    --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab \
-    --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab \
-    --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab \
-    > ../analyses/20-bs-snp/SNP.out 2> ../analyses/20-bs-snp/ERR.log
+    bgdata/v99/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
+    --fa bgdata/Olurida_v081-mergecat99.fa \
+    --output ../analyses/99-bs-snp/all.SNP-candidates.txt \
+    --methcg ../analyses/99-bs-snp/all.CpG-meth-info.tab \
+    --methchg ../analyses/99-bs-snp/all.CHG-meth-info.tab \
+    --methchh ../analyses/99-bs-snp/all.CHH-meth-info.tab \
+    > ../analyses/99-bs-snp/SNP.out
 ```
 
 
