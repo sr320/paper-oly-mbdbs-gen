@@ -429,3 +429,14 @@ d %>% mutate_if(is.numeric, format, digits=3,nsmall = 0) %>%
 ### 4. mQTL analysis  
 
 ![**Supplemental Figure 9:**  Comparison of mQTL results that intersect with the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), gene region (genes plus 2kb upstream and downstream), transposable element, and unknown region of genome. A) SNPs designated as either local (red, within 50kb) or distant (orange) mQTLs, compared with the background (blue) of all SNPs used in the mQTL analysis. B) CpGs associated with either local (red) or distant (orange) mQTLs, compared to the background (blue) of all CpGs used in the mQTL](../supplemental-files/Supp-09.png){width=70%}   
+  
+    
+    
+---
+
+### 5. Genetic and epigenetic relationship at 10x MBD coverage  
+
+```{r, echo=FALSE,out.width="75%",out.height="30%",fig.cap="Supplemental Figure 10: Epigenetic divergence as a function of genetic distance, using CpG methylation data with a 10x coverage threshold. The y axes are the Manhattan distances from CpG methylation x1000 (a; using all methylation data and b; using DMLs). The linear regression lines are shown, together with the Pearson and Spearman correlation coefficients.", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("../supplemental-files/10x_distance.png","../supplemental-files/10x_distance_dml.png"))
+``` 
+ 
