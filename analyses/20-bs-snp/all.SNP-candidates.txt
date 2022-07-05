@@ -1,0 +1,1 @@
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	GENOTYPE	FREQUENCY	Number_of_watson[A,T,C,G]	Number_of_crick[A,T,C,G]	Mean_Quality_of_Watson[A,T,C,G]	Mean_Quality_of_Crick[A,T,C,G]

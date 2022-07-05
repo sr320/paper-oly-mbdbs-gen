@@ -1,0 +1,15 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+6	8f/e868d1	31816	SNPS:preprocessing (sample1)	COMPLETED	0	2022-06-20 10:46:17.937	4.3s	4.2s	113.1%	62.6 MB	2.3 GB	32.1 MB	32.1 MB
+7	e1/b1474a	33571	SNPS:masking (sample1 - clustering)	FAILED	1	2022-06-20 10:46:22.320	178ms	149ms	-	-	-	-	-
+8	91/59e768	33576	SNPS:masking (sample1 - variants)	FAILED	1	2022-06-20 10:46:22.332	2.2s	2.2s	-	-	-	-	-
+4	0b/670354	31795	SNPS:preprocessing (sample3)	COMPLETED	0	2022-06-20 10:46:17.901	8.6s	6.3s	119.8%	108.9 MB	2.3 GB	51.3 MB	54.4 MB
+1	3f/0edfcf	31800	SNPS:preprocessing (sample5)	COMPLETED	0	2022-06-20 10:46:17.919	8.6s	4.9s	115.6%	75.6 MB	2.3 GB	38.1 MB	38.6 MB
+3	03/bb2e5d	31829	SNPS:preprocessing (sample2)	COMPLETED	0	2022-06-20 10:46:17.946	8.6s	5.3s	118.2%	84.3 MB	2.3 GB	42 MB	43.1 MB
+5	c4/66e6ae	31846	SNPS:preprocessing (sample4)	COMPLETED	0	2022-06-20 10:46:17.955	8.6s	5.6s	118.4%	94.8 MB	2.3 GB	44.8 MB	47.1 MB
+2	6a/b639cc	31865	SNPS:preprocessing (sample6)	COMPLETED	0	2022-06-20 10:46:17.963	8.6s	5.1s	114.6%	77.9 MB	2.3 GB	39 MB	39.7 MB
+9	41/910b16	34242	SNPS:masking (sample1 - clustering)	FAILED	1	2022-06-20 10:46:24.543	2.1s	5ms	-	-	-	-	-
+10	24/e8978a	34304	SNPS:masking (sample1 - variants)	FAILED	1	2022-06-20 10:46:26.554	167ms	65ms	-	-	-	-	-
+11	6c/45fdbf	34317	SNPS:masking (sample3 - clustering)	FAILED	1	2022-06-20 10:46:26.578	147ms	68ms	-	-	-	-	-
+12	54/65f58f	34340	SNPS:masking (sample3 - variants)	FAILED	1	2022-06-20 10:46:26.602	2.1s	2.1s	-	-	-	-	-
+13	97/607b2a	34350	SNPS:masking (sample5 - clustering)	FAILED	1	2022-06-20 10:46:26.613	4.1s	4.1s	-	-	-	-	-
+14	4d/54daad	34355	SNPS:masking (sample5 - variants)	FAILED	1	2022-06-20 10:46:26.619	6.1s	6.1s	-	-	-	-	-
