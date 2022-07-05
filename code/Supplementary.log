@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999991 (TeX Live 2019/Debian) (preloaded format=xelatex 2022.3.22)  22 MAR 2022 18:36
+This is XeTeX, Version 3.14159265-2.6-0.999991 (TeX Live 2019/Debian) (preloaded format=xelatex 2022.3.22)  5 JUL 2022 12:41
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -949,20 +949,24 @@ File: Supplementary_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type
 File: ../supplemental-files/Supp-09.png Graphic file (type bmp)
 <../supplemental-files/Supp-09.png>
 [12]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 554.
-[13]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 554.
+File: ../supplemental-files/10x_distance.png Graphic file (type bmp)
+<../supplemental-files/10x_distance.png>
+File: ../supplemental-files/10x_distance_dml.png Graphic file (type bmp)
+<../supplemental-files/10x_distance_dml.png>
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 569.
+[13] [14]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 569.
 (./Supplementary.aux)
-Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 554.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 554.
+Package atveryend Info: Empty hook `AtVeryEndDocument' on input line 569.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 569.
  ) 
 Here is how much of TeX's memory you used:
- 20022 strings out of 481804
- 350746 string characters out of 5937876
- 824631 words of memory out of 5000000
- 36689 multiletter control sequences out of 15000+600000
+ 20050 strings out of 481804
+ 351688 string characters out of 5937876
+ 825094 words of memory out of 5000000
+ 36712 multiletter control sequences out of 15000+600000
  538847 words of font info for 72 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  59i,10n,115p,812b,536s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on Supplementary.pdf (13 pages).
+Output written on Supplementary.pdf (14 pages).
