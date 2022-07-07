@@ -118,6 +118,26 @@ done
 sed '/>/s/.*/>Contig00/' ../data/bgdata/Olurida_v081-mergecat01.fa > ../data/bgdata/Olurida_v081-mergecat02.fa
 ```
 
+```{bash}
+awk '{for(x=1;x<=NF;x++)if($x~/00/){sub(/00/,++i)}}1' ../data/bgdata/Olurida_v081-mergecat02.fa | fgrep ">"
+
+```
+```{bash}
+awk '{for(x=1;x<=NF;x++)if($x~/00/){sub(/00/,++i)}}1' ../data/bgdata/Olurida_v081-mergecat02.fa \
+> ../data/bgdata/Olurida_v081-mergecat99.fa
+
+```
+
+^^^^^^^^^^^^^
+this is it!
+
+
+
+
+
+```{bash}
+#awk 'sub("\\>",cnt+1, $0){cnt++}1' ../data/bgdata/Olurida_v081-mergecat01.fa > ../data/bgdata/Olurida_v081-mergecat03.fa
+```
 
 ```{bash}
 n_contigs_old=$(grep ">" ../data/bgdata/Olurida_v081.fa | wc -l) #number of contigs in original fasta
@@ -137,7 +157,6 @@ echo "going to next step"
 i=10
 old=$(grep ">" ../data/bgdata/Olurida_v081-mergecat01.fa | sed "${i}q;d")
 echo "What is old?"
-echo $old
 start=$(echo $old | grep -o -E '[0-9]{1,6}' | head -n 1) #If needed, change the 6 to match the value in $digits
 echo "What is start?"
 echo $start
@@ -147,7 +166,8 @@ echo $end
 new=$(echo ">Contig"$start":Contig"$end)
 echo "What is new?"
 echo $new
-sed -i.bak "s|$old|$new|" ../data/bgdata/Olurida_v081-mergecat01.fa # edit fasta in place.
+sed -i.bak "s|$old|$new|" ../bgdata/Olurida_v081-mergecat01.fa # edit fasta in place.
+
 
 ```
-
+sed  "s|$old|$new|"
