@@ -25,14 +25,20 @@ curl -O https://gannet.fish.washington.edu/seashell/bu-mox/scrubbed/063022-olyme
 ```
 
 
+
+```{bash}
+fgrep ">" /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/Olurida_v081-mergecat98.fa
+```
+
+
+
+
 ```{bash}
 cd /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/
 
     perl /home/shared/BS-Snper-master/BS-Snper.pl \
     /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v98/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam \
-    --fa /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/Olurida_v081-mergecat98.fa \
-    --mincover 2 \
-    --minquali 1 \
+    --fa /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/Olurida_v081-mergecat97.fa \
     --output ../analyses/20-bs-snp/all.SNP-candidates.txt \
     --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab \
     --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab \
