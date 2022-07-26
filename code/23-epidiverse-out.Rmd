@@ -23,7 +23,7 @@ wget -r \
 --quiet \
 --no-directories --no-parent \
 -P . \
--A * \
+-A .tbi \
 https://gannet.fish.washington.edu/Atumefaciens/20220721-olur-zr1394_all_untrimmed-nextflow_epidiverse-snp-conda-trim_10bp_5prime/snps/vcf/
 ```
 
@@ -38,8 +38,84 @@ fgrep "C	T" ../data/zr1394_3_s456.vcf | wc -l
 fgrep "C	T" ../data/zr1394_4_s456.vcf | wc -l
 ```
 
+```{bash}
+cat ../data/zr1394_1_s456.vcf | wc -l
+```
+
+
 
 Maybe lets try merging populations separately, trim, then compare?
 
 
+```{bash}
+/Applications/bioinfo/bcftools-1.15.1/bcftools 
+```
+```{bash}
+pwd
+```
+
+
+```{bash}
+/Applications/bioinfo/bcftools-1.15.1/bcftools merge \
+../data/zr1394_1_s456.vcf.gz \
+../data/zr1394_2_s456.vcf.gz \
+../data/zr1394_3_s456.vcf.gz \
+../data/zr1394_4_s456.vcf.gz \
+../data/zr1394_5_s456.vcf.gz \
+../data/zr1394_6_s456.vcf.gz \
+../data/zr1394_7_s456.vcf.gz \
+../data/zr1394_8_s456.vcf.gz \
+../data/zr1394_9_s456.vcf.gz \
+--merge all \
+--threads 8 \
+-O v \
+-o ../analyses/Oly1_9_merged.vcf
+```
+
+
+
+```{bash}
+tail ../analyses/Oly1_9_merged.vcf
+```
+
+```{bash}
+wc -l ../analyses/Oly1_9_merged.vcf
+```
+
+/gscratch/srlab/programs/vcftools-0.1.16/bin/vcftools \
+--vcf Cv_10x_merged.vcf \
+--recode --recode-INFO-all \
+--min-alleles 2 --max-alleles 2 \
+--max-missing 0.5 \
+--mac 2 \
+--out Cv_10x_merged.filtered
+
+
+```{bash}
+wc -l ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf  
+```
+
+```{bash}
+tail -1 ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf  
+```
+
+
+
+```{bash}
+wc -l ../data/HCSS_Afilt32m70_01_pp90.vcf  
+```
+
+```{bash}
+grep "C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+grep "C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+fgrep "A	C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
 
