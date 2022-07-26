@@ -116,6 +116,67 @@ grep "C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
 
 
 ```{bash}
-fgrep "A	C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+fgrep "C	T" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf | wc -l
 ```
 
+```{bash}
+fgrep "T	C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf | wc -l
+```
+
+
+
+
+
+Pulling out all CT SNPS
+
+```{bash}
+fgrep "C	T" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf > ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+head -1 ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+CTsnp <- read_delim("../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf", delim = "\t", col_names = FALSE)
+```
+
+```{r}
+CTbed <- select(CTsnp, X1, X2) %>%
+  mutate(X3 = X2 - 1) %>% 
+  select(X1, X3, X2)
+```
+
+
+```{r}
+write_tsv(CTbed, "../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed", col_names = FALSE)
+```
+
+
+```{bash}
+/Applications/bioinfo/bedtools2/bin/intersectbed \
+-wa \
+-a ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed \
+-b ../genome-features/Olurida_v081_CG-motif.gff \
+| head
+```
+
+
+```{bash}
+head ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed
+```
+
+
+```{bash}
+/Applications/bioinfo/bedtools2/bin/intersectbed \
+-wa \
+-a ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed \
+-b ../genome-features/Olurida_v081_CG-motif.gff \
+| wc -l
+```
