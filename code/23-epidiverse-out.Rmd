@@ -6,3 +6,40 @@ output: html_document
 
 Having a look at what came out of epidiverse to try to quantify CT snps
 
+overview
+
+![pic](https://gannet.fish.washington.edu/seashell/snaps/Inbox_-_sr320uw.edu_-_UW_Mail_2022-07-26_10-55-08.png)
+
+
+```{bash}
+pwd
+```
+
+
+```{bash}
+cd ../data
+wget -r \
+--no-check-certificate \
+--quiet \
+--no-directories --no-parent \
+-P . \
+-A * \
+https://gannet.fish.washington.edu/Atumefaciens/20220721-olur-zr1394_all_untrimmed-nextflow_epidiverse-snp-conda-trim_10bp_5prime/snps/vcf/
+```
+
+```{bash}
+tail -40 ../data/zr1394_1_s456.vcf 
+```
+
+```{bash}
+fgrep "C	T" ../data/zr1394_1_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_2_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_3_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_4_s456.vcf | wc -l
+```
+
+
+Maybe lets try merging populations separately, trim, then compare?
+
+
+
