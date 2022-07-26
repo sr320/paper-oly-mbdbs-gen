@@ -1,0 +1,8 @@
+---
+title: "23-epidiverse-out"
+output: html_document
+---
+
+
+Having a look at what came out of epidiverse to try to quantify CT snps
+
