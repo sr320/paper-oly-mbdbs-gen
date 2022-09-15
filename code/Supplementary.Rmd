@@ -86,6 +86,10 @@ supp.figure01
 # dev.off()
 ```
 
+**Supplemental Figure 1**: Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).   
+
+**Supplemental Table 2**: Distribution of methylation in _Ostrea lurida_ draft genome in relation to all CpG loci.
+
 | Feature | % of all CpGs in genome | % of all methylated loci | Ratio of  % meth:%CpG |
 |---|---|---|---|
 | Exon | 3.99% | 14.71% | 3.69 |
@@ -94,8 +98,6 @@ supp.figure01
 | 3’ flanking region (+2kb) | 3.92% | 4.66% | 1.19 |
 | Transposable Elements | 14.93% | 13.83% | 0.93 |
 | Unknown genome regions | 56.01% | 32.25% | 0.58 |
-
-**Supplemental Figure 1**: Frequency distribution of % methylation in _O. lurida_ prior to filtering (left) and after filtering for loci with at minimum 5x coverage (right).   
 
 ---
 
@@ -172,7 +174,7 @@ supp2
 
 ---
 
-**Supplemental Table 2**:  Biological functions that are enriched in the _Ostrea lurida_ genome. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/methylated-loci-enriched-BP.csv 
+**Supplemental Table 3**:  Biological functions that are enriched in the _Ostrea lurida_ genome. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/methylated-loci-enriched-BP.csv 
 
 | GO Term | Biological Process | PValue | FDR | GO slim |
 |---|---|---|---|---|
@@ -317,7 +319,7 @@ DML.ratios %>%
 
 ---
 
-**Supplemental Table 3**: GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG-DML-EnrichedBP.csv 
+**Supplemental Table 4**: GO terms and GO Slim terms of biological functions enriched in DMGs & DMLs. EASE scores shown. FDR for all terms is 1.0. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/DMG-DML-EnrichedBP.csv 
 
 | Go Slim | Term | Function | DMG | DML |
 |---|---|---|---|---|
@@ -413,7 +415,7 @@ ords=plotAdmixture(data=tbl,npops=npops,angle=0,vshift=0.05,hshift=0,colors = c(
 
 ---
 
-**Supplemental Table 4**: Annotations for outlier SNPs that fall within 2kb of a gene. Also available in .bed format, [HCSS_Afilt32m70_01_BS-gene2kb.bed](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-gene2kb.bed)  
+**Supplemental Table 5**: Annotations for outlier SNPs that fall within 2kb of a gene. Also available in .bed format, [HCSS_Afilt32m70_01_BS-gene2kb.bed](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-gene2kb.bed)  
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 genes2kb <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_BS-gene2kb.bed",header = F,sep = "\t", col.names = c("SNP.Contig","SNP.start","SNP.end","Feature.Contig","source","feature","feature.start","feature.end","some1", "strand","something","attribute"))
@@ -436,7 +438,7 @@ kbl(genes2kb) %>%
 
 ---
 
-**Supplemental Table 5**: DAVID enrichment results for genes with F<sub>ST</sub> > 0.3. Also available in .tsv format, [fst_g03_david.tab](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/fst_g03_david.tab) 
+**Supplemental Table 6**: DAVID enrichment results for genes with F<sub>ST</sub> > 0.3. Also available in .tsv format, [fst_g03_david.tab](https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/analyses/2bRAD/PopGen/fst_g03_david.tab) 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 d <- read.table("../analyses/2bRAD/PopGen/fst_g03_david.tab",header=T,sep="\t")
