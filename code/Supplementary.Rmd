@@ -174,7 +174,7 @@ supp2
 
 ---
 
-**Supplemental Table 3**:  Biological functions that are enriched in the _Ostrea lurida_ genome. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/methylated-loci-enriched-BP.csv 
+**Supplemental Table 3**:  Biological functions that are enriched in methylated genes the _Ostrea lurida_ genome. Also available in .csv format: https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/methylated-loci-enriched-BP.csv 
 
 | GO Term | Biological Process | PValue | FDR | GO slim |
 |---|---|---|---|---|
