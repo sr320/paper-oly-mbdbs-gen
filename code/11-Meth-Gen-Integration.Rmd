@@ -214,6 +214,7 @@ hist(perc_meth_bins_10kb_Pst$Pst_Values)
 summary(perc_meth_bins_10kb_Pst$Pst_Values)
 round(mean(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
 round(sd(perc_meth_bins_10kb_Pst$Pst_Values), digits = 3)
+nrow(perc_meth_bins_10kb_Pst)
 
 # Write out Pst results 
 save(perc_meth_bins_10kb_Pst, file=here::here("analyses", "methylation-filtered", "R-objects", "perc_meth_bins_10kb_Pst"))

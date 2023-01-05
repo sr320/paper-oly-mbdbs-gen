@@ -1,41 +1,23 @@
 ##fileformat=VCFv4.3
-##fileDate= 20220623
+##fileDate= 20220706
 ##bssnperVersion=1.1
-##bssnperCommand=--fa Olurida_v081_100000.fa   --input bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam --output ../analyses/20-bs-snp/all.SNP-candidates.txt --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab --minhetfreq  0.1 --minhomfreq  0.85 --minquali 15 --mincover 10 --maxcover 1000 --minread2 2 --errorate 0.02 --mapvalue 20
-##reference=file://Olurida_v081_100000.fa
+##bssnperCommand=--fa /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/Olurida_v081-mergecat97.fa   --input /home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v98/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam --output ../analyses/20-bs-snp/all.SNP-candidates.txt --methcg ../analyses/20-bs-snp/all.CpG-meth-info.tab --methchg ../analyses/20-bs-snp/all.CHG-meth-info.tab --methchh ../analyses/20-bs-snp/all.CHH-meth-info.tab --minhetfreq  0.1 --minhomfreq  0.85 --minquali 15 --mincover 10 --maxcover 1000 --minread2 2 --errorate 0.02 --mapvalue 20
+##reference=file:///home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/Olurida_v081-mergecat97.fa
 ##Bisulfite=directional>
-##contig=<ID=Contig0,length=116746>
-##contig=<ID=Contig2,length=139250>
-##contig=<ID=Contig3,length=141657>
-##contig=<ID=Contig5,length=130522>
-##contig=<ID=Contig7,length=109667>
-##contig=<ID=Contig9,length=112192>
-##contig=<ID=Contig65,length=107659>
-##contig=<ID=Contig84,length=102803>
-##contig=<ID=Contig89,length=100284>
-##contig=<ID=Contig468,length=111883>
-##contig=<ID=Contig15326,length=102312>
-##contig=<ID=Contig16524,length=122429>
-##contig=<ID=Contig16668,length=101442>
-##contig=<ID=Contig16915,length=114892>
-##contig=<ID=Contig17050,length=125421>
-##contig=<ID=Contig17624,length=122541>
-##contig=<ID=Contig17876,length=129629>
-##contig=<ID=Contig18024,length=109300>
-##contig=<ID=Contig18052,length=116661>
-##contig=<ID=Contig18174,length=105922>
-##contig=<ID=Contig18571,length=110864>
-##contig=<ID=Contig19267,length=115756>
-##contig=<ID=Contig19330,length=108204>
-##contig=<ID=Contig19646,length=194507>
-##contig=<ID=Contig19826,length=107763>
-##contig=<ID=Contig20140,length=129054>
-##contig=<ID=Contig20625,length=111140>
-##contig=<ID=Contig22814,length=138260>
-##contig=<ID=Contig23978,length=107801>
-##contig=<ID=Contig23979,length=128837>
-##contig=<ID=Contig26138,length=101662>
-##contig=<ID=Contig34578,length=138978>
+##contig=<ID=Contig1,length=138455862>
+##contig=<ID=Contig2,length=162977795>
+##contig=<ID=Contig3,length=162888229>
+##contig=<ID=Contig4,length=138666776>
+##contig=<ID=Contig5,length=115454673>
+##contig=<ID=Contig6,length=90850039>
+##contig=<ID=Contig7,length=78741030>
+##contig=<ID=Contig8,length=63405826>
+##contig=<ID=Contig9,length=60272286>
+##contig=<ID=Contig10,length=50401293>
+##contig=<ID=Contig11,length=49394880>
+##contig=<ID=Contig12,length=48053427>
+##contig=<ID=Contig13,length=45952961>
+##contig=<ID=Contig14,length=45463667>
 ##ALT=<ID=*,Description="Represents allele(s) other than observed.">
 ##INFO=<ID=INDEL,Number=0,Type=Flag,Description="Indicates that the variant is an INDEL.">
 ##INFO=<ID=IDV,Number=1,Type=Integer,Description="Maximum number of reads supporting an indel">
@@ -60,4 +42,4 @@
 ##FORMAT=<ID=BSD,Number=8,Type=Integer,Description="Depth, ATCG in watson strand and crick strand">
 ##FORMAT=<ID=BSQ,Number=8,Type=Integer,Description="Avarage Base Quality, ATCG in watson strand and crick strand">
 ##FORMAT=<ID=ALFR,Number=R,Type=Float,Description="Allele frequency">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	bgdata/v082/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	/home/shared/8TB_HDD_01/sr320/github/paper-oly-mbdbs-gen/data/bgdata/v98/zr1394_all_s456_trimmed_bismark_bt2.deduplicated.sorted.bam

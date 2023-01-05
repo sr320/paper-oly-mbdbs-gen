@@ -30,7 +30,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP  
 - HCSS_sfsm70_Per{Site,Gene}Fst.csv: CSV files with pairwise FST values > 0 on either a per site or per gene basis.  
     _2bRAD_ `data`  
-- HCSS_Afilt32m70_01_pp90.vcf: HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
+- HCSS_Afilt32m70_01_pp90.vcf: the primary genetic data used in the manuscript, HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 - Afilt32m70_01_pp75.vcf: 3 populations, all SNPS with MAF > 1% and a genotype probobility of > 75%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
 
 **DNA Methylation**   

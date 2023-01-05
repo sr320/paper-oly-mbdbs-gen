@@ -169,21 +169,21 @@ save(DML.summary, file="../analyses/DMLs/R-objects/DML.summary")
 #How many DMLs are found within known genes? 
 DML.features[["DML.gene"]] %>%
   select(contig.dml, start.dml, end.dml) %>% nrow()
-1915/nrow(dml25)
+1873/nrow(dml25)
 
 #How many DMLs are found within one or more exons? 
 DML.features[["DML.exon"]] %>%
   select(contig.dml, start.dml, end.dml) %>% unique() %>% nrow()
-1504/nrow(dml25)
+1463/nrow(dml25)
 
 #How many DMLs are found upstream & downstream of genes? 
 DML.features[["DML.flank-up"]] %>% 
     select(contig.dml, start.dml, end.dml) %>% nrow()
-178/nrow(dml25)
+180/nrow(dml25)
 
 DML.features[["DML.flank-down"]] %>% 
     select(contig.dml, start.dml, end.dml) %>% nrow()
-173/nrow(dml25)
+171/nrow(dml25)
 
 #How many DMLs are found within TEs? 
 DML.features[["DML.TE"]] %>% 
@@ -192,7 +192,7 @@ DML.features[["DML.TE"]] %>%
 
 DML.features[["DML.unknown"]] %>% 
   select(contig.DML, start.dml, end.dml) %>% unique() %>% nrow()
-500/nrow(dml25)
+497/nrow(dml25)
 
 ```
 
@@ -574,6 +574,7 @@ macau.features[["macau.gene2kb"]] %>%
   select(SPID, Ontology_term) %>% na.omit() %>% mutate(GO = strsplit(as.character(Ontology_term), ",")) %>% 
     unnest(GO) %>% select(SPID, GO) %>% left_join(GOSlim, by=c("GO")) %>% arrange(slim)
 ```
+
 ### Plot SALS by oyster size 
 
 ```{r, warning=FALSE, message=FALSE}
