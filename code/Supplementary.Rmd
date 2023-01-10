@@ -5,6 +5,7 @@ output:
   latex_engine: xelatex
   html_document: default
 header-includes:
+ - \usepackage{float}
  - \usepackage{caption}
  - \captionsetup[figure]{labelformat=empty}
   
@@ -12,6 +13,10 @@ header-includes:
 
 _Epigenetic and genetic population structure is coupled in a marine invertebrate_  
 Katherine Silliman, Laura H. Spencer, Samuel J. White, Steven B. Roberts
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.pos = 'H')
+```
 
 ```{r, include=FALSE}
 # Load libraries
@@ -462,8 +467,6 @@ d %>% mutate_if(is.numeric, format, digits=3,nsmall = 0) %>%
 
 ![**Supplemental Figure 8:**  Comparison of mQTL results that intersect with the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), gene region (genes plus 2kb upstream and downstream), transposable element, and unknown region of genome. A) SNPs designated as either local (red, within 50kb) or distant (orange) mQTLs, compared with the background (blue) of all SNPs used in the mQTL analysis. B) CpGs associated with either local (red) or distant (orange) mQTLs, compared to the background (blue) of all CpGs used in the mQTL](../supplemental-files/Supp-09.png){width=70%}   
   
-    
-    
 ---
 
 ### 5. Genetic and epigenetic relationship at 10x MBD coverage  
@@ -472,3 +475,173 @@ d %>% mutate_if(is.numeric, format, digits=3,nsmall = 0) %>%
 knitr::include_graphics(c("../supplemental-files/10x_distance.png","../supplemental-files/10x_distance_dml.png"))
 ``` 
  
+---
+
+### 6. Genetic and epigenetic relationship at 5x coverage with NA values replacing data for the 1 or 2 samples not meeting coverage 
+
+For our comparative methylation analyses we filter for loci for which there is methylation data in at least 7 of the 9 samples in each population. This results in up to 2 samples that may not meet coverage thresholds, but which are included in analyses (e.g. PCA, distance matrix, differential methylation, etc.). We do agree that ideally all loci in all individuals would meet coverage thresholds, however given the nature of data derived from MBD-Seq library preparation (which is enriched for methylated regions), relaxing this setting was important to capture some loci with lower methylation levels in a population. Additionally, had we required that all samples meet 5x coverage thresholds, this would drastically reduce the dataset such that integration with genetic data would be quite limited. To examine how the the inclusion of data at loci with low coverage in 1-2 individuals per population affects our results, we re-ran methylation analyses where NA values replaced the up to 2 samples that did not meet 5x coverage threshold, and found that this approach slightly decreased noise in the methylation data, but did not qualitatively affect the relationships observed between the genome and epigenome, or the conclusions drawn therein. Here we provide key statistical results from methylation analyses, and figures that demonstrate the limited effects of these filtering changes on our conclusions about the relationship between genetic and epigenetic population structure:  
+
+| Statistic | Analysis in main text | Revised analysis for supplemental |
+|---|---|---|
+| Number of differentially methylated loci (DMLs) | 3,963 | 3,911 |
+| DMLs in genes | 1,915 | 1,873 |
+| DMLs in exons | 1,504 | 1,463 |
+| DMLs upstream of genes | 178 | 180 |
+| DMLs downstream of genes | 171 | 171 |
+| DMLs in transposable elements | 188 | 188 |
+| DMLs in no known feature | 500 | 497 |
+| % of DMLs with higher methylation in South Sound population | 54% | 54% |
+| Number of differentially methylated genes | 1,447 | 1,462 |
+| Average Pst across random 10kb bins | 0.30 +/- SD 0.26 | 0.30 +/- SD 0.25 |
+
+```{r,echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
+# Supp figure 10
+ # 10b PCA of methylation data
+ep <- read.table("../analyses/5x_SuppFiltering/PC-scores-filtered-methylation_Suppfilt.tab",
+                 header=T, sep="\t",row.names = "sample")
+#add sample names
+key = read.csv("../data/sample-key.csv",colClasses = c("character","character"))
+samples = rownames(ep)
+mapdf <- data.frame(old=key$MBD.FILENAME,new=key$SAMPLE)
+rownames(ep) <- mapdf$new[match(samples,mapdf$old)]
+
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_10","hc3_11","hc3_5","hc3_7",
+  "ss2_14","ss2_18","ss2_9","ss3_14","ss3_15","ss3_16","ss3_20","ss3_3","ss5_18")
+#make sure ep and gen in same order
+ep <- ep[mbdorder,]
+
+Population <- as.factor(c(rep("Hood Canal",9),rep("South Sound",9)))
+pc1pc2 <- cbind(ep[,c("PC1","PC2")],Population)
+
+fig10b <- ggplot(pc1pc2, aes(x=PC1,y=PC2)) + 
+  geom_point(aes(shape=Population,color=Population),size=4) +
+  scale_shape_manual(values=c(16,17)) + 
+  scale_color_manual(values=c("firebrick3", "blue3")) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+legend.position = "none"
+) +  
+  xlim(-130,325) + ylim(-225,275) +
+  xlab("PC 1 (9.9%)") + ylab("PC 2 (8.5%)")  +
+  annotate("text", x = -100, y = 266, label = "(B)", size=6) 
+
+## Correlation of methylation PC2 and SNP PC1, 10c
+
+gen <- read.table("../analyses/2bRAD/MethGen/MBD_pca_covMat.tsv")
+rownames(gen) <- mbdorder
+
+both <- merge(ep[,"PC2"],gen[,"PC1"],by="row.names",sort=F)
+Population <- as.factor(c(rep("Hood Canal",9),rep("South Sound",9)))
+both <- cbind(both,Population)
+
+fig10c <- ggplot(both, aes(x=y,y=x)) + 
+  geom_point(aes(shape=Population,color=Population),size=3) +
+  scale_shape_manual(values=c(16,17)) + 
+  scale_color_manual(values=c("firebrick3", "blue3")) +
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank(),
+legend.position = "bottom",
+legend.title=element_blank(),
+legend.text=element_text(size=15)
+) +
+  xlab("PC1 SNPs") + ylab("PC2 Methylation")  +
+   stat_cor(method = "pearson", label.x = 0., label.y = 175,size=5,p.digits = 0.001) +
+  guides(colour = guide_legend(override.aes = list(size=5)))  +
+  annotate("text", x = -0.3, y = 220, label = "(C)", size=6) 
+```
+
+```{r,echo=FALSE, results=FALSE, warning=FALSE, message=FALSE,fig.show='hide'}
+(figure10 <- ggarrange(fig10b,  
+                       fig10c, 
+                       ncol=2, nrow=1,
+                       common.legend = TRUE, legend="top"))
+
+png(file = "../supplemental-files/Supp-10.png", width=3000, height=1250, res=250)
+figure10
+dev.off()
+```
+
+![**Supplemental Figure 10:**  Revised panels B and C from Figure 3 in main text using methylation data where NA values replace loci in 1 or 2 samples not meeting 5x coverage threshold](../supplemental-files/Supp-10.png){width=90%} 
+
+
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
+# Figure 11a
+## Correlation of Epigenetic/Genetic Distance  
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+gen <- read.table("../analyses/2bRAD/PopGen/HCSS_Afilt32m70_01_mbd.dist", row.names = 1, header=T)
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+fig11a <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance")  +
+  scale_y_continuous(breaks = c(2250000,3250000),labels = c("225","325"))+
+   stat_cor(method = "pearson", label.x = 0.115, label.y = 3200000,size=5)
+```
+
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
+# Figure 11b
+## Correlation of Epigenetic/Genetic Distance (DML) 
+
+#load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
+ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
+ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
+ep10 <- as.matrix(list2dist(ep10))
+mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
+        "ss2_9","ss2_14","ss2_18","ss3_3","ss3_14","ss3_15","ss3_16","ss3_20","ss5_18")
+ep10 <- ep10[mbdorder, mbdorder]
+
+df <- data.frame( gen=gen[lower.tri(gen)], ep=ep10[ lower.tri(ep10)])
+
+fig11b <- ggplot(df, aes(x=gen,y=ep)) + geom_point(shape=19) +    # Use hollow circles
+    geom_smooth(method=lm) +
+  theme_linedraw()+
+theme(
+axis.title.x = element_text( size=15),
+axis.title.y = element_text(size=15),
+panel.grid.major = element_blank(),
+panel.grid.minor = element_blank()
+) +
+  xlab("Genetic distance") + ylab("Methylation distance (DMLs)")  +
+  scale_y_continuous(breaks = c(50000,200000),labels = c("5","20"))+
+   stat_cor(method = "pearson", label.x = 0.115, label.y = 190000,size=5,p.digits = 0.001)
+
+```
+
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE,fig.show='hide'}
+(figure11 <- ggarrange(fig11a, fig11b, ncol=2, nrow=1))
+
+tiff(file = "../supplemental-files/Supp-11.tiff", width=3000, height=1250, res=250) 
+figure11
+dev.off()
+
+png(file = "../supplemental-files/Supp-11.png", width=3000, height=1250, res=250) 
+figure11
+dev.off()
+```
+
+![**Supplemental Figure 11:**  Revised Figure 4 in main text using methylation data where NA values replace loci in 1 or 2 samples not meeting 5x coverage threshold](../supplemental-files/Supp-11.png){width=90%}
+
+
