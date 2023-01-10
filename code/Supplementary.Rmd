@@ -526,7 +526,7 @@ panel.grid.minor = element_blank(),
 legend.position = "none"
 ) +  
   xlim(-130,325) + ylim(-225,275) +
-  xlab("PC 1 (9.9%)") + ylab("PC 2 (8.5%)")  +
+  xlab("PC 1 (10.7%)") + ylab("PC 2 (8.6%)")  +
   annotate("text", x = -100, y = 266, label = "(B)", size=6) 
 
 ## Correlation of methylation PC2 and SNP PC1, 10c
