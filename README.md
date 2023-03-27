@@ -35,7 +35,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 
 ## DNA Methylation  
 
-### Code  
+### Methylation code  
 - Bismark code `code\00-Bismark.sh`
 - methylKit code `code\01-methylkit.Rmd`  -  Includes initial look at methylation data, filtering for coverage, incorporate loci that were very likely unmethylated in one population but highly methylated in the other, generating a final methylation dataset for comparative analysis among populations, conducting differential methylation analysis, PCA, and generating distance matrix from % methylation for integration with genetic data.  
 - `code\02-Generating-gene-region-feature-files.Rmd`  -  Bedtools to expand genome feature files to include 2kb up/downstream of features.  
@@ -44,11 +44,15 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - `05-Annotations.Rmd`  -  Use bedtools and enrichment analyses to characterize where differentially methylated loci (DMLs) are located in genome. Includes extraneous code annotating "MACAU" loci (i.e. Size associated Loci, SALs).  
 - `06-Meth-Pst-bins`  -  Calculate methylation Pst for genome bins. 10kb bins were used in paper, but code also contains extraneous code for 1kb bins.  
 
-### Analyses output files   
+### Methylation analyses subdirectories     
 - `analyses/methylation/` - Contains output files primarily from the `01-methylkit.Rmd` notebook relevant to comparative methylation analysis (but not including DML and DMG analyses).  
 - `analyses/methylation-genome-characteristics/` - Contains output files primarily from the `03-General-Methylation-Patterns.Rmd` notebook relevant to characterizing methylation in the Ostrea lurida genome.  
 - `analyses/DMGs/`  -  Contains output files primarily from the `04-DMG-analysis.Rmd` notebook relevant to identifying differentially methylated genes and their functions.  
 - `analyses/DMLs/`  - Contains output files primarily from the `01-methylkit.Rmd` and `05-Annotations.Rmd` notebooks relevant to differentially methylated loci and their functions.  
 
+### Methylation analyses output files   
+- `percent-methylation-filtered.tab` - % methylation of loci filtered at 5x by sample number  
+- `/DMLs/myDiff25p.tab` and `DMLs/dml25.bed` - differentially methylated bases among populations using min 25% difference  
+- `/methylation/dist.manhat.csv` and `methylation/dist.manhat.DMLs.csv` - Manhattan distance matrices generated from % methylation matrices using all methylation data and differentially methylated loci, respectively.  
 ## Archived files  
 Several directories contain `archive/` subdirectories, which contain code and results from analyses that were not ultimately needed for the paper.  For instance, we performed a [MACAU](https://www.xzlab.org/software/macau/MACAUmanual.pdf) analysis to identify methylated loci associated with oyster size ("Size associated loci", or "SALs"), but this was not included in our publication. NOTE: some MACAU-relevant code also remains in non-archived notebooks (e.g. in the 05-Annotations.Rmd notebook).  
