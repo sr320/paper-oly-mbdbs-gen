@@ -1,0 +1,159 @@
+---
+title: "03-raw-count-files"
+author: "Laura H Spencer"
+date: "8/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load libraries 
+
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+list.of.packages <- c("methylKit", "tidyverse") #add new libraries here 
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+# Load all libraries 
+lapply(list.of.packages, FUN = function(X) {
+  do.call("require", list(X)) 
+})
+```
+
+### Generate count files for analysis in MACAU 
+
+MACAU is a software program that assess the influence of a variable (or covariates) on differential methylation while controlling for relatedness. In our case, we will look at the influence of oyster length & wet weight on DML, while considering relatedness in the  Hood Canal and South Sound Olympia oyster populations. Inputs required for MACAU include: 
+
+  1) Total read counts
+  2) Methylated read counts 
+  3) Relatedness file 
+  4) Variable of interest 
+  
+In  this notebook I will generate #1 and  #2 - the count files - from a methylKit object. 
+
+First, load object that Steven created in 01-methylkit.Rmd 
+
+```{r}
+load("../analyses/methylation/R-objects/meth_filter")
+```
+
+Create subset-able dataframe from methylkit object. 
+
+```{r}
+meth_filter.df <- getData(meth_filter)
+```
+
+Create a new, single column with a base site ID by merging contig, start, and strand info. 
+
+```{r}
+meth_filter.df$siteID <- with(meth_filter.df, paste(chr, start, sep="_"))  #merge id columns into 1
+ncol(meth_filter.df) #count total #  columns 
+meth_filter.df <- subset(meth_filter.df, select=c(59,1:58)) #move siteID to first  column
+rownames(meth_filter.df) <- NULL #remove row numbers 
+head(meth_filter.df) #check resulting dataframe 
+```
+
+Create dataframe with total counts (aka coverage), and location info (chromosome, start, strand). End was not pulled, since count are of single base pairs (start and end are the same)
+
+IMPORTANT NOTE: MACAU does not work if there are any missing (NA) or 0 values in the total count file.  Because I still want to analyze the loci where one sample per population was filtered out due to <10x or >100x coverage, I need to do some merging. 
+
+```{r}
+# Load the low threshold object, needed to merge with the filtered dataframe so I can replace NA values with actual values 
+
+#load("../analyses/myobj_18") #load original count object if needed 
+
+meth_united_alldf <- methylKit::unite(myobj_18, destrand=TRUE, min.per.group=1L) %>% getData()
+meth_united_alldf$siteID <- with(meth_united_alldf, paste(chr, start, sep="_"))  #merge id columns into 1
+meth_united_alldf <- subset(meth_united_alldf, select=c(59,1:58)) #move siteID to first  column
+save(meth_united_alldf, file="../analyses/meth_united_alldf")
+#load(file="../analyses/meth_united_alldf")
+
+# Select loci from the full dataset that are only contained within the filtered dataset 
+meth_filter.df.noNA <- meth_united_alldf %>%
+  filter(siteID %in% meth_filter.df$siteID)
+
+# See if there are any NA values left in the total count file 
+sapply(meth_filter.df.noNA[, grep(c("coverage"), colnames(meth_filter.df.noNA))], function(x) sum(is.na(x))) #yes, there are some 
+head(meth_filter.df.noNA[is.na(meth_filter.df.noNA$coverage15),])  #check out the highest instance 
+
+# Extract only loci without NA values 
+meth_filter.df.noNA.final <- meth_filter.df.noNA[complete.cases(meth_filter.df.noNA[, grep(c("coverage"), colnames(meth_filter.df.noNA))]), ]
+
+# Check for NAs again - should 
+sapply(meth_filter.df.noNA.final[, grep(c("coverage"), colnames(meth_filter.df.noNA.final))], function(x) sum(is.na(x))) #nope!  
+# See how many loci were dropped 
+nrow(meth_filter.df.noNA) - nrow(meth_filter.df.noNA.final) # 454 loci dropped 
+
+save(meth_filter.df.noNA.final, file="../analyses/macau/meth_filter.df.noNA.final")
+```
+
+Create separate objects for total counts (coverage) and for methylated counts (numCs)
+
+```{r}
+head(counts.tot <- meth_filter.df.noNA.final[, grep(c("siteID|coverage"), colnames(meth_filter.df.noNA.final))])
+head(counts.meth <- meth_filter.df.noNA.final[, grep(c("siteID|numCs"), colnames(meth_filter.df.noNA.final))])
+```
+
+Confirm that rows (loci) are in same order for total counts and methylated counts 
+
+```{r}
+table(counts.tot$siteID == counts.meth$siteID)
+nrow(counts.tot)==nrow(counts.meth)
+```
+
+Write dataframes to tab delimited .txt files for MACAU. 
+
+```{r}
+write.table(counts.tot, file = "../analyses/macau/counts-filtered-total.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+write.table(counts.meth, file = "../analyses/macau/counts-filtered-meth.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+save(counts.tot, file="../analyses/macau/R-objects/counts.tot")
+```
+
+Write out dataframe with merged  ID, contig #, start #, and strand info for later use 
+
+#### NOTE: the meth_filter.df.noNA.final object is the list of loci that will be fed into MACAU. This constitutes the background list of loci. 
+
+```{r}
+write.table(meth_filter.df.noNA.final, file = "../analyses/macau/meth_filter.df.txt", sep = "\t", row.names = FALSE,  quote = FALSE)
+```
+
+### Prepare other files for MACAU
+
+I need the predictor variable and  relatedness matrix to be in the same order as the count files.  
+Read in size data (predictor variable), and sample ID key. 
+
+```{r}
+print(size <- read.csv(file = "../data/mbd_size.csv", header=T, sep = "\t"))
+print(key <- read.csv("../data/sample-key.csv"))
+```
+
+Merge size and sample key, making sure that the size data is ordered from sample #1 to #18. Include a  column of 1's - these are needed for the MACAU covariate file as it's used as the intercept. 
+
+```{r}
+print(size.macau <- cbind(x=c(rep(1,times=18)), y=merge(y=size, x=key, by.y="Sample", by.x="SAMPLE")))
+save(size.macau, file="../analyses/macau/size.macau")
+```
+
+Save 3 text files for MACAU. Don't include rownames or column names.  
+- predictors.size.macau.txt: contains both weight and length measurements so I can use either in MACAU as predictor. 
+- cov.weight.macau.txt: contains column of 1's (intercept) and weights to use as covariate (when length is predictor).  
+- cov.length.macau.txt: contains column of 1's (intercept) and lengths to use as covariate (when weight is predictor).  
+
+```{r}
+write.table(size.macau[c(4:5)],  file="../analyses/macau/predictors.size.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,4)],  file="../analyses/macau/cov.weight.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+write.table(size.macau[c(1,5)],  file="../analyses/macau/cov.length.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+```
+
+#### Prepare dummy numeric predictor variables for 2nd MACAU run - population comparison 
+
+I found out that I can use dummy/binary predictor variables, and run MACAU to identify loci associated with population while controlling for relatedness. Here I prep a .txt file with numeric predictors 1 (Hood Canal) and 2 (South Sound) 
+
+```{r}
+pop.macau <- size.macau[-4:-5] %>%
+  mutate(population=c(rep(1, times=9), rep(2, times=9)))
+write.table(pop.macau[c(2:4)],  file="../analyses/macau/predictors.pop.macau.txt", sep="\t", row.names = FALSE, col.names = FALSE)
+```
+

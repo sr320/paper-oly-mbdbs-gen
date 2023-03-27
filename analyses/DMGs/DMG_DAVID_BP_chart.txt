@@ -1,2 +1,0 @@
-Category	Term	Count	%	PValue	Genes	List Total	Pop Hits	Pop Total	Fold Enrichment	Bonferroni	Benjamini	FDR
-GOTERM_BP_DIRECT	GO:0045859~regulation of protein kinase activity	4	2.2857142857142856	0.07225317565247179	A2ASS6, Q8WZ42, Q92616, Q9ULH0	156	5	710	3.641025641025641	1.0	1.0	67.99900073828249

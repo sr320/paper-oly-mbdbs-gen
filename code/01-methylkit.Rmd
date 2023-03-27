@@ -102,17 +102,17 @@ Object prepared by Steven in 2019 is also available at https://d.pr/f/vRtrqZ
 Object prepared by Laura in March 2020 is available at TBD 
 
 ```{r, eval = FALSE}
-save(myobj_18, file = "../analyses/myobj_18") 
+save(myobj_18, file = "../analyses/methylation/R-objects/myobj_18") 
 ```
 
 ```{bash}
-#zip ../analyses/myobj_18.zip ../analyses/myobj_18
+#zip ../analyses/methylation/R-objects/myobj_18.zip ../analyses/methylation/R-objects/myobj_18
 ```
 
 Load object if needed 
 
 ```{r}
-load("../analyses/myobj_18")
+load("../analyses/methylation/R-objects/myobj_18")
 ```
 
 ### Check the basic stats about the methylation data - coverage and percent methylation. Index the object to look through each sample
@@ -262,46 +262,46 @@ getData(united0L) %>% filter(chr=="Contig137318", start=="3905")
 
 # loci with data in 1 or less Hood Canal sample, but 5x coverage in at least 7/9 South Sound samples
  perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
-  write_delim("../analyses/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
+  write_delim("../analyses/methylation/meth-highSS-nodataHC.bed",  delim = '\t', col_names = TRUE) 
 
 # loci with data in 1 or less South Sound sample, but 5x coverage in at least 7/9 Hood Canal samples
 perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
-  write_delim("../analyses/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
+  write_delim("../analyses/methylation/meth-highHC-nodataSS.bed",  delim = '\t', col_names = TRUE) 
 
 # Save a single bed file with loci that were filled in with zeros for both populations, and a column indicating which population was the "no data" population 
 rbind(perc.meth.withdata %>% filter(HC.1x.count<=1 & SS.5x.count>=7) %>% mutate(pop.no.data="HC"),
 perc.meth.withdata %>% filter(SS.1x.count<=1 & HC.5x.count>=7) %>% mutate(pop.no.data="SS")) %>% 
 separate(locus, sep="\\.", into=c("chr", "start", "end")) %>%
-  write_delim("../analyses/meth-loci-no-data-both-pops.bed",  delim = '\t', col_names = TRUE) 
+  write_delim("../analyses/methylation/meth-loci-no-data-both-pops.bed",  delim = '\t', col_names = TRUE) 
 ```
 
 ##### Which of these loci are located within a gene (+/- 2kb around genes)
 
 ```{bash}
-bedtools intersect -wb -a "../analyses/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highSS-nodataHC-genes.bed
-bedtools intersect -wb -a "../analyses/meth-highHC-nodataSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/meth-highHC-nodataSS-genes.bed
+bedtools intersect -wb -a "../analyses/methylation/meth-highSS-nodataHC.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation/meth-highSS-nodataHC-genes.bed
+bedtools intersect -wb -a "../analyses/methylation/meth-highHC-nodataSS.bed" -b "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff" >  ../analyses/methylation/meth-highHC-nodataSS-genes.bed
 ```
 
 ### Examine raw data by population - how many loci have data in some population but not the other? 
 
 ```{r}
-(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
+(meth.highSS.nodataHC.genes <- read_delim(here::here("analyses","methylation", "meth-highSS-nodataHC-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
   setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
        Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
        SPID=str_extract(attribute, "SPID=(.*?);")) %>%
   mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
-write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highSS.nodataHC.genes.csv")
+write.csv(meth.highSS.nodataHC.genes%>% filter(!is.na(SPID)), file = "../analyses/methylation/meth.highSS.nodataHC.genes.csv")
   
-(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
+(meth.highHC.nodataSS.genes <- read_delim(here::here("analyses","methylation","meth-highHC-nodataSS-genes.bed"), delim = '\t', col_names = F) %>% as_tibble() %>% dplyr::select(c(-10,-11,-12,-15,-16,-17)) %>%
   setNames(c("contig","start","end","HC.1x.count","SS.1x.count", "HC.meanmeth","SS.meanmeth", "HC.5x.count", "SS.5x.count", "start.gene", "end.gene", "attribute")) %>%
       mutate(ID=str_extract(attribute, "ID=(.*?);"),
        Note=str_extract(attribute, "Note=(.*?);"),
        Ontology_term=str_extract(attribute, "Ontology_term=(.*?);"),
        SPID=str_extract(attribute, "SPID=(.*?);")) %>%
   mutate(SPID=gsub("SPID=", "", SPID)) %>% mutate(SPID=gsub(";", "", SPID)))
-write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/meth.highHC.nodataSS.genes.csv")
+write.csv(meth.highHC.nodataSS.genes%>% filter(!is.na(SPID)), file = "../analyses/methylation/meth.highHC.nodataSS.genes.csv")
 
 # ### Copy Uniprot accession numbers for genes that are annotated 
 # meth.highSS.nodataHC.genes %>% filter(!is.na(SPID)) %>% select(SPID) %>% 
@@ -446,7 +446,7 @@ meth_filter=new("methylBase",
         names=united0L@names)
 
 meth_filter
-save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
+save(meth_filter, file = "../analyses/methylation/R-objects/meth_filter") #save object to file
 ```
 
 ```{r}
@@ -455,17 +455,17 @@ save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter
 
 # filtered.myobj=filterByCoverage(myobj_18,lo.count=10,lo.perc=NULL,
 #                                       hi.count=100,hi.perc=NULL)
-# save(filtered.myobj, file="../analyses/methylation-filtered/R-objects/filtered.myobj")
+# save(filtered.myobj, file="../analyses/methylation/R-objects/filtered.myobj")
 # 
 # meth_filter=methylKit::unite(filtered.myobj, destrand=TRUE, min.per.group=7L)
-# save(meth_filter, file = "../analyses/methylation-filtered/R-objects/meth_filter") #save object to file
+# save(meth_filter, file = "../analyses/methylation/R-objects/meth_filter") #save object to file
 ```
 
 # Back to main analysis 
 
 ## load "meth_filter" object if needed.
 ```{r}
-load(file = "../analyses/methylation-filtered/R-objects/meth_filter") 
+load(file = "../analyses/methylation/R-objects/meth_filter") 
 ```
 
 ```{r}
@@ -477,7 +477,7 @@ meth_filter %>% getData() %>% dplyr::select(starts_with("coverage")) %>%
                                         var=var(x, na.rm=T), sd=sd(x, na.rm=T), max=max(x, na.rm=T))) %>% 
   round(digits = 2) %>% as.data.frame() %>% t()  %>% as.data.frame() %>% rownames_to_column(var = "sample") %>%
   mutate(population=sample) %>% mutate(population=case_when(grepl("10|11|12|13|14|15|16|17|18", population) ~ "SS", TRUE ~ "HC")) %>%
-  write_delim(file = "../analyses/methylation-filtered/coverage-statistics.tab", delim = "\t", col_names = TRUE)
+  write_delim(file = "../analyses/methylation/coverage-statistics.tab", delim = "\t", col_names = TRUE)
 
 meth_filter %>% getData() %>% dplyr::select(-starts_with("num"), -strand) %>% pivot_longer(cols = starts_with("coverage")) %>%
   mutate(population=name) %>% mutate(population=case_when(grepl("10|11|12|13|14|15|16|17|18", population) ~ "SS", TRUE ~ "HC")) %>%
@@ -523,9 +523,9 @@ hist(perc.meth, col="gray50" )
 perc.meth
 
 # Save % methylation df to object and .tab file 
-save(perc.meth, file = "../analyses/methylation-filtered/R-objects/perc.meth") #save object to file 
-#load(file = "../analyses/methylation-filtered/R-objects/perc.meth") #load object if needed
-write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "methylation-filtered", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
+save(perc.meth, file = "../analyses/methylation/R-objects/perc.meth") #save object to file 
+#load(file = "../analyses/methylation/R-objects/perc.meth") #load object if needed
+write.table((as.data.frame(perc.meth) %>% tibble::rownames_to_column("contig")), file = here::here("analyses", "methylation", "percent-methylation-filtered.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = TRUE)
 
 # What percentage of loci have ZERO methylation? 
 100*table(perc.meth==0)[2]/table(perc.meth==0)[1] 
@@ -583,8 +583,8 @@ write_delim(getData(myDiff12p) %>%  mutate(start = start-1, end = end+1) %>% dpl
 
 ```{r}
 write.table(myDiff25p, file = "../analyses/DMLs/myDiff25p.tab", sep = "\t", col.names = TRUE)
-save(myDiff25p, file="../analyses/DMLs/myDiff25p")
-#load(file="../analyses/DMLs/myDiff25p") #load if needed
+save(myDiff25p, file="../analyses/DMLs/R-objects/myDiff25p")
+#load(file="../analyses/DMLs/R-objects/myDiff25p") #load if needed
 ```
 
 ---
@@ -673,11 +673,11 @@ key <- read.csv(here::here("data", "sample-key.csv"))
 
 dist.manhat.df <- merge(x=merge(x=dist.manhat.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.df, file=here::here("analyses", "methylation-filtered", "dist.manhat.csv"), row.names=FALSE) 
+write.csv(dist.manhat.df, file=here::here("analyses", "methylation", "dist.manhat.csv"), row.names=FALSE) 
 
 dist.manhat.DMLs.df <- merge(x=merge(x=dist.manhat.DMLs.df, y=key, by.x="row", by.y="MBD.FILENAME"), y=key, by.x="col", by.y="MBD.FILENAME")
 colnames(dist.manhat.DMLs.df) <- c("SeqNum.row", "SeqNum.col", "dist.manh", "SampNum.row", "SampNum.col")
-write.csv(dist.manhat.DMLs.df, file=here::here("analyses", "methylation-filtered", "dist.manhat.DMLs.csv"), row.names=FALSE)
+write.csv(dist.manhat.DMLs.df, file=here::here("analyses", "methylation", "dist.manhat.DMLs.csv"), row.names=FALSE)
 ```
 
 ### Figures
@@ -695,7 +695,7 @@ clusterSamples(meth_filter, dist="correlation", method="ward", plot=TRUE)
 Customized `methylKit` biplots from Yaamini Venkataraman's code,  [https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270](https://github.com/epigeneticstoocean/paper-gonad-meth/blob/master/code/04-methylkit.Rmd#L270)
 
 ```{r, fig.show='hide'}
-#load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object if needed 
+#load("../analyses/methylation/R-objects/meth_filter") #load filtered meth data object if needed 
 
 #Create dataframe with sample treatment information, color & symbol scheme 
 plotCustomization <- data.frame(sample = 1:18, population=c(
@@ -745,8 +745,8 @@ legend("topleft",
 NOTE: this PCA was run with _all_ methylated loci data after filtering for 5x across 7 of 9 samples per pop. 
 
 ```{r}
-save(PCA.filtered, file="../analyses/methylation-filtered/R-objects/PCA.filtered")
-write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
+save(PCA.filtered, file="../analyses/methylation/R-objects/PCA.filtered")
+write_delim(data.frame(PCA.filtered$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation/PC-scores-filtered-methylation.tab",  delim = '\t', col_names = TRUE)
 ```
 
 ## permANOVA and dispersion test, % methylation by population 
@@ -837,9 +837,9 @@ meth_filter_reshaped <- melt(data=meth_filter, id=c("chr", "start", "end", "stra
   mutate(population=as.character(sample))
 meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('1', '2', '3', '4', '5', '6', '7', '8', '9')='HC'") 
 meth_filter_reshaped$population <- car::recode(meth_filter_reshaped$population, "c('10','11','12','13','14','15','16','17','18')='SS'")
-readr::write_delim(meth_filter_reshaped, here::here("analyses", "methylation-filtered", "meth_filter_long.tab"),  delim = '\t', col_names = FALSE)
-save(meth_filter_reshaped, file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
-#load(file="../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+readr::write_delim(meth_filter_reshaped, here::here("analyses", "methylation", "meth_filter_long.tab"),  delim = '\t', col_names = FALSE)
+save(meth_filter_reshaped, file="../analyses/methylation/R-objects/meth_filter_reshaped")
+#load(file="../analyses/methylation/R-objects/meth_filter_reshaped")
 ```
 
 ## Check out overall distribution of filtered methylation data by population 
@@ -1028,7 +1028,7 @@ pivot_longer(cols = c(HC, SS),
 ### Heatmap
 
 ```{r}
-#load("../analyses/methylation-filtered/R-objects/meth_filter_reshaped")
+#load("../analyses/methylation/R-objects/meth_filter_reshaped")
 
 DMLs_heatmap <- meth_filter_reshaped %>%
   mutate(sample=factor(sample, levels = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18)), 
@@ -1053,7 +1053,7 @@ ggplot(DMLs_heatmap, aes(sample, chr_start, fill= percMeth)) + xlab("Sample") + 
 
 # ======================================================================================================# 
 
-# -------------# Here starts code that wasn't ultimately used for the paper and is thus commented out, but is good to keep around for futuer methylation projects. 
+# -------------# Here starts code that wasn't important for the analyses associated with the paper and is thus commented out, but is good to keep around for future methylation projects. 
 
 ### Calculate Pst for all methylated loci (using filtered object)
 
@@ -1072,7 +1072,7 @@ I looked through their code, and it's not totally clear how they did this calcul
 The following R code was provided by Kevin Johnson
 
 ```{r}
-# perc.meth.Pst <- read_delim(file = here::here("analyses",  "methylation-filtered", "percent-methylation-filtered.tab"), delim = "\t", col_names = TRUE) 
+# perc.meth.Pst <- read_delim(file = here::here("analyses",  "methylation", "percent-methylation-filtered.tab"), delim = "\t", col_names = TRUE) 
 # 
 # apply(perc.meth.Pst, 2, function(x) any(is.na(x))) #any NA values? 
 # 
@@ -1105,22 +1105,22 @@ The following R code was provided by Kevin Johnson
 # 
 # #Now run the following line and it will provide Pst estimates for every gene. NOTE: this can take a long time. 
 # perc.meth.Pst.done <- Pst(perc.meth.Pst2)
-# save(perc.meth.Pst.done, file="../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
+# save(perc.meth.Pst.done, file="../analyses/methylation/R-objects/perc.meth.Pst.done")
 # 
 # # Load Pst dataframe if needed. 
-# load("../analyses/methylation-filtered/R-objects/perc.meth.Pst.done")
+# load("../analyses/methylation/R-objects/perc.meth.Pst.done")
 # hist(perc.meth.Pst.done$Pst_Values, col = "gray50")
 # summary(perc.meth.Pst.done$Pst_Values)
 # nrow(perc.meth.Pst.done)
 # 
 # # Write out Pst results 
-# write.table(perc.meth.Pst.done, file = here::here("analyses", "methylation-filtered", "Pst_locus.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
+# write.table(perc.meth.Pst.done, file = here::here("analyses", "methylation", "Pst_locus.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE)
 ```
 
 ### Extract variables (loci) that are top contributors to PC 2 (since axis #2 differentiates populations)
 
 ```{r}
-# # load("../analyses/methylation-filtered/R-objects/PCA.filtered")
+# # load("../analyses/methylation/R-objects/PCA.filtered")
 # 
 # PCA.var.loadings <- get_pca_var(PCA.filtered)
 # 
@@ -1150,7 +1150,7 @@ The following R code was provided by Kevin Johnson
 # summary(PCA.filtered.top.Pst$Pst_Values)
 # 
 # # Write out Pst results - reminder these are for the loci that contribute 5% or greater to PCA (which was run with all loci)
-# write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation-filtered", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE, quote = F)
+# write.table(PCA.filtered.top.Pst %>% separate(Quant_Varia, into=c("contig","start", "end")), file = here::here("analyses", "methylation", "Pst_PCA-all-top-contrib.tab"), sep = '\t', na = "NA", row.names = FALSE, col.names = FALSE, quote = F)
 ```
 
 ### Plot Pst of top-contributors to the all-loci PCA against Fst for top contributors to the SNP PCA 
@@ -1168,6 +1168,7 @@ The following R code was provided by Kevin Johnson
 # # 6 top contributing methylated loci that are on the same contig as a top contribuing SNP 
 # # But no exact matches (none that are the exact same contig+position) 
 ```
+
 ### Extract variables (loci) that are top contributors to PC 1 (since axis #1 differentiates populations)
 
 ```{r}
@@ -1262,8 +1263,8 @@ The following R code was provided by Kevin Johnson
 NOTE: this PCA was run with loci with 100-highest Pst values only 
 
 ```{r}
-# save(PCA.Pst100, file="../analyses/methylation-filtered/R-objects/PCA.Pst100")
-# write_delim(data.frame(PCA.Pst100$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-Pst100.tab",  delim = '\t', col_names = TRUE)
+# save(PCA.Pst100, file="../analyses/methylation/R-objects/PCA.Pst100")
+# write_delim(data.frame(PCA.Pst100$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation/PC-scores-Pst100.tab",  delim = '\t', col_names = TRUE)
 ```
 
 ### Principal Component Analyses, Loci with highest 200 Pst values 
@@ -1320,8 +1321,8 @@ NOTE: this PCA was run with loci with 100-highest Pst values only
 NOTE: this PCA was run with loci with 200-highest Pst values only 
 
 ```{r}
-# save(PCA.Pst200, file="../analyses/methylation-filtered/R-objects/PCA.Pst200")
-# write_delim(data.frame(PCA.Pst200$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation-filtered/PC-scores-Pst200.tab",  delim = '\t', col_names = TRUE)
+# save(PCA.Pst200, file="../analyses/methylation/R-objects/PCA.Pst200")
+# write_delim(data.frame(PCA.Pst200$x) %>% tibble::rownames_to_column("sample"), "../analyses/methylation/PC-scores-Pst200.tab",  delim = '\t', col_names = TRUE)
 ```
 
 ### Barplots showing % methylation of DMLs by population 
@@ -1384,7 +1385,7 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 #   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
 #   dplyr::select(contig, start, end) %>%
 #   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/HC-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
+#   "../analyses/methylation/HC-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
 # 
 # # HC UNMETHYLATED loci 
 # # Subset HC data to include only those with 25% or less average % methylation, save to .bed file format 
@@ -1398,7 +1399,7 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 #   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
 #   dplyr::select(contig, start, end) %>%
 #   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/HC-lowmeth-loci.bed",  delim = '\t', col_names = FALSE)
+#   "../analyses/methylation/HC-lowmeth-loci.bed",  delim = '\t', col_names = FALSE)
 # 
 # # SS METHYLATED loci 
 # # Subset SS data to include only those with 50% or greater average % methylation, save to .bed file format 
@@ -1412,7 +1413,7 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 #   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
 #   dplyr::select(contig, start, end) %>%
 #   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/SS-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
+#   "../analyses/methylation/SS-highmeth-loci.bed",  delim = '\t', col_names = FALSE)
 
 # # SS UNMETHYLATED loci 
 # # Subset SS data to include only those with 25% or less average % methylation, save to .bed file format 
@@ -1426,7 +1427,7 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 #   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
 #   dplyr::select(contig, start, end) %>%
 #   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/SS-meth-lowloci.bed",  delim = '\t', col_names = FALSE)
+#   "../analyses/methylation/SS-meth-lowloci.bed",  delim = '\t', col_names = FALSE)
 
 # # Subset combined data to include only those with 50% or greater average % methylation, save to .bed file format 
 # write_delim(
@@ -1439,7 +1440,7 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 #   mutate(start = as.numeric(start) -1, end = as.numeric(end) + 1) %>% 
 #   dplyr::select(contig, start, end) %>%
 #   mutate_if(is.numeric, as.integer),
-#   "../analyses/methylation-filtered/all-meth-loci.bed",  delim = '\t', col_names = FALSE)
+#   "../analyses/methylation/all-meth-loci.bed",  delim = '\t', col_names = FALSE)
 ```
 
 ### Venn Diagram of loci sequenced in each population
@@ -1469,13 +1470,13 @@ NOTE: this PCA was run with loci with 200-highest Pst values only
 # venn.diagram(
 #   x=list(d,e),
 #   category.names = c("meth HC", "meth SS"),
-#   filename = "../analyses/methylation-characteristics/venn-test.png",
+#   filename = "../analyses/methylation-genome-characteristics/venn-test.png",
 #   output=F)
 # 
 # venn.diagram(
 #   x=list(f,g),
 #   category.names = c("unmeth HC", "unmeth SS"),
-#   filename = "../analyses/methylation-characteristics/venn-test1.png",
+#   filename = "../analyses/methylation-genome-characteristics/venn-test1.png",
 #   output=F)
 ```
 

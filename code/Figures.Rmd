@@ -28,7 +28,7 @@ lapply(list.of.packages, FUN = function(X) {
 Caption: Figure 1: Comparison of the percentages of CpGs in genome (light blue) vs. methylated CpG loci (dark blue) in O. lurida muscle tissue that intersect with each of the following genomic features: exon, intron, promoter region (within 2kb of the 5’ end of a gene), transposable element, unknown region of genome. Compared to all CpGs in the O. lurida genome methylated loci are more likely to be located in exons (3.7x) and introns (1.4x), and less likely to be located in unknown regions (0.60x).
 
 ```{r}
-load(file="../analyses/methylation-characteristics/R-objects/methdata.summary.long") # # load R object
+load(file="../analyses/methylation-genome-characteristics/R-objects/methdata.summary.long") # # load R object
 
 fig1 <- ggplot(data=subset(methdata.summary.long, analysis!="all5x" & 
                      (feature=="exon" | feature=="intron" | feature=="2kbflank-up" | 
@@ -143,7 +143,7 @@ fig3a
 ## PCA Figure, all methylated loci after filtering 
 
 ```{r, fig.show='hide'}
-load("../analyses/methylation-filtered/R-objects/meth_filter") #load filtered meth data object 
+load("../analyses/methylation/R-objects/meth_filter") #load filtered meth data object 
 
 PCA.filtered <- PCASamples(meth_filter, obj.return = TRUE, ) #Run a PCA analysis on percent methylation for all samples. methylKit uses prcomp to create the PCA matrix
 summary(PCA.filtered) #Look at summary statistics. The first PC explains 9.879% of variation, the second PC explains 8.51% of variation
@@ -175,7 +175,7 @@ fig3b
 ## Figure 3c 
 ## Correlation of methylation PC2 and SNP PC1
 ```{r}
-ep <- read.table("../analyses/methylation-filtered/PC-scores-filtered-methylation.tab",
+ep <- read.table("../analyses/methylation/PC-scores-filtered-methylation.tab",
                  header=T, sep="\t",row.names = "sample")
 #add sample names
 key = read.csv("../data/sample-key.csv",colClasses = c("character","character"))
@@ -241,7 +241,7 @@ dev.off()
 ## Correlation of Epigenetic/Genetic Distance  
 ```{r}
 #load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
-ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.csv",header = T)
+ep10 <-read.csv("../analyses/methylation/dist.manhat.csv",header = T)
 ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
 ep10 <- as.matrix(list2dist(ep10))
 mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
@@ -272,7 +272,7 @@ fig4a
 
 ```{r}
 #load("../analyses/2bRAD/MethGen/dist_allmeth_snp.Robj")
-ep10 <-read.csv("../analyses/methylation-filtered/dist.manhat.DMLs.csv",header = T)
+ep10 <-read.csv("../analyses/methylation/dist.manhat.DMLs.csv",header = T)
 ep10 <- ep10[,c("SampNum.row","SampNum.col","dist.manh")]
 ep10 <- as.matrix(list2dist(ep10))
 mbdorder = c("hc1_2","hc1_4","hc2_15","hc2_17","hc3_1","hc3_5","hc3_7","hc3_10","hc3_11",
@@ -321,7 +321,7 @@ fst <- read.csv("../analyses/2bRAD/MethGen/HCSS_sfsm70_Per10kbFst.csv")
 id <- paste(fst$contig,fst$start,fst$end, sep = "_")
 fst <- cbind(id,fst)
 
-pst10kb <- read.csv("../analyses/methylation-filtered/Pst_bins_10kb.tab", sep="\t",header=T,stringsAsFactors = F)
+pst10kb <- read.csv("../analyses/methylation/Pst_bins_10kb.tab", sep="\t",header=T,stringsAsFactors = F)
 colnames(pst10kb) <- c("id","contig","start","end","pst","pst.lowCI","pst.highCI")
 
 both = merge(pst10kb,fst, by ="id")

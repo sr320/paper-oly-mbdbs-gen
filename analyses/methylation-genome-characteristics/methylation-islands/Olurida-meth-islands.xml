@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="https://owl.fish.washington.edu/halfshell/genomic-databank/Olurida_v081.fa" hasGeneTrack="false" hasSequenceTrack="true" locus="Contig19176:9091-14165" nextAutoscaleGroup="5" path="/Users/laura/Documents/roberts-lab/paper-oly-mbdbs-gen/analyses/methylation-characteristics/methylation-islands/Olurida-meth-islands.xml" version="8">
+    <Resources>
+        <Resource path="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/macau/macau.sign.length.perc.meth.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/20190709-Olurida_v081.stringtie.gtf?raw=true"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-all.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-long.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.21-70isoforms.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081_TE-Cg.gff?raw=true"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.11-20isoforms.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/all_methylated_5x.bed?raw=true"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.6-10isoforms.bed"/>
+        <Resource path="/Users/laura/Documents/roberts-lab/paper-oly-mbdbs-gen/genome-features/Olurida_v081_CG-motif.gff"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.gene.gff?raw=true"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-short.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.2-5isoforms.bed"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081_genes.1isoform.bed?raw=true"/>
+        <Resource path="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.exon.gff?raw=true"/>
+    </Resources>
+    <Panel height="775" name="DataPanel" width="1423">
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" featureVisibilityWindow="1000000" fontSize="10" id="/Users/laura/Documents/roberts-lab/paper-oly-mbdbs-gen/genome-features/Olurida_v081_CG-motif.gff" name="Olurida_v081_CG-motif.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/analyses/methylation-characteristics/all_methylated_5x.bed?raw=true" name="all_methylated_5x.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-all.bed" name="meth-island-all.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-short.bed" name="meth-island-short.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/analyses/methylation-characteristics/methylation-islands/meth-island-long.bed" name="meth-island-long.bed" visible="true"/>
+        <Track clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://raw.githubusercontent.com/sr320/paper-oly-mbdbs-gen/master/analyses/macau/macau.sign.length.perc.meth.bed" name="SALs" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.gene.gff?raw=true" name="Olurida_v081-20190709.gene.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/20190709-Olurida_v081.stringtie.gtf?raw=true" name="20190709-Olurida_v081.stringtie.gtf" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081-20190709.exon.gff?raw=true" name="Olurida_v081-20190709.exon.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081_TE-Cg.gff?raw=true" name="Olurida_v081_TE-Cg.gff" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/blob/master/genome-features/Olurida_v081_genes.1isoform.bed?raw=true" name="Olurida_v081_genes.1isoform.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.2-5isoforms.bed" name="Olurida_v081_genes.2-5isoforms.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.6-10isoforms.bed" name="Olurida_v081_genes.6-10isoforms.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.11-20isoforms.bed" name="Olurida_v081_genes.11-20isoforms.bed" visible="true"/>
+        <Track altColor="0,0,178" clazz="org.broad.igv.track.FeatureTrack" color="0,0,178" displayMode="EXPANDED" fontSize="10" id="https://github.com/sr320/paper-oly-mbdbs-gen/raw/master/genome-features/Olurida_v081_genes.21-70isoforms.bed" name="Olurida_v081_genes.21-70isoforms.bed" visible="true"/>
+    </Panel>
+    <Panel height="76" name="FeaturePanel" width="1423">
+        <Track clazz="org.broad.igv.track.SequenceTrack" fontSize="10" id="Reference sequence" name="Reference sequence" visible="true"/>
+    </Panel>
+    <PanelLayout dividerFractions="0.8781954887218045"/>
+    <HiddenAttributes>
+        <Attribute name="DATA FILE"/>
+        <Attribute name="DATA TYPE"/>
+        <Attribute name="NAME"/>
+    </HiddenAttributes>
+</Session>

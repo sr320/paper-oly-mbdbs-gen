@@ -1,9 +1,0 @@
-slim,Term,Function,PValue.x,PValue.y
-cell adhesion,GO:0007156,homophilic cell adhesion via plasma membrane adhesion molecules,0.025681084857553854,9.118405357719405e-4
-cell organization and biogenesis,GO:0045214,sarcomere organization,0.06873610875760386,0.019117140688292674
-developmental processes,GO:0045214,sarcomere organization,0.06873610875760386,0.019117140688292674
-other biological processes,GO:0016477,cell migration,0.028504580783726766,0.03238846145694192
-protein metabolism,GO:0031398,positive regulation of protein ubiquitination,0.09750082495922978,0.09348087197194224
-transport,GO:0006895,Golgi to endosome transport,0.04267497671982383,0.019117140688292674
-transport,GO:0034220,ion transmembrane transport,0.08617258446567905,4.905409681502694e-4
-NA,GO:0044331,cell-cell adhesion mediated by cadherin,0.03335918879388884,0.0710938087428225
