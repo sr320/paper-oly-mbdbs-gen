@@ -123,7 +123,12 @@ bedtools flank \
 head -n 3 "../genome-features/Olurida_v081-20190709.2kbflank-up.gff"
 ```
 
-### Create  new files that contains genes locations of various # of isoforms 
+# ============================================================================
+
+The below code was not needed for the paper 
+
+### Createnew files that contains genes locations of various # of isoforms 
+
 These files will be used to assess association between methylation and the # of isoforms in a gene 
 
 These are the files I will create:  

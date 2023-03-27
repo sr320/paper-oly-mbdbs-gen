@@ -514,6 +514,7 @@ contrib.isoform <- 100*meth.isoform.chisq$residuals^2/meth.isoform.chisq$statist
 round(contrib.isoform, 3) 
 corrplot(contrib.isoform, is.cor = FALSE)
 ```
+
 ### Summary barplot showing where methylated loci and all CpG loci (potential methylated sites) overlap with known gene features (and unknown)
 
 ```{r}
@@ -647,7 +648,9 @@ read_delim(file="../analyses/methylation-genome-characteristics/methylated-loci-
 ```
 
 
+# =============================================
 
+The below code was not needed for the paper 
 
 
 ## Methylation islands functional analysis 
