@@ -35,4 +35,6 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 
 **DNA Methylation**   
 - Bismark code `code\00-Bismark.sh`
-- methylKit code `code\methylkit.Rmd`
+- methylKit code `code\01-methylkit.Rmd`  -  Includes initial look at methylation data, filtering for coverage, incorporate loci that were very likely unmethylated in one population but highly methylated in the other, generating a final methylation dataset for comparative analysis among populations, conducting differential methylation analysis, PCA, and generating distance matrix from % methylation for integration with genetic data.  
+- Bedtools to expand genome feature files to include 2kb up/downstream of features `02-Generating-gene-region-feature-files`.  
+- `03-General-Methylation-Patterns` -  Uses all data from both populations to characterize methylation in the Ostrea lurida genome. Includes calling methylation status & filtering for coverage, using bedtools to identify genome features containing methylated CpGs, testing for differences among distributions of methylated CpGs vs. all CpGs. Also includes methylation island analysis code that was not used for paper.  
