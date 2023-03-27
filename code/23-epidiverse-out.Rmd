@@ -1,0 +1,182 @@
+---
+title: "23-epidiverse-out"
+output: html_document
+---
+
+
+Having a look at what came out of epidiverse to try to quantify CT snps
+
+overview
+
+![pic](https://gannet.fish.washington.edu/seashell/snaps/Inbox_-_sr320uw.edu_-_UW_Mail_2022-07-26_10-55-08.png)
+
+
+```{bash}
+pwd
+```
+
+
+```{bash}
+cd ../data
+wget -r \
+--no-check-certificate \
+--quiet \
+--no-directories --no-parent \
+-P . \
+-A .tbi \
+https://gannet.fish.washington.edu/Atumefaciens/20220721-olur-zr1394_all_untrimmed-nextflow_epidiverse-snp-conda-trim_10bp_5prime/snps/vcf/
+```
+
+```{bash}
+tail -40 ../data/zr1394_1_s456.vcf 
+```
+
+```{bash}
+fgrep "C	T" ../data/zr1394_1_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_2_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_3_s456.vcf | wc -l
+fgrep "C	T" ../data/zr1394_4_s456.vcf | wc -l
+```
+
+```{bash}
+cat ../data/zr1394_1_s456.vcf | wc -l
+```
+
+
+
+Maybe lets try merging populations separately, trim, then compare?
+
+
+```{bash}
+/Applications/bioinfo/bcftools-1.15.1/bcftools 
+```
+```{bash}
+pwd
+```
+
+
+```{bash}
+/Applications/bioinfo/bcftools-1.15.1/bcftools merge \
+../data/zr1394_1_s456.vcf.gz \
+../data/zr1394_2_s456.vcf.gz \
+../data/zr1394_3_s456.vcf.gz \
+../data/zr1394_4_s456.vcf.gz \
+../data/zr1394_5_s456.vcf.gz \
+../data/zr1394_6_s456.vcf.gz \
+../data/zr1394_7_s456.vcf.gz \
+../data/zr1394_8_s456.vcf.gz \
+../data/zr1394_9_s456.vcf.gz \
+--merge all \
+--threads 8 \
+-O v \
+-o ../analyses/Oly1_9_merged.vcf
+```
+
+
+
+```{bash}
+tail ../analyses/Oly1_9_merged.vcf
+```
+
+```{bash}
+wc -l ../analyses/Oly1_9_merged.vcf
+```
+
+/gscratch/srlab/programs/vcftools-0.1.16/bin/vcftools \
+--vcf Cv_10x_merged.vcf \
+--recode --recode-INFO-all \
+--min-alleles 2 --max-alleles 2 \
+--max-missing 0.5 \
+--mac 2 \
+--out Cv_10x_merged.filtered
+
+
+```{bash}
+wc -l ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf  
+```
+
+```{bash}
+tail -1 ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf  
+```
+
+
+
+```{bash}
+wc -l ../data/HCSS_Afilt32m70_01_pp90.vcf  
+```
+
+```{bash}
+grep "C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+grep "C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+fgrep "C	T" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf | wc -l
+```
+
+```{bash}
+fgrep "T	C" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf | wc -l
+```
+
+
+
+
+
+Pulling out all CT SNPS
+
+```{bash}
+fgrep "C	T" ../data/HCSS_Afilt32m70_01_pp90_m75.recode.vcf > ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+
+
+```{bash}
+head -1 ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf
+```
+```{r}
+library(tidyverse)
+```
+
+
+
+```{r}
+CTsnp <- read_delim("../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.vcf", delim = "\t", col_names = FALSE)
+```
+
+```{r}
+CTbed <- select(CTsnp, X1, X2) %>%
+  mutate(X3 = X2 - 1) %>% 
+  select(X1, X3, X2)
+```
+
+
+```{r}
+write_tsv(CTbed, "../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed", col_names = FALSE)
+```
+
+
+```{bash}
+/Applications/bioinfo/bedtools2/bin/intersectbed \
+-wa \
+-a ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed \
+-b ../genome-features/Olurida_v081_CG-motif.gff \
+| head
+```
+
+
+```{bash}
+head ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed
+```
+
+
+```{bash}
+/Applications/bioinfo/bedtools2/bin/intersectbed \
+-wa \
+-a ../analyses/CT_HCSS_Afilt32m70_01_pp90_m75.recode.bed \
+-b ../genome-features/Olurida_v081_CG-motif.gff \
+| wc -l
+```
