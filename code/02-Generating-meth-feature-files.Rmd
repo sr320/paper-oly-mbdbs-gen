@@ -49,7 +49,7 @@ slopBed \
 head -n 3 "../genome-features/Olurida_v081-20190709.gene.2kbslop.gff"
 ```
 
-### Use intersectBed to find where loci and genes intersect, allowing loci to be mapped to annotated genes
+### Use intersectBed to find where loci with methylation data and genes intersect, allowing loci to be mapped to annotated genes
   
   wb: Print all lines in the second file
   a: input data file, which was created in previous code chunk

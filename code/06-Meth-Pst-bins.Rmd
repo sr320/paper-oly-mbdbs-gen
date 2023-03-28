@@ -1,5 +1,5 @@
 ---
-title: "11-Meth-Gen-Integration"
+title: "06-Meth-Pst-bins"
 author: "Laura H Spencer"
 date: "4/23/2020"
 output: html_document

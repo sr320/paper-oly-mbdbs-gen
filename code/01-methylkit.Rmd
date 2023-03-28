@@ -429,6 +429,7 @@ subset(united0L.df.filtered.na, !(locus %in% c(nodata.SS$locus,nodata.HC$locus))
 ```{r}
 united0L.df.filtered.na
 ```
+
 # Create a methylBase object that includes data replaced for zeros in some instances. These instances include ... loci with data in 1 Hood Canal sample (any coverage) & 5x coverage (or greater) in 7/9 samples in South Sound, and visa ersa. 
 
 ```{r}
