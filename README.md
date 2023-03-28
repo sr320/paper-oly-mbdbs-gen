@@ -52,7 +52,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 
 ### Methylation analyses output files   
 - [all_methylated_5x](analyses/methylation-genome-characteristics/R-objects/all_methylated_5x) & [all_unmethylated_5x](analyses/methylation-genome-characteristics/R-objects/all_unmethylated_5x) - R objects containing loci in the O. lurida genome that are methhylated and unmethylated, respectively, used to characterize methylation patterns for the species / draft genome.  
-- [methylated-<_feature_>.bed](analyses/methylation-genome-characteristics/methylated-<_feature_>.bed) - Bed files containing locations of methylated loci, where _feature_ is gene, gene2kb, 2kbflank-up, 2kbflank-down, exon, CDS, mRNA, TE, or ASV.  
+- `analyses/methylation-genome-characteristics/methylated-<_feature_>.bed` - Bed files containing locations of methylated loci, where _feature_ is gene, gene2kb, 2kbflank-up, 2kbflank-down, exon, CDS, mRNA, TE, or ASV.  
 - [meth_filter](/analyses/methylation/R-objects/meth_filter) - methylBase object containing coverage, numCs, and numTs for each sample for the final set of filtered loci used in comparative analyses.  
 - [perc.meth](analyses/methylation/R-objects/perc.meth) - Percent methylation matrix (rows=loci, columns=sample) used in comparative analyses.  
 - [percent-methylation-filtered.tab](analyses/methylation/percent-methylation-filtered.tab) - % methylation of loci filtered at 5x by sample number used in comparative analyses.   
