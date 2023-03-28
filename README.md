@@ -58,7 +58,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - [percent-methylation-filtered.tab](analyses/methylation/percent-methylation-filtered.tab) - % methylation of loci filtered at 5x by sample number  
 - [myDiff25p](analyses/DMLs/R-objects/myDiff25p), [dml25_counts](analyses/DMLs/R-objects/dml25_counts), [myDiff25p.tab](analyses/DMLs/myDiff25p.tab), and [dml25.bed](analyses/DMLs/dml25.bed) - differentially methylated loci (DMLs) among populations using min 25% difference   
 - [dist.manhat.csv](analyses/methylation/dist.manhat.csv) and [dist.manhat.DMLs.csv](analyses/methylation/dist.manhat.DMLs.csv) - Manhattan distance matrices generated from % methylation matrices using all methylation data and differentially methylated loci, respectively.  
-- [dist.manhat.DMLs.csv](analyses/methylation/R-objects/PCA.filtered) - PCA representing global methylation patterns & differences among populations (uses all loci after filtering)  
+- [PCA.filtered](analyses/methylation/R-objects/PCA.filtered) - PCA R object representing global methylation patterns & differences among populations (uses all loci after filtering)  
 - [perc_meth_bins_10kb_Pst](analyses/methylation/R-objects/perc_meth_bins_10kb_Pst) and [Pst_bins_10kb.tab](analyses/methylation/Pst_bins_10kb.tab)- Pst calculation results for random 10kb bins that contain both genetic and methylation data.  
 - [DMGs_2kbslop](analyses/DMGs/R-objects/DMGs_2kbslop) and [DMGs_2kbslop_annotated.tab](analyses/DMGs/DMGs_2kbslop_annotated.tab) - Differentially methylated genes (DMGs) among ppoulations.  
 
