@@ -24,11 +24,14 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - _Crassostrea virginica_ proteins `genome-annot/GCF_002022765.2_C_virginica-3.0_protein.faa`
 
 ## Genetic Analyses
-- Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`    
-    _2bRAD_ `analyses`     
-- Files for relatedness matrix for MACAU: HSmbdsamples_rab.txt and mbdsamples_rab.txt. File starting with HS is generated from an ANGSD run using only HC/SS samples, the other is a run using HC/SS/NF samples. The two files are very tightly correlated so should not matter much.
+- Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`
+
+### Genetics analyses code
+
+### Genetics analyses output files
+
 - HCSS_Afilt32m70_01_pp90_m75_BSouts.vcf: VCF file of 7 SNPs determined to be outliers by Bayescan with FDR < 0.1 and prior of 10.
-- GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP  
+ 
 - HCSS_sfsm70_Per{Site,Gene}Fst.csv: CSV files with pairwise FST values > 0 on either a per site or per gene basis.  
     _2bRAD_ `data`  
 - HCSS_Afilt32m70_01_pp90.vcf: the primary genetic data used in the manuscript, HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
@@ -65,3 +68,5 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 
 ## Archived files  
 Several directories contain `archive/` subdirectories, which contain code and results from analyses that were not ultimately needed for the paper.  For instance, we performed a [MACAU](https://www.xzlab.org/software/macau/MACAUmanual.pdf) analysis to identify methylated loci associated with oyster size ("Size associated loci", or "SALs"), but this was not included in our publication. NOTE: some MACAU-relevant code also remains in non-archived notebooks (e.g. in the 05-Annotations.Rmd notebook).  
+- Files for relatedness matrix for MACAU: HSmbdsamples_rab.txt and mbdsamples_rab.txt. File starting with HS is generated from an ANGSD run using only HC/SS samples, the other is a run using HC/SS/NF samples. The two files are very tightly correlated so should not matter much.
+- - GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP 
