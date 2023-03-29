@@ -8,6 +8,7 @@ Repository structure
 - `genome annot` - code and fasta files used for genome annotation
 - `genome-features` - genome feature tracks for visualization and analysis (eg _bedtools_)
 - `protocols` - protocol for 2bRAD library prep
+- `snps` - calling snps from MBD-BS data (not used in manuscript)
 
 ---
 
