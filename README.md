@@ -27,6 +27,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`
 
 ### Genetics analyses code
+- [ANGSD_HCSSonly.ipynb](code/ANGSD_HCSSonly.ipynb): ANGSD genotyping, converting ANGSD output to VCF, running outlier analysis with Bayescan, generating relatedness matrix (not used in paper), running ngsAdmix for admixture, F_{ST} (overall, per gene, per SNP), calculate the number of SNPs in genes, generate GO enrichment files for genes with F_{ST} > 0.3, PCA of all genetic samples, PCA of MBD samples 
 
 ### Genetics analyses output files
 
@@ -35,7 +36,10 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - HCSS_sfsm70_Per{Site,Gene}Fst.csv: CSV files with pairwise FST values > 0 on either a per site or per gene basis.  
     _2bRAD_ `data`  
 - HCSS_Afilt32m70_01_pp90.vcf: the primary genetic data used in the manuscript, HC and SS populations, all SNPS with MAF > 1% and a genotype probobility of > 90%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
-- Afilt32m70_01_pp75.vcf: 3 populations, all SNPS with MAF > 1% and a genotype probobility of > 75%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
+
+### Genetic analyses subdirectories
+- [Inputs](analyses/2bRAD/Inputs/): contains input files used in [ANGSD_HCSSonly.ipynb](code/ANGSD_HCSSonly.ipynb) and [Figures.Rmd](code/Figures.Rmd)
+- [PopGen](analyses/2bRAD/PopGen): contains outputs from [ANGSD_HCSSonly.ipynb](code/ANGSD_HCSSonly.ipynb)
 
 ## DNA Methylation  
 
@@ -65,8 +69,18 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - [perc_meth_bins_10kb_Pst](analyses/methylation/R-objects/perc_meth_bins_10kb_Pst) and [Pst_bins_10kb.tab](analyses/methylation/Pst_bins_10kb.tab)- Pst calculation results for random 10kb bins that contain both genetic and methylation data.  
 - [DMGs_2kbslop](analyses/DMGs/R-objects/DMGs_2kbslop) and [DMGs_2kbslop_annotated.tab](analyses/DMGs/DMGs_2kbslop_annotated.tab) - Differentially methylated genes (DMGs) among poulations.  
 
+## Combined methylation and genetic analyses  
+- [MBD_samples_genetic_analysisHCSS_5x.ipynb](code/MBD_samples_genetic_analysisHCSS_5x.ipynb): integrating methylation and genetic data for 5x filtered methylation data; correlate distance matrices, correlate P_{ST} and F_{ST}, correlate PC scores, explore CpG-SNPs (includes some preliminary analyses with addition GBS SNPs not used in the paper), TsTv ratio
+- [mQTL_analysis-RankNorm-5x.ipynb](code/mQTL_analysis-RankNorm-5x.ipynb) (large file, view on nbviewer): Methylation QTL analysis
+
+### Combined methylation and genetic analyses subdirectories
+- [MethGen](analyses/2bRAD/MethGen): contains outputs from [MBD_samples_genetic_analysisHCSS_5x.ipynb](code/MBD_samples_genetic_analysisHCSS_5x.ipynb)
+- [mQTL_5x](analyses/2bRAD/mQTL_5x): contains outputs from [mQTL_analysis-RankNorm-5x.ipynb](code/mQTL_analysis-RankNorm-5x.ipynb)
+
+## Code for manuscript figures: [Figures.Rmd](code/Figures.Rmd)
 
 ## Archived files  
 Several directories contain `archive/` subdirectories, which contain code and results from analyses that were not ultimately needed for the paper.  For instance, we performed a [MACAU](https://www.xzlab.org/software/macau/MACAUmanual.pdf) analysis to identify methylated loci associated with oyster size ("Size associated loci", or "SALs"), but this was not included in our publication. NOTE: some MACAU-relevant code also remains in non-archived notebooks (e.g. in the 05-Annotations.Rmd notebook).  
 - Files for relatedness matrix for MACAU: HSmbdsamples_rab.txt and mbdsamples_rab.txt. File starting with HS is generated from an ANGSD run using only HC/SS samples, the other is a run using HC/SS/NF samples. The two files are very tightly correlated so should not matter much.
-- - GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP 
+- - GWAS_\*.pvalues: pvalues from GWAS of either weight or width for each SNP
+- Afilt32m70_01_pp75.vcf: 3 populations, all SNPS with MAF > 1% and a genotype probobility of > 75%; \_m75.recode.vcf is filtered for SNPs genotyped in at least 75% of individuals
