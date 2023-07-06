@@ -27,7 +27,7 @@ _Below are select files in the repository distinctly referenced in the manuscrip
 - Meyer 2bRAD protocol `protocols/2bRAD_11Aug2015.pdf`
 
 ### Genetics analyses code
-- [ANGSD_HCSSonly.ipynb](code/ANGSD_HCSSonly.ipynb): ANGSD genotyping, converting ANGSD output to VCF, running outlier analysis with Bayescan, generating relatedness matrix (not used in paper), running ngsAdmix for admixture, F_{ST} (overall, per gene, per SNP), calculate the number of SNPs in genes, generate GO enrichment files for genes with F_{ST} > 0.3, PCA of all genetic samples, PCA of MBD samples 
+- [ANGSD_HCSSonly.ipynb](code/ANGSD_HCSSonly.ipynb): ANGSD genotyping, converting ANGSD output to VCF, running outlier analysis with Bayescan, generating relatedness matrix (not used in paper), running ngsAdmix for admixture, FST (overall, per gene, per SNP), calculate the number of SNPs in genes, generate GO enrichment files for genes with FST > 0.3, PCA of all genetic samples, PCA of MBD samples 
 
 ### Genetics analyses output files
 
